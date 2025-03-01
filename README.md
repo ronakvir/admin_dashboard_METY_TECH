@@ -65,33 +65,16 @@ Also, includes a Render.com `render.yaml` and a working Django `production.py` s
 -   `django-defender` for blocking brute force attacks against login
 -   `whitenoise` and `brotlipy` for serving static assets
 
-## Share your project!
 
-Several people have leveraged our boilerplate to start spinoffs or to boost their efforts in the challenging pursuit of securing funding. Starting with a solid foundation allows you to create more resilient products and focus on what really matters: discovering and delivering value to your customers. If you are one of those people, we're eager to help you even more! We can spread the word about your project across our social media platforms, giving you access to a broader audience.
 
-Send us an email at contact@vintasoftware.com telling us a bit more about how our boilerplate helped you boost your project.
+## Project bootstrap
 
-## Project bootstrap [![main](https://github.com/vintasoftware/django-react-boilerplate/actions/workflows/main.yml/badge.svg)](https://github.com/vintasoftware/django-react-boilerplate/actions/workflows/main.yml) [![Known Vulnerabilities](https://snyk.io/test/github/vintasoftware/django-react-boilerplate/badge.svg)](https://snyk.io/test/github/vintasoftware/django-react-boilerplate)
 
--   [ ] Make sure you have Python 3.12 installed
--   [ ] Install Django with `pip install django`, to have the `django-admin` command available
--   [ ] Open the command line and go to the directory you want to start your project in
--   [ ] Start your project using (replace `project_name` with your project name and remove the curly braces):
-    ```
-    django-admin startproject admin_dashboard --extension py,json,yml,yaml,toml --name Dockerfile,README.md,.env.example,.gitignore,Makefile --template=https://github.com/vintasoftware/django-react-boilerplate/archive/refs/heads/main.zip
-    ```
-    Alternatively, you may start the project in the current directory by placing a `.` right after the project name, using the following command:
-    ```
-    django-admin startproject admin_dashboard . --extension py,json,yml,yaml,toml --name Dockerfile,README.md,.env.example,.gitignore,Makefile --template=https://github.com/vintasoftware/django-react-boilerplate/archive/refs/heads/main.zip
-    ```
-In the next steps, always remember to replace admin_dashboard with your project's name (in case it isn't yet):
--   [ ] Above: don't forget the `--extension` and `--name` params!
 -   [ ] Go into project's root directory: `cd admin_dashboard`
--   [ ] Change the first line of README to the name of the project
 -   [ ] Add an email address to the `ADMINS` settings variable in `admin_dashboard/backend/admin_dashboard/settings/base.py`
 -   [ ] Change the `SERVER_EMAIL` to the email address used to send e-mails in `admin_dashboard/backend/admin_dashboard/settings/production.py`
 
-After completing ALL of the above, remove this `Project bootstrap` section from the project README. Then follow `Running` below.
+
 
 ## Running
 
