@@ -90,7 +90,6 @@ Also, includes a Render.com `render.yaml` and a working Django `production.py` s
     -   Create a git-untracked `.env.example` file:
         `cp backend/.env.example backend/.env`
 
-### If you are using Docker:
 
 -   Open the `backend/.env` file on a text editor and uncomment the line `DATABASE_URL=postgres://admin_dashboard:password@db:5432/admin_dashboard`
 -   Open a new command line window and go to the project's directory
@@ -145,8 +144,7 @@ The API documentation pages are accessible at `http://localhost:8000/api/schema/
 > Anytime a view is created, updated, or removed, the schema must be updated to reflect the changes. Failing to do so can lead to outdated client code or documentation.
 >
 > To update the schema, run:
-> - If you are using Docker: `make docker_backend_update_schema`
-> - If you are not using Docker: `poetry run python manage.py spectacular --color --file schema.yml`
+> - `make docker_backend_update_schema`
 
 We use the [`openapi-ts`](https://heyapi.vercel.app/openapi-ts/get-started.html) tool to generate TypeScript client code from the OpenAPI schema. The generated client code is used to interact with the API in a type-safe manner.
 
@@ -154,8 +152,7 @@ We use the [`openapi-ts`](https://heyapi.vercel.app/openapi-ts/get-started.html)
 > Anytime the API schema is updated, the client code must be regenerated to reflect the changes. Failing to do so can lead to type errors in the client code.
 >
 > To update the client code, run:
-> - If you are using Docker: `make docker_frontend_update_api`
-> - If you are not using Docker: `npm run openapi-ts`
+> - `make docker_frontend_update_api`
 
 > [!NOTE]
 > If `pre-commit` is properly enabled, it will automatically update both schema and client before each commit whenever necessary.
@@ -253,16 +250,6 @@ After enabling dyno metadata and setting the environment variables, your next Re
 -   At pre-commit time (see below)
 -   Manually with `poetry run ruff` and `npm run lint` on project root.
 -   During development with an editor compatible with ruff and ESLint.
-
-## Pre-commit hooks
-
-### If you are using Docker:
-
--   Not supported yet. Please feel free to contribute!
-
-### If you are not using Docker:
-
--   On project root, run `poetry run pre-commit install` to enable the hook into your git repo. The hook will run automatically for each commit.
 
 ## Opinionated Settings
 
