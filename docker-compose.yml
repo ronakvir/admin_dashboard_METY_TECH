@@ -2,15 +2,16 @@ version: '3.5'
 
 services:
   db:
-    image: "postgres:alpine"
+    image: "mysql:8"
     environment:
-      - POSTGRES_USER=admin_dashboard
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=admin_dashboard
+      - MYSQL_USER=admin_dashboard
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=admin_dashboard
+      - MYSQL_ROOT_PASSWORD=rootpassword
     ports:
-      - "5432"
+      - "3306:3306"
     volumes:
-      - dbdata:/var/lib/postgresql/data:delegated
+      - dbdata:/var/lib/mysql
 
   broker:
     image: "rabbitmq:alpine"

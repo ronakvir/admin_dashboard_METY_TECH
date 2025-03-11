@@ -93,7 +93,7 @@ Also, includes a Render.com `render.yaml` and a working Django `production.py` s
         `cp backend/.env.example backend/.env`
 
 
--   Open the `backend/.env` file on a text editor and uncomment the line `DATABASE_URL=postgres://admin_dashboard:password@db:5432/admin_dashboard`
+-   Open the `backend/.env` file on a text editor and uncomment the line `DATABASE_URL=DATABASE_URL=mysql-connector://admin_dashboard:password@db:3306/admin_dashboard`
 -   Open a new command line window and go to the project's directory
 -   Run the initial setup:
     `make docker_setup`
