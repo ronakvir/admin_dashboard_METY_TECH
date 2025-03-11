@@ -11,7 +11,7 @@ ENV PYTHONFAULTHANDLER=1 \
 RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
 
 # Install system dependencies
-RUN apt-get update && apt-get install python3-dev gcc build-essential libpq-dev -y
+RUN apt-get update && apt-get install -y python3-dev build-essential pkg-config
 
 # install python dependencies
 RUN pip install "poetry==$POETRY_VERSION"
