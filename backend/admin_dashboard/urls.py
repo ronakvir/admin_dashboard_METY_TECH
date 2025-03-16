@@ -10,6 +10,7 @@ from drf_spectacular.views import (
 )
 from rest_framework.routers import DefaultRouter
 from users.routes import routes as users_routes
+from users.routes import urlpatterns as user_urlpatterns
 
 
 router = DefaultRouter()
@@ -21,6 +22,7 @@ for route in routes:
 urlpatterns = [
     path("", include("common.urls"), name="common"),
     path("admin/", admin.site.urls, name="admin"),
+    path("api/", include(user_urlpatterns)),
     path("admin/defender/", include("defender.urls")),
     path("jsreverse/", django_js_reverse.views.urls_js, name="js_reverse"),
     path("api/", include(router.urls), name="api"),

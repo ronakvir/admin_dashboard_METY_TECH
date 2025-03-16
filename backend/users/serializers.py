@@ -16,3 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
             "modified",
             "last_login",
         ]
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)

@@ -1,4 +1,7 @@
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
 from django.views import generic
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status, viewsets
@@ -46,3 +49,7 @@ class RestViewSet(viewsets.ViewSet):
         )
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return JsonResponse({'csrftoken': get_token(request)})

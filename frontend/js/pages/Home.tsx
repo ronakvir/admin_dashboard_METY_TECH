@@ -1,55 +1,52 @@
-import React, { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { UsersService } from "../api";
 
-const Home = () => {
-  const [formData, setFormData] = useState({username: "" , password: ""});
-  const username = "admin";
-  const password = "password";
+const Home: React.FC = () => {
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value})
-  }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Attempting to log in with", formData);
-    if (formData.username === username && formData.password === password) {
-      //useNavigate("/UserDashboard");
-      alert("Correct Username and Password!")
-    }
-    else {
-      alert("Invalid Username or Password!")
+    try {
+      const data = await UsersService.usersLoginCreate({
+        requestBody: formData,
+      });
+
+     alert("Success!");
+    } catch (err) {
+      console.error(err);
+      alert("Invalid email or password!");
     }
   };
 
   return (
-    <>
+    <form onSubmit={handleSubmit}>
       <h2>Login:</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Username:</label>
-          <input 
-            type="username" 
-            name="username" 
-            value={formData.username} 
-            onChange={handleChange} 
-            required 
-          />
-        </div>
-        <div>
-          <label>Password:</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            />
-        </div>
-        <button type="submit">Login</button>
-      </form>
-       
-    </>
+      <div>
+        <label>Email:</label>
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+      </div>
+      <div>
+        <label>Password:</label>
+        <input
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+      </div>
+      <button type="submit">Login</button>
+    </form>
   );
 };
 
