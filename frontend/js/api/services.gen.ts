@@ -17,6 +17,8 @@ import type {
   UsersPartialUpdateResponse,
   UsersDestroyData,
   UsersDestroyResponse,
+  UsersLoginCreateData,
+  UsersLoginCreateResponse,
 } from "./types.gen";
 
 export class RestService {
@@ -147,6 +149,23 @@ export class UsersService {
       path: {
         id: data.id,
       },
+    });
+  }
+
+  /**
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns Login
+   * @throws ApiError
+   */
+  public static usersLoginCreate(
+    data: UsersLoginCreateData,
+  ): CancelablePromise<UsersLoginCreateResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/users/login/",
+      body: data.requestBody,
+      mediaType: "application/json",
     });
   }
 }
