@@ -1,44 +1,54 @@
-import { useState, useEffect } from "react";
-import Button from "react-bootstrap/Button";
-
-import DjangoImgSrc from "../../assets/images/django-logo-negative.png";
-import { RestService } from "../api";
+import React, { useState, useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
 
 const Home = () => {
-  const [showBugComponent, setShowBugComponent] = useState(false);
-  const [restCheck, setRestCheck] =
-    useState<Awaited<ReturnType<typeof RestService.restRestCheckRetrieve>>>();
+  const [formData, setFormData] = useState({username: "" , password: ""});
+  const username = "admin";
+  const password = "password";
 
-  useEffect(() => {
-    async function onFetchRestCheck() {
-      setRestCheck(await RestService.restRestCheckRetrieve());
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value})
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Attempting to log in with", formData);
+    if (formData.username === username && formData.password === password) {
+      //useNavigate("/UserDashboard");
+      alert("Correct Username and Password!")
     }
-    onFetchRestCheck();
-  }, []);
+    else {
+      alert("Invalid Username or Password!")
+    }
+  };
 
   return (
     <>
-      <h2>Static assets</h2>
-      <div id="django-background">
-        If you are seeing the green Django logo on a white background and this
-        text color is #092e20, frontend static files serving is working:
-      </div>
-      <div id="django-logo-wrapper">
+      <h2>Login:</h2>
+      <form onSubmit={handleSubmit}>
         <div>
-          Below this text, you should see an img tag with the white Django logo
-          on a green background:
+          <label>Username:</label>
+          <input 
+            type="username" 
+            name="username" 
+            value={formData.username} 
+            onChange={handleChange} 
+            required 
+          />
         </div>
-        <img alt="Django Negative Logo" src={DjangoImgSrc} />
-      </div>
-      <h2>Rest API</h2>
-      <p>{restCheck?.message}</p>
-      <Button variant="outline-dark" onClick={() => setShowBugComponent(true)}>
-        Click to test if Sentry is capturing frontend errors! (Should only work
-        in Production)
-      </Button>
-      {/* NOTE: The next line intentionally contains an error for testing frontend errors in Sentry. */}
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {showBugComponent && (showBugComponent as any).field.notexist}
+        <div>
+          <label>Password:</label>
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+       
     </>
   );
 };

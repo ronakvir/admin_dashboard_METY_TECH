@@ -55,3 +55,7 @@ docker_backend_update_schema:
 
 docker_frontend_update_api:
 	docker compose run --rm frontend npm run openapi-ts
+
+docker_restart:
+	docker compose down
+	docker compose up
