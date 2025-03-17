@@ -4,7 +4,18 @@ import cookie from "cookie";
 import axios from "axios";
 import { OpenAPI } from "./api";
 import Home from "./pages/Home";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import QuestionnaireBuilder from "./pages/admin/QuestionnaireBuilder";
+import LogicBuilder from "./pages/admin/LogicBuilder";
+import VideoLibrary from "./pages/admin/VideoLibrary";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
+import AdminProfile from "./pages/admin/AdminProfile";
+
+
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "../sass/_global.scss";
+
 
 OpenAPI.interceptors.request.use((request) => {
   const { csrftoken } = cookie.parse(document.cookie);
@@ -30,12 +41,30 @@ const App = () => {
   }, []);
 
   return (
+
     <Sentry.ErrorBoundary fallback={<p>ERROR</p>}>
-      <div className="center">
-        <Home />
-      </div>
+      <Router>
+        <Routes>
+          <Route path="/" element={
+            <div className="center">
+              <Home />
+            </div>}
+          />
+          <Route path="/admindashboard" element={<AdminDashboard />}>
+            <Route path="/admindashboard/usermanagement" element={<UserManagement />} />
+            <Route path="/admindashboard/questionnairebuilder" element={<QuestionnaireBuilder />} />
+            <Route path="/admindashboard/videolibrary" element={<VideoLibrary />} />
+            <Route path="/admindashboard/logicbuilder" element={<LogicBuilder />} />
+            <Route path="/admindashboard/analyticsdashboard" element={<AnalyticsDashboard />} />
+            <Route path="/admindashboard/adminprofile" element={<AdminProfile />} />
+          </Route>
+        </Routes>
+      </Router>
     </Sentry.ErrorBoundary>
+
   );
 };
-
+//<Sentry.ErrorBoundary fallback={<p>ERROR</p>}>
+//  <Home />
+//</Sentry.ErrorBoundary>
 export default App;
