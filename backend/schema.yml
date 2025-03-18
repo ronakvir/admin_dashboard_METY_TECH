@@ -198,6 +198,7 @@ paths:
         required: true
       security:
       - cookieAuth: []
+      - {}
       responses:
         '200':
           content:
