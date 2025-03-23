@@ -5,22 +5,22 @@ import "../../../sass/_global.scss";
 const SidePanel: React.FC = () => {
     const navigate = useNavigate();
     const UserManagement = () => {
-        navigate("/admindashboard/usermanagement")
+        navigate("/dashboard/usermanagement")
     }
     const QuestionnaireBuilder = () => {
-        navigate("/admindashboard/questionnairebuilder")
+        navigate("/dashboard/questionnairebuilder")
     }
     const VideoLibrary = () => {
-        navigate("/admindashboard/videolibrary")
+        navigate("/dashboard/videolibrary")
     }
     const LogicBuilder = () => {
-        navigate("/admindashboard/logicbuilder")
+        navigate("/dashboard/logicbuilder")
     }
     const AnalyticsDashboard = () => {
-        navigate("/admindashboard/analyticsdashboard")
+        navigate("/dashboard/analyticsdashboard")
     }
     const AdminProfile = () => {
-        navigate("/admindashboard/adminprofile")
+        navigate("/dashboard/adminprofile")
     }
     const Logout = () => {
         navigate("/")

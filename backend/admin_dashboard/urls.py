@@ -21,6 +21,7 @@ for route in routes:
 
 urlpatterns = [
     path("", include("common.urls"), name="common"),
+    path("dashboard/", include("dashboard.urls")),
     path("admin/", admin.site.urls, name="admin"),
     path("api/", include(user_urlpatterns)),
     path("admin/defender/", include("defender.urls")),

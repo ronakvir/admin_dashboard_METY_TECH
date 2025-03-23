@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "common",
     "users",
     "questionnaire_builder",
+    "dashboard"
 ]
 
 MIDDLEWARE = [

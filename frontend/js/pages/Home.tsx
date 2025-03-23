@@ -20,7 +20,7 @@ const Home: React.FC = () => {
       });
       // We need to be able to check what kind of user this is and route them accordingly.
       // alert("Success!");
-      navigate("/admindashboard");
+      navigate("/dashboard");
 
     } catch (err) {
       console.error(err);
