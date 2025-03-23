@@ -4,7 +4,7 @@ import cookie from "cookie";
 import axios from "axios";
 import { OpenAPI } from "./api";
 import Home from "./pages/Home";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import Dashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import QuestionnaireBuilder from "./pages/admin/Questionnaire/QuestionnaireBuilder";
 import LogicBuilder from "./pages/admin/LogicBuilder";
@@ -50,13 +50,13 @@ const App = () => {
               <Home />
             </div>}
           />
-          <Route path="/admindashboard" element={<AdminDashboard />}>
-            <Route path="/admindashboard/usermanagement" element={<UserManagement />} />
-            <Route path="/admindashboard/questionnairebuilder" element={<QuestionnaireBuilder />} />
-            <Route path="/admindashboard/videolibrary" element={<VideoLibrary />} />
-            <Route path="/admindashboard/logicbuilder" element={<LogicBuilder />} />
-            <Route path="/admindashboard/analyticsdashboard" element={<AnalyticsDashboard />} />
-            <Route path="/admindashboard/adminprofile" element={<AdminProfile />} />
+          <Route path="/dashboard" element={<Dashboard />}>
+            <Route path="/dashboard/usermanagement" element={<UserManagement />} />
+            <Route path="/dashboard/questionnairebuilder" element={<QuestionnaireBuilder />} />
+            <Route path="/dashboard/videolibrary" element={<VideoLibrary />} />
+            <Route path="/dashboard/logicbuilder" element={<LogicBuilder />} />
+            <Route path="/dashboard/analyticsdashboard" element={<AnalyticsDashboard />} />
+            <Route path="/dashboard/adminprofile" element={<AdminProfile />} />
           </Route>
         </Routes>
       </Router>

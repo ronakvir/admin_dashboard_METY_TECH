@@ -4,7 +4,7 @@ import SidePanel from "./SidePanel"
 import { Outlet, Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import "../../../sass/_global.scss";
 
-const AdminDashboard: React.FC = () => {
+const Dashboard: React.FC = () => {
   const [sidePanel, setSidePanel] = useState(true);
   const toggleSidePanel = () => {
     if (sidePanel) {
@@ -32,4 +32,4 @@ const AdminDashboard: React.FC = () => {
   )
 }
 
-export default AdminDashboard;
+export default Dashboard;
