@@ -6,7 +6,7 @@ import { OpenAPI } from "./api";
 import Home from "./pages/Home";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
-import QuestionnaireBuilder from "./pages/admin/QuestionnaireBuilder";
+import QuestionnaireBuilder from "./pages/admin/Questionnaire/QuestionnaireBuilder";
 import LogicBuilder from "./pages/admin/LogicBuilder";
 import VideoLibrary from "./pages/admin/VideoLibrary";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
