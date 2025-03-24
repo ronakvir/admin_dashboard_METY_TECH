@@ -16,17 +16,27 @@ const Dashboard: React.FC = () => {
   return (
   <div className="container">
     <button className="" onClick={toggleSidePanel}>Toggle Side Panel</button>
-    <p className="topPanel">Admin Dashboard</p>
-    <div className="notTopPanel">
-      <aside 
+    <h1 className="topPanel">Admin Dashboard</h1>
+    <div style={{ display: 'flex', height: '100vh' }}>
+      <div 
         id="sidePanel" 
-        className="sidePanel" 
-        style={{transition: "transform 0.3s", transform: sidePanel ? "translateX(0)" : "translateX(-150%)"}}>
-        <SidePanel />
-      </aside>
-      <section style={{}}>
+        style={{
+          width: sidePanel ? "250px" : "0",
+          transition: "width 0.5s", 
+          zIndex: "1",
+          position: "fixed",
+          overflowX: "hidden"
+          
+        }}>
+        <SidePanel sidePanel={sidePanel} setSidePanel={setSidePanel} />
+      </div>
+      <div style={{
+        flex: "1",
+        transition: "margin-left 0.5s ease",
+        marginLeft: sidePanel ? "250px" : "0"
+      }}>
         <Outlet />
-      </section>
+      </div>
     </div>
   </div>
   )

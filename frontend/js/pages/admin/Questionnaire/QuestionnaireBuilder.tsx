@@ -192,7 +192,7 @@ const QuestionnaireBuilder: React.FC = () => {
   return (
     !previewQuestionnaire ? (
       <>
-        <h1>Questionnaire Builder</h1>
+        <h3>Questionnaire Builder</h3>
         <hr/>
         {questionnaireSection()}
         <hr/>
