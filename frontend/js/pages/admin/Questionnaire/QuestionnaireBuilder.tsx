@@ -1,45 +1,32 @@
 import { Console } from "console";
-import React, { ButtonHTMLAttributes, ChangeEvent, useEffect, useState } from "react";
+import React, { ButtonHTMLAttributes, ChangeEvent, createContext, useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-//import QuestionnaireBuilder from "./QuestionnaireBuilder";
+import ComponentRecents from "./ComponentRecents";
+import ComponentList from "./ComponentList";
+import ComponentWorkshop from "./ComponentWorkshop";
+import ComponentQuestions from "./ComponentQuestions";
+import ComponentPreview from "./ComponentPreview";
 
-// Questionnaire Data Class, the purpose of this is to create a names object with thiese fields.
-class QuestionnaireData {
-  name: string;
-  questions: string;
-  status: string;
-  responses: string;
 
-  constructor (name: string, questions: string, status: string, responses: string) {
-    this.name = name;
-    this.questions = questions;
-    this.status = status;
-    this.responses = responses;
-  }
-}
+export type Question = {
 
-type Question = {
   id: string;
   type: string;
   question: string;
   answers: string[];
 }
 
-type Questionnaire = {
+export type Questionnaire = {
   id: string;
   name: string;
-  questions: Question[];
+  status: string;
+  responses: string;
+  lastModified: string;
+  questions: string[];
 }
 
-// This is acting like an API call response for the list of questionnaires in the database
-let questionnaireAPIResponse = [
-  new QuestionnaireData("Fitness Goal Assessment", "12", "Active", "1005"),
-  new QuestionnaireData("Health History Form", "15", "Active", "52"),
-  new QuestionnaireData("Workout Preference", "13", "Draft", "135"),
-  new QuestionnaireData("Nutrition Assessment", "10", "Template", "521"),
-  new QuestionnaireData("Workout Preference", "9", "Active", "135"),
-  new QuestionnaireData("Nutrition Assessment", "20", "Active", "125")
-]
+
+
 
 // This is acting like an API call response for the list of questions in the database
 let questionTypesAPIResponse = [
@@ -63,245 +50,85 @@ let questionTypesAPIResponse = [
 ];
 
 // This is acting like an API call response for the list of questions in the database
-let questionAPIResponse = [
-  {
-    id: "123",
-    type: "multichoice",
-    question: "What is your name?",
-    answers: [
-    "Ronak",
-    "Joshua"
-    ],
-  }, {
-    id: "321",
-    type: "text",
-    question: "What are you looking to get out of this?",
-    answers: []
-  }
+let questionAPIResponse = new Map([
+  ["000001", { id: "000001", type: "multichoice", question: "Favorite color?", answers: ["Red", "Blue", "Green", "Yellow"] }],
+  ["000002", { id: "000002", type: "checkbox", question: "Programming languages?", answers: ["JS", "Python", "Java", "C++", "Ruby"] }],
+  ["000003", { id: "000003", type: "text", question: "Your career goals?", answers: [] }],
+  ["000004", { id: "000004", type: "slider", question: "Job satisfaction?", answers: [] }],
+  ["000005", { id: "000005", type: "multichoice", question: "Preferred transport?", answers: ["Car", "Bike", "Train", "Plane", "Walk"] }],
+  ["000006", { id: "000006", type: "checkbox", question: "Hobbies?", answers: ["Reading", "Gaming", "Hiking", "Cooking"] }],
+  ["000007", { id: "000007", type: "text", question: "Describe your weekend.", answers: [] }],
+  ["000008", { id: "000008", type: "slider", question: "Work-life balance importance?", answers: [] }],
+  ["000009", { id: "000009", type: "multichoice", question: "Favorite season?", answers: ["Spring", "Summer", "Autumn", "Winter"] }],
+  ["000010", { id: "000010", type: "checkbox", question: "Languages spoken?", answers: ["English", "Spanish", "French", "German", "Chinese"] }],
+  ["000011", { id: "000011", type: "text", question: "Your dream job?", answers: [] }],
+  ["000012", { id: "000012", type: "slider", question: "How active are you?", answers: [] }],
+  ["000013", { id: "000013", type: "multichoice", question: "Favorite beverage?", answers: ["Coffee", "Tea", "Soda", "Water", "Juice"] }],
+  ["000014", { id: "000014", type: "checkbox", question: "Sports followed?", answers: ["Soccer", "Basketball", "Tennis", "Cricket"] }],
+  ["000015", { id: "000015", type: "text", question: "What’s the last book you read?", answers: [] }],
+  ["000016", { id: "000016", type: "slider", question: "Enjoy cooking?", answers: [] }],
+  ["000017", { id: "000017", type: "multichoice", question: "Preferred music genre?", answers: ["Pop", "Rock", "Jazz", "Classical", "Hip-Hop"] }],
+  ["000018", { id: "000018", type: "checkbox", question: "Social media used?", answers: ["Facebook", "Twitter", "Instagram", "Reddit", "TikTok"] }],
+  ["000019", { id: "000019", type: "text", question: "What do you want to learn this year?", answers: [] }],
+  ["000020", { id: "000020", type: "slider", question: "Comfortable with public speaking?", answers: [] }],
+  ["000021", { id: "000021", type: "multichoice", question: "Favorite movie genre?", answers: ["Action", "Comedy", "Drama", "Sci-Fi", "Horror"] }],
+  ["000022", { id: "000022", type: "checkbox", question: "Outdoor activities?", answers: ["Camping", "Fishing", "Cycling", "Skiing", "Kayaking"] }],
+  ["000023", { id: "000023", type: "text", question: "If you could live anywhere, where?", answers: [] }],
+  ["000024", { id: "000024", type: "slider", question: "How tech-savvy are you?", answers: [] }],
+  ["000025", { id: "000025", type: "multichoice", question: "Favorite meal?", answers: ["Breakfast", "Lunch", "Dinner", "Snacks"] }],
+  ["000026", { id: "000026", type: "checkbox", question: "Board games you like?", answers: ["Chess", "Monopoly", "Scrabble", "Risk", "Catan"] }],
+  ["000027", { id: "000027", type: "text", question: "One word to describe yourself?", answers: [] }],
+  ["000028", { id: "000028", type: "slider", question: "Do you enjoy traveling?", answers: [] }],
+  ["000029", { id: "000029", type: "multichoice", question: "Preferred pet?", answers: ["Dog", "Cat", "Bird", "Fish", "Reptile"] }],
+  ["000030", { id: "000030", type: "checkbox", question: "Favorite travel destinations?", answers: ["Japan", "Italy", "France", "USA", "Australia"] }]
+]);
+
+// This is acting like an API call response for the list of questionnaires in the database
+let questionnaireAPIResponse = [
+  { id: "000001", name: "Survey on Preferences", status: "Active", responses: "132", lastModified: "2025-03-21", questions: ["000001", "000002", "000003", "000004", "000005", "000006", "000007", "000009", "000013"] },
+  { id: "000002", name: "Work and Lifestyle Survey", status: "Template", responses: "98", lastModified: "2025-03-22", questions: ["000003", "000004", "000008", "000012", "000017", "000020", "000022", "000025"] },
+  { id: "000003", name: "Technology and Hobbies", status: "Draft", responses: "245", lastModified: "2025-03-22", questions: ["000006", "000007", "000013", "000018", "000019", "000027", "000024"] },
+  { id: "000004", name: "Travel and Preferences", status: "Template", responses: "76", lastModified: "2025-03-20", questions: ["000010", "000014", "000022", "000030", "000029", "000024", "000017", "000025"] },
+  { id: "000005", name: "Personal Growth and Learning", status: "Draft", responses: "310", lastModified: "2025-03-19", questions: ["000011", "000015", "000019", "000027", "000024", "000016", "000013", "000028"] },
+  { id: "000006", name: "Health and Lifestyle", status: "Template", responses: "189", lastModified: "2025-03-18", questions: ["000016", "000017", "000028", "000024", "000027", "000012", "000021"] },
+  { id: "000007", name: "Career and Professional Development", status: "Active", responses: "54", lastModified: "2025-03-17", questions: ["000003", "000008", "000012", "000023", "000019", "000027", "000022"] },
+  { id: "000008", name: "Social Media and Entertainment", status: "Active", responses: "221", lastModified: "2025-03-16", questions: ["000018", "000021", "000014", "000025", "000022", "000027", "000026", "000023"] },
+  { id: "000009", name: "Outdoor Activities", status: "Active", responses: "402", lastModified: "2025-03-23", questions: ["000022", "000027", "000029", "000028", "000016", "000019", "000023", "000015"] },
+  { id: "000010", name: "Food and Drink Preferences", status: "Active", responses: "167", lastModified: "2025-03-23", questions: ["000025", "000013", "000029", "000014", "000018", "000017", "000019", "000022"] }
 ];
+
 
 // MAIN FUNCTION
 const QuestionnaireBuilder: React.FC = () => {
-
-  const [questionnaires, setQuestionnaires] = useState<Questionnaire[]>([]);
-  const [questions, setQuestions] = useState(questionAPIResponse);
-  const [questionnaireVisibility, setQuestionnaireVisibility] = useState("All");
-  const [filter, setFilter] = useState(new RegExp(`.*`));
-  const [questionnaireSelection, setQuestionnaireSelection] = useState(questionnaireAPIResponse);
-  const [selectedOption, setSelectedOption] = useState("");
-  const [questionForms, setQuestionForms] = useState({ id: "", type: "multichoice", question: "", answers: ["", ""] });
-  const [questionnaireWorkshop, setQuestionnaireWorkshop] = useState("");
-  const [currentQuestionnaire, setCurrentQuestionnaire] = useState<Questionnaire>({ id: "", name: "", questions: []});
-  const [questionIsSelected, setQuestionIsSelected] = useState(false);
-
-  // Logic to determine if we show the questionnaire list, or the questionnaire workshop
-  const questionnaireSection = ()  => {
-    if (questionnaireWorkshop === "") {
-      return (
-        <>
-          {recentQuestionnairesSection()}
-          {filteredQuestionaireSection()}
-        </>
-      )
-    }
-    else {
-      return (
-        <>
-          {questionnaireWorkshopView()}
-        </>
-      )
-    }
-  }
-
-  // The Questionnaire Cards
-  const recentQuestionnairesSection = () =>{
-    return (
-      <div style={{display: "flex", flexDirection: "column"}}>
-        <h4 style={{display: "flex", justifyContent: "left"}}>Recent Questionnaires</h4>
-        <div style={{display: "flex", flexDirection: "row"}}>
-          {questionnaireAPIResponse.map((questionnaire, index) => 
-            {
-              if (index >= 4) return;
-              
-              return  (
-                <div style={{width: "200px", height: "225px", backgroundColor: "lightgrey", borderRadius: "15px", overflow: "hidden", margin: "5px", padding: "10px"}}>
-                  <h3>{questionnaire.name}</h3>
-                  <p>{questionnaire.questions} questions - {questionnaire.status} - {questionnaire.responses} responses</p>
-                  <button>
-                    Edit
-                  </button>
-                  <button>
-                    Preview
-                  </button>
-                </div>
-              )
-            }
-        )}
-        </div>
-      </div>
-    )
-  }
-
-  // Updates the filter every time they type in the form
-  const changeFilter = (value: ChangeEvent<HTMLInputElement>) => {
-    setFilter(new RegExp(`.*${value.target.value.toLowerCase()}.*`));
-  }
-
-  // Updates the filterable list of questionnaires depending on which button they click
-  useEffect(() => {
-    const questionnaires = [];
-    for (let i = 0; i < questionnaireAPIResponse.length; i++) {
-      if (questionnaireAPIResponse[i].status === questionnaireVisibility || questionnaireVisibility === "All") {
-        questionnaires.push(questionnaireAPIResponse[i]);
-      }
-    }
-    setQuestionnaireSelection(questionnaires);
-  },[questionnaireVisibility, questionnaireAPIResponse]);
-
-  // Shows the list of filterable questionnaires
-  const filteredQuestionaireSection = () => {
-    let count = 0;
-    return (
-      <div style={{display: "flex", flexDirection: "column"}}>
-        <div style={{display: "flex"}}>
-          <button onClick={() => setQuestionnaireVisibility("All")} >All Questionnaires</button>
-          <button onClick={() => setQuestionnaireVisibility("Template")}>Templates</button>
-          <button onClick={() => setQuestionnaireVisibility("Active")}>Published</button>
-          <button onClick={() => setQuestionnaireVisibility("Draft")}>Drafts</button>
-          <p>Filter</p>
-          <input onChange={changeFilter}></input>
-          <button onClick={() => setQuestionnaireWorkshop("yes")}>Create New</button>
-        </div>
-        <h4 style={{display: "flex", justifyContent: "left"}}>{questionnaireVisibility} Questionnaires</h4>
-        <div style={{display: "flex", flexDirection: "column"}}>
-          {questionnaireSelection.map((questionnaire) => 
-            {
-              // Dont populate with items that dont match the filter
-              if (!filter.test(questionnaire.name.toLowerCase())) return;
-              // Only populate 5 items
-              if (count >= 5) return;
-
-              count++;
-              return (
-                <div style={{display: "flex", justifyContent: "left", flexDirection: "row", width: "fit-content", height: "35px", backgroundColor: "lightgrey", margin: "5px"}}>
-                  <p style={{display: "flex", justifyContent: "left",width: "250px", margin: "5px"}}>{questionnaire.name}</p>
-                  <p style={{display: "flex", justifyContent: "left", width: "140px", margin: "5px"}}>{questionnaire.questions} questions</p>
-                  <p style={{display: "flex", justifyContent: "left", width: "140px", margin: "5px"}}>{questionnaire.status}</p>
-                  <p style={{display: "flex", justifyContent: "left", width: "140px", margin: "5px"}}>{questionnaire.responses} responses</p>
-                  <button>
-                    Edit
-                  </button>
-                  <button>
-                    Preview
-                  </button>
-                </div>
-              )
-            }
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // Update the questionnaire form fields when we open the workshop view.
-  useEffect(() => {
-    setCurrentQuestionnaire({ id: "", name: "", questions: []});
-    setSelectedOption("multichoice");
-  },[questionnaireWorkshop]);
   
-  // THis is the view that lets you create a new questionnaire or modify a current one
-  const questionnaireWorkshopView = () => {
-    return (
-      <div style={{display: "flex", flexDirection: "column", justifyContent: "left"}}>
-        {/* Updates the Questionnaire Title and input field*/}
-        <input style={{width: "425px"}} placeholder="Questionnaire Title" onChange={(value) => setCurrentQuestionnaire({...currentQuestionnaire, name: value.target.value})} />
-        <div style={{display: "flex", flexDirection: "row", justifyContent: "left"}}>
-          {currentQuestionnaire.questions.map((question, index) => (
-            <>
-              <div style={{borderStyle: "bold", borderColor: "black"}}>
-                <p>Type: {question.type}</p>
-                <p>Question: {question.question}</p>
-                <p># of Answers: {question.answers.length}</p>
-                <br/>
-              </div>
-              <button onClick={() => removeFromQuestionnaire(question, index)}>X</button>
-            </>
-            )
-            )}
-        </div>
-        <div style={{display: "flex", flexDirection: "row"}}>
-          <button style={{width: "415px"}} onClick={() => createQuestionnaire()}> Create Questionnaire</button>
-          <button style={{width: "415px"}} onClick={() => cancelQuestionnaire()}> Cancel/Discard</button>
-        </div>
 
-      </div>
-    )
-  }
+  const [questionnaires,          setQuestionnaires] = useState(questionnaireAPIResponse);
+  const [questions,               setQuestions] = useState<Map<string, Question>>(questionAPIResponse);
+  const [questionnaireVisibility, setQuestionnaireVisibility] = useState("All");
+  const [questionnaireList,       setQuestionnaireList] = useState(questionnaireAPIResponse);
+  const [questionType,            setQuestionType] = useState("");
+  const [questionForms,           setQuestionForms] = useState<Question>({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+  const [questionnaireWorkshop,   setQuestionnaireWorkshop] = useState("");
+  const [currentQuestionnaire,    setCurrentQuestionnaire] = useState<Questionnaire>({ id: "", name: "", status: "", responses: "", lastModified: "", questions: []});
+  const [questionIsSelected,      setQuestionIsSelected] = useState(false);
+  const [previewQuestionnaire,    setPreviewQuestionnaire] = useState(false);
 
-  // Finalize and create the questionnaire
-  const createQuestionnaire = () => {
-    if (currentQuestionnaire.questions.length < 8 || currentQuestionnaire.name == "") {
 
-      alert("You must have at least 8 questions and name the questionnaire!");
-    }
-
-    alert("Questionnaire Created Successfully!");
-    setQuestionnaires([ ...questionnaires, currentQuestionnaire ]);
-    setCurrentQuestionnaire({ id: "", name: "", questions: []});
-    setQuestionnaireWorkshop("");
-    // SEND API CALL TO ADD A NEW QUESTIONNAIRE TO DB
-  }
-
-  // CAncel Questionnaire creation
-  const cancelQuestionnaire = () => {
-    setCurrentQuestionnaire({ id: "", name: "", questions: []});
-    setQuestionnaireWorkshop("");
-  }
-
-  // Question Section - These are the Question Type Cards
-  const addQuestionSection = () => {
-    return(
-      <div style={{display: "flex", flexDirection: "column"}}>
-        <h4 style={{display: "flex", justifyContent: "left"}}>Question Types</h4>
-        <div style={{display: "flex", flexDirection: "row"}}>
-          {questionTypesAPIResponse.map((type, index) => 
-            {
-              if (index >= 4) return;
-              
-              // Create the Cards
-              return  (
-                <div style={{width: "200px", height: "225px", backgroundColor: "lightgrey", borderRadius: "15px", overflow: "hidden", margin: "5px", padding: "10px"}}>
-                  <h3>{type.name}</h3>
-                  <p>Used in {type.usedInCount} questionnaires</p>
-                  <button onClick={() => { 
-                    setSelectedOption(type.value);
-                    }}>
-                    Add
-                  </button>
-                </div>
-              )
-            }
-          )}
-        </div>
-        {questionSelection()}
-      </div>
-    )
-  }
 
   // Do this everytime I choose a question card
   // This clears the forms and un selects any selected questions.
   useEffect(() => {
     setQuestionIsSelected(false);
-    setQuestionForms({id: "", type: selectedOption, question: "", answers: ["", ""]});
-    console.log(selectedOption);
-  },[selectedOption] );
+    setQuestionForms({id: "", type: questionType, question: "", answers: ["", ""]});
+    console.log(questionType);
+  },[questionType] );
 
   // Print off the questions array for debugging
   const showQuestions = () => {
-    if (questions.length === 0) {
-      return <></>;
-    }
-    return questions.map((question, index) => (
+    if (questions.size === 0) return <></>;
+
+    const questionsArray = Array.from(questions);
+    return questionsArray.map(([id, question], index) => (
       <div>
         <p>Type {index+1}: {question.type}</p>
         <p>Question {index+1}: {question.question}</p>
@@ -313,141 +140,101 @@ const QuestionnaireBuilder: React.FC = () => {
     ))
   };
 
-  // Updates the formData data everytime they type in a form field
-  const changeFormData = (value: React.ChangeEvent<HTMLInputElement>) => {
-    setQuestionForms({ ...questionForms, [value.target.name]: value.target.value });
-  }
-
-  // Updates the formData answers every time a answer field is added or removed
-  const updateAnswer = (index: number, value: string) => {
-    const newAnswers = [...questionForms.answers];
-    newAnswers[index] = value;
-    setQuestionForms({ ...questionForms, answers: newAnswers });
-  }
-  
-  // Adds a new answer field to the formData.answers array
-  const addAnswerField = () => {
-    setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, ""] })
-  }
-
-  // Removes an answer field from ther formData.answers array based on the given index
-  const removeAnswerField = async (index: number) => {
-    if (questionForms.answers.length < 3) {
-      return;
+  // Logic to determine if we show the questionnaire list, or the questionnaire workshop
+  const questionnaireSection = ()  => {
+    if (!questionnaireWorkshop) {
+      return (
+        <>
+          <ComponentRecents 
+            questionnaires={questionnaires} setQuestionnaires={setQuestionnaires}
+            questions={questions} setQuestions={setQuestions}
+            questionnaireVisibility={questionnaireVisibility} setQuestionnaireVisibility={setQuestionnaireVisibility} 
+            questionnaireList={questionnaireList} setQuestionnaireList={setQuestionnaireList}
+            questionType={questionType} setQuestionType={setQuestionType}
+            questionForms={questionForms} setQuestionForms={setQuestionForms}
+            questionnaireWorkshop={questionnaireWorkshop} setQuestionnaireWorkshop={setQuestionnaireWorkshop}
+            currentQuestionnaire={currentQuestionnaire} setCurrentQuestionnaire={setCurrentQuestionnaire} 
+            questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
+            previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
+          />
+          <hr/>
+          <ComponentList 
+            questionnaires={questionnaires} setQuestionnaires={setQuestionnaires}
+            questionnaireVisibility={questionnaireVisibility} setQuestionnaireVisibility={setQuestionnaireVisibility} 
+            questionnaireList={questionnaireList} setQuestionnaireList={setQuestionnaireList}
+            questionType={questionType} setQuestionType={setQuestionType}
+            questionnaireWorkshop={questionnaireWorkshop} setQuestionnaireWorkshop={setQuestionnaireWorkshop}
+            currentQuestionnaire={currentQuestionnaire} setCurrentQuestionnaire={setCurrentQuestionnaire} 
+            previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
+          />
+        </>
+      )
     }
-    const updatedAnswers = [...questionForms.answers];
-    updatedAnswers.splice(index, 1);
-    setQuestionForms({ ...questionForms, answers: updatedAnswers })
-  }
+    else {
+      return (
 
-  // Adds the completed question to the questions array.
-  // This will eventually be changed to adding it to the database.
-  const addQuestion = () => {
-    if (questionForms.question.trim() == "") {
-      alert("You must enter a question first!");
-      return;
+        <ComponentWorkshop 
+          questionnaires={questionnaires} setQuestionnaires={setQuestionnaires}
+          questions={questions} setQuestions={setQuestions}
+          questionnaireVisibility={questionnaireVisibility} setQuestionnaireVisibility={setQuestionnaireVisibility} 
+          questionnaireList={questionnaireList} setQuestionnaireList={setQuestionnaireList}
+          questionType={questionType} setQuestionType={setQuestionType}
+          questionForms={questionForms} setQuestionForms={setQuestionForms}
+          questionnaireWorkshop={questionnaireWorkshop} setQuestionnaireWorkshop={setQuestionnaireWorkshop}
+          currentQuestionnaire={currentQuestionnaire} setCurrentQuestionnaire={setCurrentQuestionnaire} 
+          questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
+        />
+
+      )
     }
-
-    const id = (Math.random() * 999999).toString();
-    questionForms.id = id;
-
-    setQuestions([ ...questions, questionForms ]);
-    setQuestionForms({ id: "", type: "", question: "", answers: [""] });
   }
-
-
-  // which question types are we working with??
-  // creates those form fields and shows a list of them
-  const questionSelection = () => {
-    if (selectedOption === "") return <></>;
-
-    return (
-      <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
-        <div style={{display: "flex", flexDirection: "column", gap: "5px", justifyContent: "left"}}>
-          <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
-            <h4 style={{display: "flex", justifyContent: "left"}}>Add {selectedOption} Question</h4>
-            <button style={{display: "inline", maxWidth: "100"}} onClick={() => setSelectedOption("")}>Cancel</button>
-          </div>
-          <input onChange={changeFormData} name="question" style={{display: "inline", width: "530px"}} type="text" placeholder="Question" value={questionForms.question} />
-          
-          {// This checks if the button clicked was a checkbox  or multichoice type question card.
-            (selectedOption === "checkbox" || selectedOption === "multichoice") && (
-              <>
-                <button style={{width: "200px"}} onClick={addAnswerField}>Add Answer</button>
-                {questionForms.answers.map((answer, index) =>(
-                  <div style={{display: "flex", flexDirection:"row"}} key={index}>
-                    <input onChange={(e) => updateAnswer(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index]} />
-                    <button onClick={async () => removeAnswerField(index)}>X</button>
-                  </div>
-                ))}
-              </>
-            )
-          }
-
-          <button style={{display: "inline", maxWidth: "200px"}} onClick={async () => addQuestion()}>Add Question</button>
-        </div>
-
-        <div style={{height: "250px", width: "300px", gap: "5px", justifyContent: "right", borderStyle: "solid",borderColor:"black"}}>
-          <table>
-            <thead>
-              <tr>
-                <th>Question</th>
-              </tr>
-            </thead>
-            <tbody style={{overflowY: "auto"}}>
-              {questions.map(question => {
-                if (question.type !== selectedOption) return;
-                return (
-                  <tr className="questionRow" onClick={() => selectQuestion(question)} style={{height: "20px",backgroundColor: questionForms.id === question.id ? "grey" : "white"}}>
-                    <td style={{justifyContent: "left"}}>{question.question}</td>
-                  </tr>
-                );
-              })}
-
-            </tbody>
-          </table>
-          {questionnaireWorkshop !== "" ? <button onClick={() => addToQuestionnaire()}>Add to Questionnaire</button> : <></>}
-        </div>
-
-      </div>
-    )
-
-  }
-
-  // Helper Function to click on a question item from the list.
-  const selectQuestion = (question: {id: string; type: string; question: string; answers: string[]}) => {
-    if (questionForms.id === question.id) setQuestionIsSelected(false);
-    else setQuestionIsSelected(true);
-
-    setQuestionForms(current => 
-      current.id === question.id  ?  {id: "", type: selectedOption, question: "", answers: ["", ""]} : question);
-  }
-  
-  // Add the selected question to the current Questionnaire
-  const addToQuestionnaire = () => {
-    if (!questionIsSelected) return;
-
-    setCurrentQuestionnaire({ ...currentQuestionnaire, questions: [...currentQuestionnaire.questions, questionForms]});
-    setQuestionIsSelected(false);
-    setQuestionForms({ id: "", type: "", question: "", answers: [""] });
-  }
-
-  // Remove a question from the current Questionnaire
-  const removeFromQuestionnaire = (question: Question, index: number) => {
-    const updatedQuestions = [ ...currentQuestionnaire.questions ];
-    updatedQuestions.splice(index, 1);
-    setCurrentQuestionnaire({ ...currentQuestionnaire, questions: updatedQuestions })
-  }
-
 
   return (
-    <>
-      <h1>Questionnaire Builder</h1>
-      {questionnaireSection()}
-      {addQuestionSection()}
-      <hr/>
+    !previewQuestionnaire ? (
+      <>
+        <h1>Questionnaire Builder</h1>
+        <hr/>
+        {questionnaireSection()}
+        <hr/>
+        <ComponentQuestions 
+            questionnaires={questionnaires} setQuestionnaires={setQuestionnaires}
+            questions={questions} setQuestions={setQuestions}
+            questionnaireVisibility={questionnaireVisibility} setQuestionnaireVisibility={setQuestionnaireVisibility} 
+            questionnaireList={questionnaireList} setQuestionnaireList={setQuestionnaireList}
+            questionType={questionType} setQuestionType={setQuestionType}
+            questionForms={questionForms} setQuestionForms={setQuestionForms}
+            questionnaireWorkshop={questionnaireWorkshop} setQuestionnaireWorkshop={setQuestionnaireWorkshop}
+            currentQuestionnaire={currentQuestionnaire} setCurrentQuestionnaire={setCurrentQuestionnaire} 
+            questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
+          />
+        <hr/>
+        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+      </>
+      ) : (
+        <>
+        <h1>Questionnaire Preview</h1>
 
-    </>
+        <hr/>
+        <ComponentPreview 
+            questionnaires={questionnaires} setQuestionnaires={setQuestionnaires}
+            questions={questions} setQuestions={setQuestions}
+            questionnaireVisibility={questionnaireVisibility} setQuestionnaireVisibility={setQuestionnaireVisibility} 
+            questionnaireList={questionnaireList} setQuestionnaireList={setQuestionnaireList}
+            questionType={questionType} setQuestionType={setQuestionType}
+            questionForms={questionForms} setQuestionForms={setQuestionForms}
+            questionnaireWorkshop={questionnaireWorkshop} setQuestionnaireWorkshop={setQuestionnaireWorkshop}
+            currentQuestionnaire={currentQuestionnaire} setCurrentQuestionnaire={setCurrentQuestionnaire} 
+            questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
+            previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
+          />
+        <hr/>
+        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+      </>
+
+      )
+ 
+    
+    
   );
 }
 

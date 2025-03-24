@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
         style={{transition: "transform 0.3s", transform: sidePanel ? "translateX(0)" : "translateX(-150%)"}}>
         <SidePanel />
       </aside>
-      <section className="mainContent">
+      <section style={{}}>
         <Outlet />
       </section>
     </div>
