@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import "../../../sass/_global.scss";
+import { Questionnaire } from "./Questionnaire/QuestionnaireBuilder";
+interface QuestionnaireStates {
+    sidePanel: boolean; setSidePanel: Dispatch<SetStateAction<boolean>>;
 
-const SidePanel: React.FC = () => {
+}
+const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => {
     const navigate = useNavigate();
     const UserManagement = () => {
         navigate("/dashboard/usermanagement")

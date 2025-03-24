@@ -7,33 +7,27 @@
 .container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+
+
 }
 
 .topPanel {
     text-align: center;
     padding: 20px;
-    font-size: 24px;
 }
 
 .notTopPanel {
     display: flex;
-    flex: 1;
+
 }
 
-.sidePanel {
-    width: 250px;
-    padding: 20px;
-    justify-content: center;
-    gap: 10px;
-}
 
 
 
 .navButton {
-    flex: 1;
+
     padding: 10px;
     text-align: center;
-    min-width: 200px;
+    width: 200px;
 }
 
