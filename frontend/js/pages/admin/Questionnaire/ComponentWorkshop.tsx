@@ -114,7 +114,7 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
                         <button style={{width: "415px"}} onClick={() => modifyQuestionnaire()}> Save Questionnaire</button>
                     }
                     <button style={{width: "415px"}} onClick={() => cancelQuestionnaire()}> Cancel/Discard</button>
-                </div>
+            </div>
         </div>
 
     )
