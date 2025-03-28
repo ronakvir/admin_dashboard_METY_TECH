@@ -206,6 +206,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Login'
           description: ''
+  /api/users/logout/:
+    post:
+      operationId: users_logout_create
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
 components:
   schemas:
     Login:
