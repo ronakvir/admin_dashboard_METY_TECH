@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import LoginView, UserViewSet
+from .views import LoginView, LogoutRequestView, UserViewSet
 
 
 routes = [
@@ -9,4 +9,5 @@ routes = [
 
 urlpatterns = [
     path("users/login/", LoginView.as_view(), name="login"),
+    path('api/logout/', LogoutRequestView.as_view(), name='logout-request'),
 ]

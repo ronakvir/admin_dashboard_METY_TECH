@@ -4,6 +4,57 @@ info:
   version: 0.1.0
   description: A Django project boilerplate with Vinta's best practices
 paths:
+  /api/api/logout/:
+    post:
+      operationId: api_logout_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Logout'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Logout'
+          description: ''
+  /api/questionnaire/api/questionnaires/:
+    post:
+      operationId: questionnaire_api_questionnaires_create
+      tags:
+      - questionnaire
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Questionnaire'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Questionnaire'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Questionnaire'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Questionnaire'
+          description: ''
   /api/rest/rest-check/:
     get:
       operationId: rest_rest_check_retrieve
@@ -220,6 +271,14 @@ components:
       required:
       - email
       - password
+    Logout:
+      type: object
+      properties:
+        detail:
+          type: string
+          readOnly: true
+      required:
+      - detail
     Message:
       type: object
       properties:
@@ -284,6 +343,58 @@ components:
           type: string
           format: date-time
           nullable: true
+    Question:
+      type: object
+      properties:
+        value:
+          type: string
+          maxLength: 255
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionAnswer'
+      required:
+      - answers
+      - order
+      - value
+    QuestionAnswer:
+      type: object
+      properties:
+        value:
+          type: string
+          maxLength: 255
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        input:
+          type: string
+          maxLength: 255
+      required:
+      - input
+      - order
+      - value
+    Questionnaire:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          maxLength: 255
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+      required:
+      - name
+      - questions
+      - status
     User:
       type: object
       properties:

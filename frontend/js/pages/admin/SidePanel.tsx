@@ -2,6 +2,7 @@ import React, { Dispatch, SetStateAction, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import "../../../sass/_global.scss";
 import { Questionnaire } from "./Questionnaire/QuestionnaireBuilder";
+import { ApiService } from "../../api";
 interface QuestionnaireStates {
     sidePanel: boolean; setSidePanel: Dispatch<SetStateAction<boolean>>;
 
@@ -26,9 +27,15 @@ const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => 
     const AdminProfile = () => {
         navigate("/dashboard/adminprofile")
     }
-    const Logout = () => {
-        navigate("/")
-    }
+    const Logout = async () => {
+        try {
+            await ApiService.apiLogoutCreate();
+        } catch (error) {
+            console.error("Logout failed:", error);
+        } finally {
+            navigate("/");
+        }
+      };
 
   return (
     <>

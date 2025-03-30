@@ -4,6 +4,10 @@ import type { CancelablePromise } from "./core/CancelablePromise";
 import { OpenAPI } from "./core/OpenAPI";
 import { request as __request } from "./core/request";
 import type {
+  ApiLogoutCreateData,
+  ApiLogoutCreateResponse,
+  QuestionnaireApiQuestionnairesCreateData,
+  QuestionnaireApiQuestionnairesCreateResponse,
   RestRestCheckRetrieveResponse,
   UsersListData,
   UsersListResponse,
@@ -20,6 +24,44 @@ import type {
   UsersLoginCreateData,
   UsersLoginCreateResponse,
 } from "./types.gen";
+
+export class ApiService {
+  /**
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns Logout
+   * @throws ApiError
+   */
+  public static apiLogoutCreate(
+    data: ApiLogoutCreateData = {},
+  ): CancelablePromise<ApiLogoutCreateResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/api/logout/",
+      body: data.requestBody,
+      mediaType: "application/json",
+    });
+  }
+}
+
+export class QuestionnaireService {
+  /**
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns Questionnaire
+   * @throws ApiError
+   */
+  public static questionnaireApiQuestionnairesCreate(
+    data: QuestionnaireApiQuestionnairesCreateData,
+  ): CancelablePromise<QuestionnaireApiQuestionnairesCreateResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/questionnaire/api/questionnaires/",
+      body: data.requestBody,
+      mediaType: "application/json",
+    });
+  }
+}
 
 export class RestService {
   /**

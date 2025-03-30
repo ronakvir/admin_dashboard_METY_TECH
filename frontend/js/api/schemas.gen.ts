@@ -15,6 +15,17 @@ export const $Login = {
   required: ["email", "password"],
 } as const;
 
+export const $Logout = {
+  type: "object",
+  properties: {
+    detail: {
+      type: "string",
+      readOnly: true,
+    },
+  },
+  required: ["detail"],
+} as const;
+
 export const $Message = {
   type: "object",
   properties: {
@@ -97,6 +108,69 @@ export const $PatchedUser = {
       nullable: true,
     },
   },
+} as const;
+
+export const $Question = {
+  type: "object",
+  properties: {
+    value: {
+      type: "string",
+      maxLength: 255,
+    },
+    order: {
+      type: "integer",
+      maximum: 2147483647,
+      minimum: -2147483648,
+    },
+    answers: {
+      type: "array",
+      items: {
+        $ref: "#/components/schemas/QuestionAnswer",
+      },
+    },
+  },
+  required: ["answers", "order", "value"],
+} as const;
+
+export const $QuestionAnswer = {
+  type: "object",
+  properties: {
+    value: {
+      type: "string",
+      maxLength: 255,
+    },
+    order: {
+      type: "integer",
+      maximum: 2147483647,
+      minimum: -2147483648,
+    },
+    input: {
+      type: "string",
+      maxLength: 255,
+    },
+  },
+  required: ["input", "order", "value"],
+} as const;
+
+export const $Questionnaire = {
+  type: "object",
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 255,
+    },
+    status: {
+      type: "string",
+      maxLength: 255,
+    },
+    questions: {
+      type: "array",
+      items: {
+        $ref: "#/components/schemas/Question",
+      },
+    },
+  },
+  required: ["name", "questions", "status"],
 } as const;
 
 export const $User = {
