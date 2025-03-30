@@ -30,7 +30,7 @@ const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => 
 
     const handleLogout = async () => {
         try {
-            await UsersService.usersLogoutCreate();
+            await ApiService.apiLogoutCreate();
         } catch (error) {
             console.error("Logout failed:", error);
         } finally {
