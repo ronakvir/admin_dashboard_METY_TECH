@@ -27,9 +27,10 @@ const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => 
     const AdminProfile = () => {
         navigate("/dashboard/adminprofile")
     }
-    const Logout = async () => {
+
+    const handleLogout = async () => {
         try {
-            await ApiService.apiLogoutCreate();
+            await UsersService.usersLogoutCreate();
         } catch (error) {
             console.error("Logout failed:", error);
         } finally {
@@ -46,7 +47,7 @@ const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => 
         <button className="navButton" onClick={LogicBuilder}>Logic Builder</button>
         <button className="navButton" onClick={AnalyticsDashboard}>Analytics Dashboard</button>
         <button className="navButton" onClick={AdminProfile}>Admin Profile</button>
-        <button className="navButton" onClick={Logout}>Logout</button>
+        <button className="navButton" onClick={handleLogout}>Logout</button>
     </>
   );
 };
