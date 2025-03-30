@@ -2,9 +2,8 @@ from django.db import models
 
 # Create your models here.
 class Questionnaire(models.Model):
-    type = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
     status = models.CharField(max_length=255)
-    # responses = models.IntegerField(default=0)
 
 class Question(models.Model):
     questionnaire = models.ForeignKey(
@@ -14,5 +13,15 @@ class Question(models.Model):
     )
     value = models.CharField(max_length=255)
     order = models.IntegerField()
-    type = models.CharField(max_length=255)
+
+class QuestionAnswer(models.Model):
+    question = models.ForeignKey(
+        'Question', 
+        on_delete=models.CASCADE, 
+        related_name='answers'
+    )
+    value = models.CharField(max_length=255)
+    order = models.IntegerField()
+    input = models.CharField(max_length=255) # multi choice, boolean, free response, etc 
+
 

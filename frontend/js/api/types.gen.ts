@@ -5,6 +5,10 @@ export type Login = {
   password: string;
 };
 
+export type Logout = {
+  readonly detail: string;
+};
+
 export type Message = {
   message: string;
 };
@@ -36,6 +40,24 @@ export type PatchedUser = {
   last_login?: string | null;
 };
 
+export type Question = {
+  value: string;
+  order: number;
+  answers: Array<QuestionAnswer>;
+};
+
+export type QuestionAnswer = {
+  value: string;
+  order: number;
+  input: string;
+};
+
+export type Questionnaire = {
+  name: string;
+  status: string;
+  questions: Array<Question>;
+};
+
 export type User = {
   readonly id: number;
   email: string;
@@ -55,6 +77,18 @@ export type User = {
   readonly modified: string;
   last_login?: string | null;
 };
+
+export type ApiLogoutCreateData = {
+  requestBody?: Logout;
+};
+
+export type ApiLogoutCreateResponse = Logout;
+
+export type QuestionnaireApiQuestionnairesCreateData = {
+  requestBody: Questionnaire;
+};
+
+export type QuestionnaireApiQuestionnairesCreateResponse = Questionnaire;
 
 export type RestRestCheckRetrieveResponse = Message;
 
@@ -124,6 +158,22 @@ export type UsersLoginCreateResponse = Login;
 export type UsersLogoutCreateResponse = unknown;
 
 export type $OpenApiTs = {
+  "/api/api/logout/": {
+    post: {
+      req: ApiLogoutCreateData;
+      res: {
+        200: Logout;
+      };
+    };
+  };
+  "/api/questionnaire/api/questionnaires/": {
+    post: {
+      req: QuestionnaireApiQuestionnairesCreateData;
+      res: {
+        201: Questionnaire;
+      };
+    };
+  };
   "/api/rest/rest-check/": {
     get: {
       res: {
