@@ -1,5 +1,6 @@
 import { useEffect, FC, Dispatch, SetStateAction } from "react";
 import { Questionnaire, Question } from "./QuestionnaireBuilder"
+import { QuestionnaireService } from "../../../api";
 
 interface QuestionnaireStates {
     questionnaires:             Questionnaire[];        setQuestionnaires:          Dispatch<SetStateAction<Questionnaire[]>>;
@@ -34,18 +35,19 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
 
     // Finalize and create the questionnaire
     const createQuestionnaire = () => {
-        if (currentQuestionnaire.questions.length < 8 || currentQuestionnaire.name == "") {
-            alert("You must have at least 8 questions and name the questionnaire!");
-            return;
-        }
-
-        alert("Questionnaire Created Successfully!");
-        setQuestionnaires([ ...questionnaires, currentQuestionnaire ]);
-        setQuestionnaireWorkshop("");
-        clearForms();
-        // SEND API CALL TO ADD A NEW QUESTIONNAIRE TO DB
-    }
-
+      
+        QuestionnaireService.questionnaireApiQuestionnairesCreate({ requestBody: currentQuestionnaire })
+          .then((response) => {
+            alert("Questionnaire Created Successfully!");
+            setQuestionnaires([...questionnaires, response]);
+            setQuestionnaireWorkshop("");
+            clearForms();
+          })
+          .catch((error) => {
+            console.error("Error creating questionnaire:", error);
+            alert("failure");
+          });
+      };
     // Finalize and create the questionnaire
     const modifyQuestionnaire = () => {
         if (currentQuestionnaire.questions.length < 8 || currentQuestionnaire.name == "") {
