@@ -155,8 +155,6 @@ export type UsersLoginCreateData = {
 
 export type UsersLoginCreateResponse = Login;
 
-export type UsersLogoutCreateResponse = unknown;
-
 export type $OpenApiTs = {
   "/api/api/logout/": {
     post: {
@@ -229,16 +227,6 @@ export type $OpenApiTs = {
       req: UsersLoginCreateData;
       res: {
         200: Login;
-      };
-    };
-  };
-  "/api/users/logout/": {
-    post: {
-      res: {
-        /**
-         * No response body
-         */
-        200: unknown;
       };
     };
   };

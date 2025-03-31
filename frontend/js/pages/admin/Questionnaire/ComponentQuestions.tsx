@@ -52,10 +52,10 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                     <>
                         <button style={{width: "300px"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, ""] })}>Add Answer</button>
                         {questionForms.answers.map((answer, index) =>(
-                        <div style={{display: "flex", flexDirection:"row"}} key={index}>
-                            <input onChange={(e) => updateAnswer(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index]} />
-                            <button onClick={async () => removeAnswerField(index)}>X</button>
-                        </div>
+                            <div style={{display: "flex", flexDirection:"row"}} key={index}>
+                                <input onChange={(e) => updateAnswer(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index]} />
+                                <button onClick={async () => removeAnswerField(index)}>X</button>
+                            </div>
                         ))}
                     </>
                     )

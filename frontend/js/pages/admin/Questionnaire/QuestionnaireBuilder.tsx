@@ -212,7 +212,7 @@ const QuestionnaireBuilder: React.FC = () => {
       </>
       ) : (
         <>
-        <h1>Questionnaire Preview</h1>
+        <h3>Questionnaire Preview</h3>
 
         <hr/>
         <ComponentPreview 

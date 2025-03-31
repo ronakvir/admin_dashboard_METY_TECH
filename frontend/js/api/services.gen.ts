@@ -23,7 +23,6 @@ import type {
   UsersDestroyResponse,
   UsersLoginCreateData,
   UsersLoginCreateResponse,
-  UsersLogoutCreateResponse,
 } from "./types.gen";
 
 export class ApiService {
@@ -209,17 +208,6 @@ export class UsersService {
       url: "/api/users/login/",
       body: data.requestBody,
       mediaType: "application/json",
-    });
-  }
-
-  /**
-   * @returns unknown No response body
-   * @throws ApiError
-   */
-  public static usersLogoutCreate(): CancelablePromise<UsersLogoutCreateResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/users/logout/",
     });
   }
 }
