@@ -8,7 +8,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import QuestionnaireBuilder from "./pages/admin/Questionnaire/QuestionnaireBuilder";
 import LogicBuilder from "./pages/admin/LogicBuilder";
-import VideoLibrary from "./pages/admin/VideoLibrary";
+import VideoLibrary from "./pages/admin/VideoManagement/VideoLibrary";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import AdminProfile from "./pages/admin/AdminProfile";
 

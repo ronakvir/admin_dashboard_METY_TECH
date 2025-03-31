@@ -70,15 +70,15 @@ const ComponentList: FC<QuestionnaireStates> = ({
                     //if (count >= 5) return;
                     //count++;
                     return (
-                        <div style={{display: "flex", justifyContent: "left", flexDirection: "row", width: "fit-content", height: "35px", backgroundColor: "lightgrey", margin: "5px"}}>
-                            <p style={{display: "flex", justifyContent: "left",width: "250px", margin: "5px"}}>{questionnaire.name}</p>
-                            <p style={{display: "flex", justifyContent: "left", width: "140px", margin: "5px"}}>{questionnaire.questions.length} questions</p>
-                            <p style={{display: "flex", justifyContent: "left", width: "140px", margin: "5px"}}>{questionnaire.status}</p>
-                            <p style={{display: "flex", justifyContent: "left", width: "140px", margin: "5px"}}>{questionnaire.responses} responses</p>
-                            <button onClick={ () => editQuestionnaire(questionnaire) }>
+                        <div style={{display: "flex", justifyContent: "left", flexDirection: "row", width: "fit-content", height: "35px", backgroundColor: "lightgrey", margin: "5px", borderRadius: "10px", padding:"5px"}}>
+                            <p style={{display: "flex", justifyContent: "left",width: "250px"}}>{questionnaire.name}</p>
+                            <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.questions.length} questions</p>
+                            <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.status}</p>
+                            <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.responses} responses</p>
+                            <button style={{borderRadius: "10px", justifyContent: "left"}} onClick={ () => editQuestionnaire(questionnaire) }>
                                 Edit
                             </button>
-                            <button onClick={ () => previewQuestionnaireButton(questionnaire)} >
+                            <button style={{borderRadius: "10px", justifyContent: "left"}} onClick={ () => previewQuestionnaireButton(questionnaire)} >
                                 Preview
                             </button>
                         </div>

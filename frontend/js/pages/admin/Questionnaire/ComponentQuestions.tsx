@@ -1,7 +1,7 @@
 import { useEffect, FC, Dispatch, SetStateAction } from "react";
 import { Questionnaire, Question } from "./QuestionnaireBuilder"
 
-
+// Interface for the parent's states
 interface QuestionnaireStates {
     questionnaires:             Questionnaire[];        setQuestionnaires:          Dispatch<SetStateAction<Questionnaire[]>>;
     questions:                  Map<string, Question>;  setQuestions:               Dispatch<SetStateAction<Map<string, Question>>>;
@@ -14,6 +14,7 @@ interface QuestionnaireStates {
     questionIsSelected:         boolean;                setQuestionIsSelected:      Dispatch<SetStateAction<boolean>>;
 }
 
+// Global variable to declare only on load. this keeps track of each types question count
 let questionCount = [0, 0, 0, 0];
 
 const ComponentQuestions: FC<QuestionnaireStates> = ({ 
@@ -35,37 +36,80 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
         if (questionType === "") return <></>;
 
         return (
+
         <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
+
             <div style={{display: "flex", flexDirection: "column", gap: "5px", justifyContent: "left"}}>
-            <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
-                <h4 style={{display: "flex", justifyContent: "left"}}>Add {questionType} Question</h4>
-                <button style={{display: "inline", maxWidth: "100"}} onClick={() => setQuestionType("")}>Cancel</button>
-            </div>
-            <input onChange={(value) => setQuestionForms({ ...questionForms, [value.target.name]: value.target.value })} name="question" style={{display: "inline", width: "530px"}} type="text" placeholder="Question" value={questionForms.question} />
-            
-            {// This checks if the button clicked was a checkbox  or multichoice type question card.
-                (questionType === "checkbox" || questionType === "multichoice") && (
-                <>
-                    <button style={{width: "300px"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, ""] })}>Add Answer</button>
-                    {questionForms.answers.map((answer, index) =>(
-                    <div style={{display: "flex", flexDirection:"row"}} key={index}>
-                        <input onChange={(e) => updateAnswer(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index]} />
-                        <button onClick={async () => removeAnswerField(index)}>X</button>
-                    </div>
-                    ))}
-                </>
-                )
-            }
-            {questionIsSelected ? 
-                <>
-                    <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => modifyQuestion()}>Modify Question</button>
-                    <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => deleteQuestion()}>Delete Question</button>
-                </> :
-                <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => addQuestion()}>Add Question</button>
-            }
-            
+                {/* This is the "Add Question" form field section */}
+                <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
+                    <h4 style={{display: "flex", justifyContent: "left"}}>Add {questionType} Question</h4>
+                    <button style={{display: "inline", maxWidth: "100"}} onClick={() => setQuestionType("")}>Cancel</button>
+                </div>
+                <input onChange={(value) => setQuestionForms({ ...questionForms, [value.target.name]: value.target.value })} name="question" style={{display: "inline", width: "200px"}} type="text" placeholder="Question" value={questionForms.question} />
+                
+                { // This checks if the button clicked was a checkbox or multichoice type question card and displays the fields accordingly
+                    (questionType === "checkbox" || questionType === "multichoice") && (
+                    <>
+                        <button style={{width: "300px"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, ""] })}>Add Answer</button>
+                        {questionForms.answers.map((answer, index) =>(
+                            <div style={{display: "flex", flexDirection:"row"}} key={index}>
+                                <input onChange={(e) => updateAnswer(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index]} />
+                                <button onClick={async () => removeAnswerField(index)}>X</button>
+                            </div>
+                        ))}
+                    </>
+                    )
+                }
+                {/* This builds the question viewer with the items you can select */}
+                {questionIsSelected ? 
+                    <>
+                        <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => modifyQuestion()}>Modify Question</button>
+                        <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => deleteQuestion()}>Delete Question</button>
+                    </> :
+                    <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => addQuestion()}>Add Question</button>
+                }
+                
             </div>
 
+            {/* This is the question preview box */}
+            <div style={{display: "grid", flexWrap: "nowrap", gridTemplateColumns: "repeat(1, minmax(160px, 1fr))", gap: "10px"}}>
+                <div style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
+                    <h5>{questionForms.question}</h5>
+                    { (() => {
+                        let type = questionForms.type;
+                        if (type === "slider") {
+                            return <input type="range" style={{width: "100%", padding: "20px", }} onChange={() => ""}/>;
+                        }
+                        else if (type === "text") {
+                            return <input style={{height: "auto", width: "100%", padding: "5px 10px", }}></input>;
+                        }
+                        else {
+                            return questionForms.answers.map((answer, index) => {
+                                if (type === "multichoice") {
+                                    return (
+                                        <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
+                                            <input type="radio" name={questionForms.question} value={answer} />
+                                            <label htmlFor={questionForms.question}>{answer}</label>
+                                        </div>
+                                    )
+                                
+                                }
+                                else if (type === "checkbox") {
+                                    return (
+                                        <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
+                                            <input type="checkbox" name={questionForms.question} value={answer} />
+                                            <label htmlFor={questionForms.question}>{answer}</label>
+                                        </div>
+                                    )
+                                
+                                }
+                            })
+                        }
+                    })()}
+                </div>
+            </div>
+
+            {/* This builds the question viewer with the items you can select */}
             <div style={{height: "250px", width: "300px", gap: "5px", justifyContent: "right", borderStyle: "solid", borderColor:"black"}}>
             <table>
                 <thead>
@@ -90,7 +134,6 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
             </table>
             {questionnaireWorkshop !== "" ? <button onClick={() => addToQuestionnaire()}>Add to Questionnaire</button> : <></>}
             </div>
-
         </div>
         )
     }
@@ -131,9 +174,16 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
         questionForms.id = id;
 
         setQuestions(new Map(questions.set(questionForms.id, questionForms)));
-        clearForms();
+        if (questionnaireWorkshop === "") {
+            clearForms();
+        } else {
+            setQuestionIsSelected(false);
+            setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+        }
+        
     }
 
+    // modify Question Button Action
     const modifyQuestion = () => {
         if (questionForms.question.trim() == "") {
             alert("You must enter a question first!");
@@ -144,15 +194,26 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
         updatedQuestions.set(questionForms.id, questionForms);
 
         setQuestions(updatedQuestions);
-        clearForms();
+        if (questionnaireWorkshop === "") {
+            clearForms();
+        } else {
+            setQuestionIsSelected(false);
+            setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+        }
     }
 
+    // Delete Question Button Action
     const deleteQuestion = () => {
         const updatedQuestions = new Map(questions);
         updatedQuestions.delete(questionForms.id);
 
         setQuestions(updatedQuestions);
-        clearForms();
+        if (questionnaireWorkshop === "") {
+            clearForms();
+        } else {
+            setQuestionIsSelected(false);
+            setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+        }
     }
 
     // Add the selected question to the current Questionnaire
@@ -160,7 +221,8 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
         if (!questionIsSelected) return;
     
         setCurrentQuestionnaire({ ...currentQuestionnaire, questions: [ ...currentQuestionnaire.questions, questionForms.id ] });
-        clearForms()
+        setQuestionIsSelected(false);
+        setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
     }
     
     function clearForms() {
@@ -169,6 +231,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
         setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
     }
 
+    // Checks how many questionnaires each question type has been used in
     useEffect(() => {
         questionCount = [0, 0, 0, 0];
         questionnaires.forEach( (questionnaire) => {
@@ -182,7 +245,6 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
     });
 
     // Question Section - These are the Question Type Cards
-
     return (
       <div style={{display: "flex", flexDirection: "column"}}>
         <h4 style={{display: "flex", justifyContent: "left"}}>Question Types</h4>
