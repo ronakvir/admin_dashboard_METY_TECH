@@ -103,7 +103,7 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
 
     const addVideoButton = () => {
         setVideoList([]);
-        setSelectedVideo({id: "", title: "", duration: "", categories: [""]});
+        setSelectedVideo({id: 0, title: "", duration: "", categories: [""]});
         setVideoWorkshop("new");
         setSearchFields({title: "", duration: "", category: ""});
     }

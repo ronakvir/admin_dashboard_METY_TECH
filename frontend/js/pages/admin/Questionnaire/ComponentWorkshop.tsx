@@ -35,11 +35,10 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
 
     // Finalize and create the questionnaire
     const createQuestionnaire = () => {
-      
         QuestionnaireService.questionnaireApiQuestionnairesCreate({ requestBody: currentQuestionnaire })
           .then((response) => {
             alert("Questionnaire Created Successfully!");
-            setQuestionnaires([...questionnaires, response]);
+            setQuestionnaires([ ...questionnaires, response ]);
             setQuestionnaireWorkshop("");
             clearForms();
           })
