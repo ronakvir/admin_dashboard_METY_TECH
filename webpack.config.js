@@ -18,6 +18,11 @@ module.exports = (env, argv) => {
     filename: "[name]-[chunkhash].js",
   };
 
+
+
+
+
+
   return {
     mode: isDev ? "development" : "production",
     devtool: "source-map",

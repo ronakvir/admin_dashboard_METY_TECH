@@ -26,29 +26,6 @@ export type Questionnaire = {
 }
 
 
-
-
-// This is acting like an API call response for the list of questions in the database
-let questionTypesAPIResponse = [
-  {
-    name: "Multiple Choice", 
-    value: "multichoice",
-    usedInCount: "5"
-  }, {
-    name: "Checkbox",
-    value: "checkbox",
-    usedInCount: "10"
-  }, {
-    name: "Slider Scale", 
-    value: "slider",
-    usedInCount: "1"
-  }, {
-    name: "Text Input", 
-    value: "text",
-    usedInCount: "2"
-  }
-];
-
 // This is acting like an API call response for the list of questions in the database
 let questionAPIResponse = new Map([
   ["000001", { id: "000001", type: "multichoice", question: "Favorite color?", answers: ["Red", "Blue", "Green", "Yellow"] }],
