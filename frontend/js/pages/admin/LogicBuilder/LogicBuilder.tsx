@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { answer_categoryMappingTable, answerTable, categoryTable, question_questionnaireTable, questionnaireTable, questionTable } from "./database";
+import { LargeNumberLike } from "crypto";
 
-export type VideoData = {
+type QuestionCategory = {
   id: number;
-  title: string;
-  duration: string;
-  
+  question: string;
+  answers: {
+    id: number;
+    value: string;
+    categories: {
+        id: number;
+        value: string;
+      } [];
+    } [];
 }
 
 
@@ -13,8 +20,8 @@ export type VideoData = {
 const LogicBuilder: React.FC = () => {
   const [ questionnaireList, setQuestionnaireList ] = useState([{id: 0, name: "" }]);
   const [ categoryList, setCategoryList ] = useState([{ id: 0, category: "" }]);
-  const [ questionList, setQuestionList ] = useState([{ id: 0, question: { id: 0, value: "" }, answers: [{ id: 0, value: "", categories: [{ id: 0, value: "" }] }] }]);
-  const [ selectedLink, setSelectedLink ] = useState({ id: 0, question: { id: 0, value: "" }, answer: { id: 0, value: "", categories: [{ id: 0, value: "" }] } });
+  const [ questionList, setQuestionList ] = useState<QuestionCategory[]>([{ id: 0, question: "", answers: [{ id: 0, value: "", categories: [{ id: 0, value: "" }] }] }]);
+  const [ selectedLink, setSelectedLink ] = useState({ id: 0, question: "", answer: { id: 0, value: "", categories: [{ id: 0, value: "" }] } });
   
 
   const [ linkWorkshop, setLinkWorkshop ] = useState(false);
@@ -51,11 +58,14 @@ const LogicBuilder: React.FC = () => {
   }
 
   const selectQuestionnaire = async (questionnaireID: number) => {
+    setSelectedLink({ id: 0, question: "", answer: { id: 0, value: "", categories: [{ id: 0, value: "" }] } });
+    setLinkWorkshop(false);
     if (questionnaireID === 0 ){
-      await setSelectedQuestionnaire({id: 0, name: "" })
+      setSelectedQuestionnaire({id: 0, name: "" })
       clearStates();
       return;
     }
+    
 
     questionnaireList.some((questionnaire) => {
       if (questionnaireID === questionnaire.id) setSelectedQuestionnaire(questionnaire);
@@ -64,7 +74,7 @@ const LogicBuilder: React.FC = () => {
     const tempCategoryList = [{ id: 0, category: "" }]
     tempCategoryList.splice(0, tempCategoryList.length);
 
-    const tempQuestionList = [{ id: 0, question: { id: 0, value: "" }, answers: [{ id: 0, value: "", categories: [{ id: 0, value: "" }] }] }];
+    const tempQuestionList = [{ id: 0, question: "", answers: [{ id: 0, value: "", categories: [{ id: 0, value: "" }] }] }];
     tempQuestionList.splice(0, tempQuestionList.length);
 
     
@@ -84,16 +94,15 @@ const LogicBuilder: React.FC = () => {
     // 2. On each question, we need to fetch every answer associated with it. this will be put in an array of it id, value, and categories linked to it.
     // 3. IMPORTANT: the categories mentioned above should be linked to both the answer id and the questionnaire we are working with. 
     question_questionnaireTable.forEach((relation, relationKey) => {
-      const tempQuestion = { id: 0, question: { id: 0, value: "" }, answers: [{ id: 0, value: "", categories: [{ id: 0, value: "" }] }] };
+      const tempQuestion = { id: 0, question: "", answers: [{ id: 0, value: "", categories: [{ id: 0, value: "" }] }] };
       tempQuestion.answers.splice(0, tempQuestion.answers.length); // reset answers
       // Find the questionID
       if (questionnaireID === relation.questionnaireID) {
-        console.log("TEST")
         const questionID = relation.questionID;
 
         
-        tempQuestion.question.id = questionID;
-        tempQuestion.question.value = questionTable.get(questionID)?.question as string;
+        tempQuestion.id = questionID;
+        tempQuestion.question = questionTable.get(questionID)?.question as string;
 
         answerTable.forEach((answer, answerID) => {
           if (questionID === answer.questionID) {
@@ -104,8 +113,7 @@ const LogicBuilder: React.FC = () => {
             answer_categoryMappingTable.forEach((mapping, mappingKey) => {
               if (answerID === mapping.answerID && questionnaireID === mapping.questionnaireID) {
                 if (categoryTable.has(mapping.categoryID)){
-                  tempAnswer.categories.push({id: mapping.categoryID, value: categoryTable.get(mapping.categoryID)?.category });
-                  tempQuestion.id = mappingKey;
+                  tempAnswer.categories.push({id: mapping.categoryID, value: categoryTable.get(mapping.categoryID)?.category as string });
                 }
               }
             })
@@ -120,11 +128,63 @@ const LogicBuilder: React.FC = () => {
   }
 
 
-  const clickEditLinkButton = (question, linkID, answer) => {
-    const modifiedQuestion = { id: linkID, question: { id: question.question.id, value: question.question.value }, answer: answer }
+  const clickEditLinkButton = (question: QuestionCategory, answer: { id: number; value: string; categories: { id: number; value: string; }[]; }) => {
+    const modifiedQuestion = { id: question.id, question: question.question, answer: answer }
     setSelectedLink(modifiedQuestion); 
     setLinkWorkshop(true);
     console.log(JSON.stringify(answer));
+  }
+
+  const deleteLinks = (answerID: number) => {
+    if (!confirm("Are you sure you would like to delete the links to this response?")) return;
+    // DO API CALL HERE
+
+    // TEMP CODE
+    const tempMappingDatabase = answer_categoryMappingTable;
+    tempMappingDatabase.forEach(( mapping, key ) => {
+      if ( selectedQuestionnaire.id === mapping.questionnaireID && answerID === mapping.answerID) {
+        answer_categoryMappingTable.delete(key);
+      }
+    })
+
+    const tempQuestionList = [ ...questionList ];
+    questionList.forEach((question, questionIndex) => {
+      question.answers.some((answer, answerindex) => {
+        if (answerID === answer.id) {
+          tempQuestionList[questionIndex].answers[answerindex].categories = [];
+        }
+      })
+    })
+    // END TEMP CODE
+    setQuestionList(tempQuestionList);
+  }
+
+  const addLink = (answerID: number) => {
+
+    // DO API CALL HERE
+
+    // TEMP CODE
+
+    let element = document.getElementById("categories") as HTMLSelectElement;
+    let categoryID = parseInt(element.value);
+
+       
+    
+    
+    let newKey = Array.from(answer_categoryMappingTable.keys()).pop() as number;
+    newKey++;
+    answer_categoryMappingTable.set(newKey, { questionnaireID: selectedQuestionnaire.id, answerID: answerID, categoryID: categoryID, inclusive: true});
+    console.log(newKey);
+    const tempQuestionList = [ ...questionList ];
+    questionList.forEach((question, questionIndex) => {
+      question.answers.some((answer, answerindex) => {
+        if (answerID === answer.id) {
+          tempQuestionList[questionIndex].answers[answerindex].categories.push({id: categoryID, value: categoryTable.get(categoryID)?.category as string });
+        }
+      })
+    })
+    // END TEMP CODE
+    setQuestionList(tempQuestionList);
   }
 
   return (
@@ -158,7 +218,7 @@ const LogicBuilder: React.FC = () => {
               {questionList.map((question, mappingIndex) => {
                 return(
                   <tr key={mappingIndex} style={{border: "1px solid"}}>
-                    <td>{question.question.value}</td>
+                    <td>{question.question}</td>
                     <td>
                       <div style={{display: "flex", flexDirection: "column"}}>   
                         {question.answers.map((answer, answerIndex) => {
@@ -189,8 +249,8 @@ const LogicBuilder: React.FC = () => {
                             return (
                               <>     
                                 <div style={{display: "flex", flexDirection: "row", height:"23px"}}> 
-                                  <button onClick={() => clickEditLinkButton(question, mappingIndex, answer)}>E</button>
-                                  <button onClick={() => answer_categoryMappingTable.delete(mappingIndex)}>X</button>
+                                  <button onClick={() => clickEditLinkButton(question, answer)}>E</button>
+                                  <button onClick={() => deleteLinks(answer.id)}>X</button>
                                 </div>
                               </>   
                             ) 
@@ -208,12 +268,8 @@ const LogicBuilder: React.FC = () => {
         {linkWorkshop && (
           <div>
             <h4>Rule Configuration</h4>
-
-            <h6>Question: {selectedLink?.question?.value}</h6>
-
+            <h6>Question: {selectedLink?.question}</h6>
             <h6>Response: {selectedLink?.answer?.value}</h6>
-
-
             <h4>Linked Categories</h4>
 
             {selectedLink?.answer?.categories.map((category, index) => {
@@ -221,13 +277,13 @@ const LogicBuilder: React.FC = () => {
                 <h6>{category.value}</h6>
               )
             })}
-            <select>
+            <select id="categories">
               {categoryList.map((category) => {
                 if (selectedLink?.answer?.categories.some((categoryCheck) => category.id === categoryCheck.id)) return;
-                return(<option value={category.category}>{category.category}</option>)
+                return(<option value={category.id}>{category.category}</option>)
               })}
             </select>
-            <button>Link another category</button>
+            <button onClick={() => addLink(selectedLink?.answer?.id)}>Link Category</button>
             <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/>
           </div>
         )}

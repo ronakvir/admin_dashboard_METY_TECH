@@ -58,30 +58,17 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
         const cancelButton = () => {
             
             setVideoWorkshop("");
-            setSelectedVideo({id: "", title: "", duration: "", categories: [""]});
+            setSelectedVideo({id: 0, title: "", duration: "", categories: [""]});
         }
 
         const addVideoButton = () => {
-             // do input validation
-             const file = document.getElementById("fileInput");
-             if (file?.isDefaultNamespace.length === 0) {
-                 alert("You must choose a file to upload!");
-                 return;
-             }
-             if (selectedVideo.duration === "") {
-                 alert("You must enter a duration!");
-                 return;
-             }
-             if (selectedVideo.title === "") {
-                 alert("You must enter a title!");
-                 return;
-             }
-             for (let i = 0; i < selectedVideo.categories.length; i++) {
-                 if (selectedVideo.categories[i] === "") {
-                     alert("You must remove empty category fields!");
-                     return;
-                 }
-             }
+            const file = document.getElementById("fileInput");
+
+            // do input validation
+            if (file?.isDefaultNamespace.length === 0) {alert("You must choose a file to upload!"); return;}
+            if (selectedVideo.duration === "") {alert("You must enter a duration!"); return; }
+            if (selectedVideo.title === "") {alert("You must enter a title!");return;}
+            for (let i = 0; i < selectedVideo.categories.length; i++) {if (selectedVideo.categories[i] === "") {alert("You must remove empty category fields!"); return;}}
 
             // ADD API STUFF HERE. 
             // WE NEED TO FIGURE OUT HOW TO XFER THE FILE OVER THE API CALL 
@@ -89,17 +76,16 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
             
             // START TEST CODE
             // This calculates the new index
-            let indexString = videoDatabase[videoDatabase.length-1].id;
-            const index = parseInt(indexString, 10) + 1;
-            indexString = index.toString().padStart(6, "0");
+            let index = videoDatabase[videoDatabase.length-1].id + 1;
+
 
             const tempSelectedVideo = selectedVideo;
-            tempSelectedVideo.id = indexString;
+            tempSelectedVideo.id = index;
             videoDatabase.push(tempSelectedVideo);
             // END TEST CODE
 
             setVideoWorkshop("");
-            setSelectedVideo({id: "", title: "", duration: "", categories: [""]});
+            setSelectedVideo({id: 0, title: "", duration: "", categories: [""]});
         }
 
         const modifyVideoButton = () => {
@@ -139,7 +125,7 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
             // END TEST CODE
 
             setVideoWorkshop("");
-            setSelectedVideo({id: "", title: "", duration: "", categories: [""]});
+            setSelectedVideo({id: 0, title: "", duration: "", categories: [""]});
         }
 
         return(
