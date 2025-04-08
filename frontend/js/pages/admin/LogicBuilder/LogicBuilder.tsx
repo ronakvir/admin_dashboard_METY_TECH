@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { answer_categoryMappingTable, answerTable, categoryTable, question_questionnaireTable, questionnaireTable, questionTable } from "./database";
-import { LargeNumberLike } from "crypto";
 
+
+// This whole file can probably be split into 2 or 3 separate components.
+
+// Main Datastructure we need to fetch from the database.
 type QuestionCategory = {
   id: number;
   question: string;
@@ -22,7 +25,6 @@ const LogicBuilder: React.FC = () => {
   const [ categoryList, setCategoryList ] = useState([{ id: 0, category: "" }]);
   const [ questionList, setQuestionList ] = useState<QuestionCategory[]>([{ id: 0, question: "", answers: [{ id: 0, value: "", categories: [{ id: 0, value: "" }] }] }]);
   const [ selectedLink, setSelectedLink ] = useState({ id: 0, question: "", answer: { id: 0, value: "", categories: [{ id: 0, value: "" }] } });
-  
 
   const [ linkWorkshop, setLinkWorkshop ] = useState(false);
   const [ selectedQuestionnaire, setSelectedQuestionnaire ] = useState({id: 0, name: "" });
@@ -57,7 +59,9 @@ const LogicBuilder: React.FC = () => {
     setQuestionList([]);
   }
 
+  // Happens when a questionnaire is selected from the dropdown menu
   const selectQuestionnaire = async (questionnaireID: number) => {
+    // Reset states
     setSelectedLink({ id: 0, question: "", answer: { id: 0, value: "", categories: [{ id: 0, value: "" }] } });
     setLinkWorkshop(false);
     if (questionnaireID === 0 ){
@@ -66,11 +70,12 @@ const LogicBuilder: React.FC = () => {
       return;
     }
     
-
+    // Se the selected questionnaire from the list of questionnaires that match the given ID
     questionnaireList.some((questionnaire) => {
       if (questionnaireID === questionnaire.id) setSelectedQuestionnaire(questionnaire);
     })
     
+    // Initialize and clear temp objects
     const tempCategoryList = [{ id: 0, category: "" }]
     tempCategoryList.splice(0, tempCategoryList.length);
 
@@ -83,6 +88,7 @@ const LogicBuilder: React.FC = () => {
     // API CALLS GO HERE:
     // API CALLS END HERE
     
+
     // TEMP CODE UNTIL BACKEND COMPLETE:
 
     // Populate the category state. We need to fetch all categories from the database
@@ -93,14 +99,15 @@ const LogicBuilder: React.FC = () => {
     // 1. We need to find all questions associated with the selected questionnaire, fetch it's id and value.
     // 2. On each question, we need to fetch every answer associated with it. this will be put in an array of it id, value, and categories linked to it.
     // 3. IMPORTANT: the categories mentioned above should be linked to both the answer id and the questionnaire we are working with. 
+    // Ultimately We need a resulting data structure from the database that has the information of the Type: QuestionCategory defined in this file - tempQuestions has the same structure below.
     question_questionnaireTable.forEach((relation, relationKey) => {
       const tempQuestion = { id: 0, question: "", answers: [{ id: 0, value: "", categories: [{ id: 0, value: "" }] }] };
       tempQuestion.answers.splice(0, tempQuestion.answers.length); // reset answers
-      // Find the questionID
+      // Find the questionID from the question_questionnaire table based on the given questionaireID
       if (questionnaireID === relation.questionnaireID) {
         const questionID = relation.questionID;
 
-        
+        // Set temp object values
         tempQuestion.id = questionID;
         tempQuestion.question = questionTable.get(questionID)?.question as string;
 
@@ -127,7 +134,7 @@ const LogicBuilder: React.FC = () => {
     // END TEMP CODE
   }
 
-
+  // Opens the edit links component
   const clickEditLinkButton = (question: QuestionCategory, answer: { id: number; value: string; categories: { id: number; value: string; }[]; }) => {
     const modifiedQuestion = { id: question.id, question: question.question, answer: answer }
     setSelectedLink(modifiedQuestion); 
@@ -135,6 +142,7 @@ const LogicBuilder: React.FC = () => {
     console.log(JSON.stringify(answer));
   }
 
+  // Delete matching link from the database, update frontend with results.
   const deleteLinks = (answerID: number) => {
     if (!confirm("Are you sure you would like to delete the links to this response?")) return;
     // DO API CALL HERE
@@ -159,6 +167,7 @@ const LogicBuilder: React.FC = () => {
     setQuestionList(tempQuestionList);
   }
 
+  // Add new link to database, update frontend with results.
   const addLink = (answerID: number) => {
 
     // DO API CALL HERE
@@ -168,9 +177,6 @@ const LogicBuilder: React.FC = () => {
     let element = document.getElementById("categories") as HTMLSelectElement;
     let categoryID = parseInt(element.value);
 
-       
-    
-    
     let newKey = Array.from(answer_categoryMappingTable.keys()).pop() as number;
     newKey++;
     answer_categoryMappingTable.set(newKey, { questionnaireID: selectedQuestionnaire.id, answerID: answerID, categoryID: categoryID, inclusive: true});
@@ -184,8 +190,10 @@ const LogicBuilder: React.FC = () => {
       })
     })
     // END TEMP CODE
+
     setQuestionList(tempQuestionList);
   }
+
 
   return (
     <>
