@@ -1,19 +1,9 @@
 import { useEffect, FC, Dispatch, SetStateAction } from "react";
-import { Questionnaire, Question } from "./QuestionnaireBuilder"
+import { Questionnaire, Question, QuestionnaireStates } from "./QuestionnaireBuilder"
 import { QuestionnaireService } from "../../../api";
+import { question_questionnaireTable, question_questionnaireTableIndex, questionnaireTable, questionnaireTableIndex } from "../../database";
 
-interface QuestionnaireStates {
-    questionnaires:             Questionnaire[];        setQuestionnaires:          Dispatch<SetStateAction<Questionnaire[]>>;
-    questions:                  Map<string, Question>;  setQuestions:               Dispatch<SetStateAction<Map<string, Question>>>;
-    questionnaireVisibility:    string;                 setQuestionnaireVisibility: Dispatch<SetStateAction<string>>;
-    questionnaireList:          Questionnaire[];        setQuestionnaireList:       Dispatch<SetStateAction<Questionnaire[]>>;
-    questionType:               string;                 setQuestionType:            Dispatch<SetStateAction<string>>; 
-    questionForms:              Question;               setQuestionForms:           Dispatch<SetStateAction<Question>>;
-    questionnaireWorkshop:      string;                 setQuestionnaireWorkshop:   Dispatch<SetStateAction<string>>;
-    currentQuestionnaire:       Questionnaire;          setCurrentQuestionnaire:    Dispatch<SetStateAction<Questionnaire>>;
-    questionIsSelected:         boolean;                setQuestionIsSelected:      Dispatch<SetStateAction<boolean>>;
-}
-  
+
 const ComponentWorkshop: FC<QuestionnaireStates> = ({ 
     questionnaires,             setQuestionnaires,
     questions,                  setQuestions,
@@ -23,9 +13,11 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
     questionForms,              setQuestionForms,
     questionnaireWorkshop,      setQuestionnaireWorkshop,
     currentQuestionnaire,       setCurrentQuestionnaire, 
-    questionIsSelected,         setQuestionIsSelected}) => {
+    questionIsSelected,         setQuestionIsSelected,
+    previewQuestionnaire,       setPreviewQuestionnaire}) => {
   
-  
+    let questionnaireTableIndexLocal = questionnaireTableIndex;
+    let question_questionnaireTableIndexLocal = question_questionnaireTableIndex;
     // Remove a question from the current Questionnaire
     const removeFromQuestionnaire = (index: number) => {
         const updatedQuestions = [ ...currentQuestionnaire.questions ];
@@ -35,24 +27,56 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
 
     // Finalize and create the questionnaire
     const createQuestionnaire = () => {
+        //if (currentQuestionnaire.questions.length < 8) {alert("Must attach at least 8 questions!"); return;}
+        
+            /*
         QuestionnaireService.questionnaireApiQuestionnairesCreate({ requestBody: currentQuestionnaire })
-          .then((response) => {
-            alert("Questionnaire Created Successfully!");
-            setQuestionnaires([ ...questionnaires, response ]);
-            setQuestionnaireWorkshop("");
-            clearForms();
-          })
-          .catch((error) => {
-            console.error("Error creating questionnaire:", error);
-            alert("failure");
-          });
-      };
+            .then((response) => {
+                alert("Questionnaire Created Successfully!");
+                setQuestionnaires([ ...questionnaires, response ]);
+                setQuestionnaireWorkshop("");
+                clearForms();
+            })
+            .catch((error) => {
+                console.error("Error creating questionnaire:", error);
+                alert("failure");
+            });
+            */
+
+        // TEST CODE:
+        const newID = questionnaireTableIndexLocal++;
+        currentQuestionnaire.lastModified = new Date().toISOString();
+        
+        questionnaireTable.set(newID, {
+            name: currentQuestionnaire.name,
+            status: currentQuestionnaire.status,
+            started: currentQuestionnaire.started,
+            completed: currentQuestionnaire.completed,
+            lastModified: currentQuestionnaire.lastModified
+        });
+        
+        for (const questionID of currentQuestionnaire.questions) {
+            const mapID = question_questionnaireTableIndexLocal++;
+            question_questionnaireTable.set(mapID, { questionnaireID: newID, questionID });
+        }
+
+        currentQuestionnaire.id = questionnaireTableIndexLocal;
+        setQuestionnaires([ ...questionnaires, currentQuestionnaire ]);
+        setQuestionnaireWorkshop("");
+        clearForms();
+
+
+        // END TEST CODE
+    };
+
     // Finalize and create the questionnaire
     const modifyQuestionnaire = () => {
         if (currentQuestionnaire.questions.length < 8 || currentQuestionnaire.name == "") {
             alert("You must have at least 8 questions and name the questionnaire!");
             return;
         }
+        
+        currentQuestionnaire.lastModified = new Date().toISOString();
 
         let index = questionnaires.findIndex(questionnaire => questionnaire.id === currentQuestionnaire.id);
         let updatedQuestionnaires = [ ...questionnaires ];
@@ -73,9 +97,9 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
     }
 
     function clearForms() {
-        setCurrentQuestionnaire({ id: "", name: "", status: "", responses: "", lastModified: "", questions: []});
+        setCurrentQuestionnaire({ id: 0, name: "", status: "", started: 0, completed: 0, lastModified: new Date().toISOString(), questions: []});
         setQuestionIsSelected(false);
-        setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+        setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
     }
     
     // This is the view that lets you create a new questionnaire or modify a current one

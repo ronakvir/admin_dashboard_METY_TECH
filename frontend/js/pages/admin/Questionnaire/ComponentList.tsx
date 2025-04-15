@@ -1,23 +1,17 @@
 import { useEffect, FC, Dispatch, SetStateAction, useState } from "react";
-import { Questionnaire } from "./QuestionnaireBuilder"
+import { Questionnaire, QuestionnaireStates } from "./QuestionnaireBuilder"
 
-interface QuestionnaireStates {
-    questionnaires:             Questionnaire[];    setQuestionnaires:          Dispatch<SetStateAction<Questionnaire[]>>;
-    questionnaireVisibility:    string;             setQuestionnaireVisibility: Dispatch<SetStateAction<string>>;
-    questionnaireList:          Questionnaire[];    setQuestionnaireList:       Dispatch<SetStateAction<Questionnaire[]>>;
-    questionType:               string;             setQuestionType:            Dispatch<SetStateAction<string>>; 
-    questionnaireWorkshop:      string;             setQuestionnaireWorkshop:   Dispatch<SetStateAction<string>>;
-    currentQuestionnaire:       Questionnaire;      setCurrentQuestionnaire:    Dispatch<SetStateAction<Questionnaire>>;
-    previewQuestionnaire:       boolean;            setPreviewQuestionnaire:    Dispatch<SetStateAction<boolean>>; 
-}
 
 const ComponentList: FC<QuestionnaireStates> = ({ 
     questionnaires,             setQuestionnaires,
+    questions,                  setQuestions,
     questionnaireVisibility,    setQuestionnaireVisibility, 
     questionnaireList,          setQuestionnaireList,
     questionType,               setQuestionType,
+    questionForms,              setQuestionForms,
     questionnaireWorkshop,      setQuestionnaireWorkshop,
-    currentQuestionnaire,       setCurrentQuestionnaire,
+    currentQuestionnaire,       setCurrentQuestionnaire, 
+    questionIsSelected,         setQuestionIsSelected,
     previewQuestionnaire,       setPreviewQuestionnaire}) => {
 
     const [filter, setFilter] = useState(new RegExp(`.*`));
@@ -35,7 +29,7 @@ const ComponentList: FC<QuestionnaireStates> = ({
 
      // Update the questionnaire form fields when we open the workshop view.
     useEffect(() => {
-        setCurrentQuestionnaire({ id: "", name: "", status: "", responses: "", lastModified: "", questions: []});
+        setCurrentQuestionnaire({ id: 0, name: "", status: "", started: 0, completed: 0, lastModified: new Date().toISOString(), questions: []});
         setQuestionType("multichoice");
     },[questionnaireWorkshop]);
     
@@ -74,7 +68,7 @@ const ComponentList: FC<QuestionnaireStates> = ({
                             <p style={{display: "flex", justifyContent: "left",width: "250px"}}>{questionnaire.name}</p>
                             <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.questions.length} questions</p>
                             <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.status}</p>
-                            <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.responses} responses</p>
+                            <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.completed} responses</p>
                             <button style={{borderRadius: "10px", justifyContent: "left"}} onClick={ () => editQuestionnaire(questionnaire) }>
                                 Edit
                             </button>

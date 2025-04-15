@@ -1,41 +1,42 @@
 
 
 
-
-// videoTable(id: number, title: string, duration: string);
+export let videoTableIndex = 30;
+// videoTable(id: number, title: string, duration: string, description: string);
 export const videoTable = new Map([
-    [1, { title: 'How to Improve Your Public Speaking Skills', duration: '45-60min' }],
-    [2, { title: 'The History of the Internet', duration: '30-45min' }],
-    [3, { title: 'How to Improve Your Public Speaking Skills', duration: '30-45min' }],
-    [4, { title: 'Simple Home Repairs You Can Do Yourself', duration: '30-45min' }],
-    [5, { title: 'The History of the Internet', duration: '45-60min' }],
-    [6, { title: 'Understanding Cryptocurrency', duration: '30-45min' }],
-    [7, { title: 'Yoga for Beginners', duration: '15-30min' }],
-    [8, { title: 'How to Build a Website in 10 Minutes', duration: '45-60min' }],
-    [9, { title: 'Top 10 Movies to Watch in 2025', duration: '<15min' }],
-    [10, { title: 'Learn to Play Guitar in 30 Days', duration: '>60min' }],
-    [11, { title: 'How to Travel on a Budget', duration: '>60min' }],
-    [12, { title: 'The Importance of Mental Health', duration: '<15min' }],
-    [13, { title: 'The Art of Photography', duration: '<15min' }],
-    [14, { title: 'Introduction to Machine Learning', duration: '<15min' }],
-    [15, { title: 'Mastering the Art of Cooking', duration: '30-45min' }],
-    [16, { title: 'Fitness for Busy People', duration: '15-30min' }],
-    [17, { title: 'How to Build a Website in 10 Minutes', duration: '15-30min' }],
-    [18, { title: 'Mastering the Art of Cooking', duration: '15-30min' }],
-    [19, { title: 'Learn to Play Guitar in 30 Days', duration: '>60min' }],
-    [20, { title: 'The Art of Photography', duration: '>60min' }],
-    [21, { title: 'How to Start a Business from Scratch', duration: '>60min' }],
-    [22, { title: "Exploring the Universe: A Beginner's Guide", duration: '30-45min' }],
-    [23, { title: 'Introduction to Machine Learning', duration: '15-30min' }],
-    [24, { title: 'How to Build a Mobile App from Scratch', duration: '<15min' }],
-    [25, { title: "Exploring the Universe: A Beginner's Guide", duration: '30-45min' }],
-    [26, { title: 'Fitness for Busy People', duration: '45-60min' }],
-    [27, { title: 'Eco-Friendly Living Tips', duration: '>60min' }],
-    [28, { title: 'The Best Workouts for Strength Training', duration: '15-30min' }],
-    [29, { title: 'How to Stay Fit While Working from Home', duration: '<15min' }],
-    [30, { title: 'Healthy Meal Prep Ideas', duration: '30-45min' }]
+    [1, { title: 'How to Improve Your Public Speaking Skills', duration: '45-60min', description: '...' }],
+    [2, { title: 'The History of the Internet', duration: '30-45min', description: '...' }],
+    [3, { title: 'How to Improve Your Public Speaking Skills', duration: '30-45min', description: '...' }],
+    [4, { title: 'Simple Home Repairs You Can Do Yourself', duration: '30-45min', description: '...' }],
+    [5, { title: 'The History of the Internet', duration: '45-60min', description: '...' }],
+    [6, { title: 'Understanding Cryptocurrency', duration: '30-45min', description: '...' }],
+    [7, { title: 'Yoga for Beginners', duration: '15-30min', description: '...' }],
+    [8, { title: 'How to Build a Website in 10 Minutes', duration: '45-60min', description: '...' }],
+    [9, { title: 'Top 10 Movies to Watch in 2025', duration: '<15min', description: '...' }],
+    [10, { title: 'Learn to Play Guitar in 30 Days', duration: '>60min', description: '...' }],
+    [11, { title: 'How to Travel on a Budget', duration: '>60min', description: '...' }],
+    [12, { title: 'The Importance of Mental Health', duration: '<15min', description: '...' }],
+    [13, { title: 'The Art of Photography', duration: '<15min', description: '...' }],
+    [14, { title: 'Introduction to Machine Learning', duration: '<15min', description: '...' }],
+    [15, { title: 'Mastering the Art of Cooking', duration: '30-45min', description: '...' }],
+    [16, { title: 'Fitness for Busy People', duration: '15-30min', description: '...' }],
+    [17, { title: 'How to Build a Website in 10 Minutes', duration: '15-30min', description: '...' }],
+    [18, { title: 'Mastering the Art of Cooking', duration: '15-30min', description: '...' }],
+    [19, { title: 'Learn to Play Violin in 30 Days', duration: '>60min', description: '...' }],
+    [20, { title: 'The Art of Photography', duration: '>60min', description: '...' }],
+    [21, { title: 'How to Start a Business from Scratch', duration: '>60min', description: '...' }],
+    [22, { title: "Exploring the Universe: A Beginner's Guide", duration: '30-45min', description: '...' }],
+    [23, { title: 'Introduction to Machine Learning', duration: '15-30min', description: '...' }],
+    [24, { title: 'How to Build a Mobile App from Scratch', duration: '<15min', description: '...' }],
+    [25, { title: "Exploring the Universe: A Beginner's Guide", duration: '30-45min', description: '...' }],
+    [26, { title: 'Fitness for Busy People', duration: '45-60min', description: '...' }],
+    [27, { title: 'Eco-Friendly Living Tips', duration: '>60min', description: '...' }],
+    [28, { title: 'The Best Workouts for Strength Training', duration: '15-30min', description: '...' }],
+    [29, { title: 'How to Stay Fit While Working from Home', duration: '<15min', description: '...' }],
+    [30, { title: 'Healthy Meal Prep Ideas', duration: '30-45min', description: '...' }]
 ]);
 
+export let categoryTableIndex = 10;
 // categoryTable(id: number, category: string);
 export const categoryTable = new Map([
     [1, { category: "Sports" }],
@@ -50,10 +51,11 @@ export const categoryTable = new Map([
     [10, { category: "Health" }]
 ]);
 
+export let videoCategoriesMappingTableIndex = 70;
 // videoCategoriesMappingTable(id: number, videoID: number, categoryID: number);
 export const videoCategoriesMappingTable = new Map([
-    [1, { videoID: 0, categoryID: 1 }],
-    [2, { videoID: 0, categoryID: 2 }],
+    [1, { videoID: 1, categoryID: 1 }],
+    [2, { videoID: 1, categoryID: 2 }],
     [3, { videoID: 2, categoryID: 3 }],
     [4, { videoID: 2, categoryID: 4 }],
     [5, { videoID: 2, categoryID: 5 }],
@@ -123,7 +125,8 @@ export const videoCategoriesMappingTable = new Map([
     [69, { videoID: 30, categoryID: 7 }],
     [70, { videoID: 30, categoryID: 5 }]
 ]);
-  
+
+export let questionTableIndex = 8;
 // questionTable(id: number, type: string, question: string);
 export const questionTable = new Map([
     [1, { type: "multichoice",   question: "Favorite color?" }],
@@ -136,6 +139,7 @@ export const questionTable = new Map([
     [8, { type: "checkbox",     question: "Sports followed?" }],
 ]);
 
+export let answerTableIndex = 36;
 // answerTable(id: number, questionID: number, text: string);
 export const answerTable = new Map([
     [1, { questionID: 1, text: "Red" }],
@@ -183,11 +187,14 @@ export const answerTable = new Map([
     [36, { questionID: 8, text: "Cricket" }],
 ]);
 
+
+export let questionnaireTableIndex = 1;
 // questionnaireTable(id: number, name: string, status: string, started: number, completed: number, lastModified: Date, )
 export const questionnaireTable = new Map([
     [1, { name: "Survey on Preferences",                 status: "Active",   started: 132,   completed: 110,     lastModified: "2025-03-21" }],
 ]);
 
+export let question_questionnaireTableIndex = 8;
 // question_questionnaireTable(id: number, questionID: number, questionnaireID: number);
 export const question_questionnaireTable = new Map([
     [1, { questionID: 1, questionnaireID: 1 }],
@@ -200,6 +207,7 @@ export const question_questionnaireTable = new Map([
     [8, { questionID: 8, questionnaireID: 1 }],
 ]);
 
+export let answer_categoryMappingTableIndex = 11;
 // response_mappingTable(id: number, questionnaireID: number, answerID: number, categoryID: number, inclusive: boolean)
 export const answer_categoryMappingTable = new Map([
     [1, { questionnaireID: 1, answerID: 1, categoryID: 1, inclusive: true  }],
@@ -214,3 +222,5 @@ export const answer_categoryMappingTable = new Map([
     [10, { questionnaireID: 1, answerID: 9, categoryID: 10, inclusive: true  }],
     [11, { questionnaireID: 1, answerID: 10, categoryID: 10, inclusive: true  }],
 ]);
+
+  

@@ -1,21 +1,7 @@
 import { useEffect, FC, Dispatch, SetStateAction, useState } from "react";
-import { Questionnaire, Question } from "./QuestionnaireBuilder"
+import { Questionnaire, Question, QuestionnaireStates } from "./QuestionnaireBuilder"
+import { answer_categoryMappingTable, categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
 
-
-interface QuestionnaireStates {
-    questionnaires:             Questionnaire[];        setQuestionnaires:          Dispatch<SetStateAction<Questionnaire[]>>;
-    questions:                  Map<string, Question>;  setQuestions:               Dispatch<SetStateAction<Map<string, Question>>>;
-    questionnaireVisibility:    string;                 setQuestionnaireVisibility: Dispatch<SetStateAction<string>>;
-    questionnaireList:          Questionnaire[];        setQuestionnaireList:       Dispatch<SetStateAction<Questionnaire[]>>;
-    questionType:               string;                 setQuestionType:            Dispatch<SetStateAction<string>>; 
-    questionForms:              Question;               setQuestionForms:           Dispatch<SetStateAction<Question>>;
-    questionnaireWorkshop:      string;                 setQuestionnaireWorkshop:   Dispatch<SetStateAction<string>>;
-    currentQuestionnaire:       Questionnaire;          setCurrentQuestionnaire:    Dispatch<SetStateAction<Questionnaire>>;
-    questionIsSelected:         boolean;                setQuestionIsSelected:      Dispatch<SetStateAction<boolean>>;
-    previewQuestionnaire:       boolean;                setPreviewQuestionnaire:    Dispatch<SetStateAction<boolean>>; 
-}
-
-let questionCount = [0, 0, 0, 0];
 
 const ComponentPreview: FC<QuestionnaireStates> = ({ 
     questionnaires,             setQuestionnaires,
@@ -31,10 +17,60 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
 
 
     const [tempSliderValue, setTempSliderValue] = useState(50);
+    const [qResponses, setQResponses] = useState<number[]>(new Array(currentQuestionnaire.questions.length));
+    const [matchedVideos, setMatchedVideos] = useState<{id: Number, title: string, duration: string, description: string}[]>([]);
+
     const returnToDashboard = () => {
-        setCurrentQuestionnaire({ id: "", name: "", status: "", responses: "", lastModified: "", questions: []});
+        setCurrentQuestionnaire({ id: 0, name: "", status: "", started: 0, completed: 0, lastModified: new Date().toISOString(), questions: []});
         setPreviewQuestionnaire(false);
     }
+
+    const updateResponses = (answer: {id: number, answer: string}, index: number) => {
+        const tempResponses = [ ...qResponses ]
+        tempResponses[index] = answer.id;
+        setQResponses(tempResponses);
+    }
+
+    const submitAnswers = () => {
+        console.log("TEST");
+        const tempMatched: number[] = [];
+
+        answer_categoryMappingTable.forEach((mapping) => {
+            if (currentQuestionnaire.id !== mapping.questionnaireID) return;
+            qResponses.forEach((responseID) => {
+                if (responseID !== mapping.answerID) return;
+                tempMatched.push(mapping.categoryID);
+            })
+        })
+        const tempVideoIDs: number[] = [];
+        videoCategoriesMappingTable.forEach((mapping) => {
+            tempMatched.forEach((catID) => {
+                if (catID === mapping.categoryID) {
+                    tempVideoIDs.push(mapping.videoID);
+                }
+            })
+        })
+
+
+        // Creating an array with unique values, ordered by most appearing value.
+        const freqMap = new Map<number, number>();
+        tempVideoIDs.forEach(num => {
+            freqMap.set(num, (freqMap.get(num) || 0) + 1);
+        });
+        
+        const uniqueVideos = [...new Set(tempVideoIDs)];
+        uniqueVideos.sort((a, b) => (freqMap.get(b)! - freqMap.get(a)!));
+
+
+
+        const tempVideos = [{ id: 0, title: '', duration: '', description: '' }]
+        tempVideos.splice(0, 1);
+        uniqueVideos.forEach((videoID) => {
+            tempVideos.push({id: videoID, title: videoTable.get(videoID)?.title as string, duration: videoTable.get(videoID)?.duration as string, description: videoTable.get(videoID)?.description as string});
+        })
+        setMatchedVideos(tempVideos);
+    }
+
     return (
         <>
             <div style={{display: "flex", flexDirection: "column", gap: "10px"}}>
@@ -46,7 +82,7 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                         let question = questions.get(id);
                         return (
                             
-                        <div style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
+                        <div key={index} style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
                             <h5>{question?.question}</h5>
                             { (() => {
                                 let type = question?.type;
@@ -57,12 +93,12 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                                     return <input style={{height: "auto", width: "100%", padding: "5px 10px", }}></input>;
                                 }
                                 else {
-                                    return question?.answers.map((answer, index) => {
+                                    return question?.answers.map((answer) => {
                                         if (type === "multichoice") {
                                             return (
                                                 <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                                    <input type="radio" name={question?.question} value={answer} />
-                                                    <label htmlFor={question?.question}>{answer}</label>
+                                                    <input onChange={() => updateResponses(answer, index)} type="radio" name={question?.question} value={answer.answer} />
+                                                    <label htmlFor={question?.question}>{answer.answer}</label>
                                                 </div>
                                             )
                                      
@@ -70,8 +106,8 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                                         else if (type === "checkbox") {
                                             return (
                                                 <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                                    <input type="checkbox" name={question?.question} value={answer} />
-                                                    <label htmlFor={question?.question}>{answer}</label>
+                                                    <input type="checkbox" name={question?.question} value={answer.answer} />
+                                                    <label htmlFor={question?.question}>{answer.answer}</label>
                                                 </div>
                                             )
                                      
@@ -83,6 +119,20 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
 
                     )})
                     })()}
+                    
+     
+                </div>
+                <div style={{display: "flex", flexDirection: "column"}}>
+                    <button onClick={submitAnswers}>Submit</button>
+                    {matchedVideos.map((video, index) => {
+                        return (
+                        <>
+                            <p>
+                                {index+1}: {video.title}
+                            </p>
+                        </> 
+                        )
+                    })}
                 </div>
             </div>
         </>

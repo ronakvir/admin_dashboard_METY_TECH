@@ -1,18 +1,6 @@
-import { Dispatch, FC, SetStateAction} from "react";
-import { Questionnaire, Question } from "./QuestionnaireBuilder"
+import { Dispatch, FC, SetStateAction, useEffect} from "react";
+import { Questionnaire, Question, QuestionnaireStates } from "./QuestionnaireBuilder"
 
-interface QuestionnaireStates {
-    questionnaires:             Questionnaire[];        setQuestionnaires:          Dispatch<SetStateAction<Questionnaire[]>>;
-    questions:                  Map<string, Question>;  setQuestions:               Dispatch<SetStateAction<Map<string, Question>>>;
-    questionnaireVisibility:    string;                 setQuestionnaireVisibility: Dispatch<SetStateAction<string>>;
-    questionnaireList:          Questionnaire[];        setQuestionnaireList:       Dispatch<SetStateAction<Questionnaire[]>>;
-    questionType:               string;                 setQuestionType:            Dispatch<SetStateAction<string>>; 
-    questionForms:              Question;               setQuestionForms:           Dispatch<SetStateAction<Question>>;
-    questionnaireWorkshop:      string;                 setQuestionnaireWorkshop:   Dispatch<SetStateAction<string>>;
-    currentQuestionnaire:       Questionnaire;          setCurrentQuestionnaire:    Dispatch<SetStateAction<Questionnaire>>;
-    questionIsSelected:         boolean;                setQuestionIsSelected:      Dispatch<SetStateAction<boolean>>;
-    previewQuestionnaire:       boolean;            setPreviewQuestionnaire:    Dispatch<SetStateAction<boolean>>; 
-}
 
 
 
@@ -26,24 +14,43 @@ const ComponentRecents: FC<QuestionnaireStates> = ({
     questionnaireWorkshop,      setQuestionnaireWorkshop,
     currentQuestionnaire,       setCurrentQuestionnaire, 
     questionIsSelected,         setQuestionIsSelected,
+    recentQuestionnaires,       setRecentQuestionnaires,
     previewQuestionnaire,       setPreviewQuestionnaire}) => {
-    let count = 0;
-    let recentQuestionnaires: Questionnaire[] = [];
-    while (count < 4) {
-        let topQuestionnaire: Questionnaire = {id: "", name: "", status: "", responses: "", lastModified: "1900-01-01", questions: []};
-        let mostRecentDate: Date = new Date("1900-01-01");
-        questionnaires.forEach( (questionnaire, index) => {
-            let date = new Date(questionnaire.lastModified);
-            if (date > mostRecentDate) {
-                if (!recentQuestionnaires.includes(questionnaire)){
-                    mostRecentDate = date;
-                    topQuestionnaire = questionnaire;
-                }
-            }
 
-        })
-        count++;
-        recentQuestionnaires.push(topQuestionnaire);
+    
+    
+    useEffect(() => {
+        updateRecentsList();
+        console.log("recents");
+    }, [questionnaires])
+
+
+    const updateRecentsList = () => {
+        let count = 0;
+        const tempRecentQuestionnaires: Questionnaire[] = [];
+        while (count < 4) {
+            let topQuestionnaire: Questionnaire = { id: 0, name: "", status: "", started: 0, completed: 0, lastModified: "", questions: []};
+            let mostRecentDate: Date = new Date("1900-01-01T00:00:00.000");
+            questionnaires.forEach( (questionnaire, index) => {
+                let date = new Date(questionnaire.lastModified);
+                if (date > mostRecentDate) {
+                    if (!tempRecentQuestionnaires.includes(questionnaire)){
+
+                        mostRecentDate = date;
+                        topQuestionnaire = questionnaire;
+                        
+                    }
+                }
+    
+            })
+            console.log("TEST " + topQuestionnaire.name);
+            console.log("TEST " + topQuestionnaire.id);
+            count++;
+            if (topQuestionnaire.id != 0) tempRecentQuestionnaires.push(topQuestionnaire);
+            
+            
+        }
+        setRecentQuestionnaires(tempRecentQuestionnaires);
     }
 
     const editQuestionnaire = (questionnaire: Questionnaire) => {
@@ -66,7 +73,7 @@ const ComponentRecents: FC<QuestionnaireStates> = ({
                         return  (
                             <div style={{width: "200px", height: "225px", backgroundColor: "lightgrey", borderRadius: "15px", overflow: "hidden", margin: "5px", padding: "10px"}}>
                             <h3>{questionnaire.name}</h3>
-                            <p>{questionnaire.questions.length} questions - {questionnaire.status} - {questionnaire.responses} responses</p>
+                            <p>{questionnaire.questions.length} questions - {questionnaire.status} - {questionnaire.completed} responses</p>
                             <button onClick={ () => editQuestionnaire(questionnaire) }>
                                 Edit
                             </button>
