@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
-import { SearchFields, VideoData, videoDatabase } from "./VideoLibrary";
+import { SearchFields, VideoData } from "./VideoLibrary";
+import { categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
 
 interface VideoManagementStates {
     searchFields:               SearchFields;       setSearchFields:            Dispatch<SetStateAction<SearchFields>>;
@@ -52,16 +53,31 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
         const durationRegex = new RegExp(`.*` + searchFields.duration.toLowerCase() + `.*`);
         const categoryRegex = new RegExp(`.*` + searchFields.category.toLowerCase() + `.*`);
 
-        const tempVideoList = videoDatabase.filter((video) => {
+        const tempVideoList: VideoData[] = Array.from(videoTable).filter(([key1, video]) => {
             const titleCheck = titleRegex.test(video.title.toLowerCase());
             const durationCheck = durationRegex.test(video.duration.toLowerCase());
-            const categoryCheck = video.categories.some((category) => {
-                return categoryRegex.test(category.toLowerCase());
+            const categoryCheck = Array.from(videoCategoriesMappingTable).some(([, videoCategory]) => {
+                if (videoCategory.videoID === key1) {
+                    return categoryRegex.test(categoryTable.get(videoCategory.categoryID)?.category.toLowerCase() as string);
+                }
             })
 
             return (titleCheck && durationCheck && categoryCheck);
         })
-
+        .map(([key, video]) => {
+            const categories = Array.from(videoCategoriesMappingTable)
+            .filter(([, videoCategory]) => key === videoCategory.videoID)
+            .map(([catID, category]) => {return {id: category.categoryID, category: categoryTable.get(category.categoryID)?.category}})
+            .filter((cat): cat is {id: number, category: string} => cat.category !== undefined);
+            return {
+                id: key,
+                title: video.title,
+                description: video.description,
+                duration: video.duration,
+                categories
+            }
+        })
+        console.log(tempVideoList);
         // End Testing Code
 
         setVideoList(tempVideoList);
@@ -81,12 +97,7 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
             // CALL DELETE API HERE
 
             // START TESTING CODE - Simulated deleting from database
-            for(let i = 0; i < videoDatabase.length; i++) {
-                if (videoDatabase[i].id === videoTobeDeleted.id) {
-                    videoDatabase.splice(i, 1);
-                    break;
-                }
-            }
+            videoTable.delete(videoTobeDeleted.id);
             // END TESTING CODE
 
             const tempVideoList = [ ...videoList ];
@@ -103,7 +114,7 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
 
     const addVideoButton = () => {
         setVideoList([]);
-        setSelectedVideo({id: 0, title: "", duration: "", categories: [""]});
+        setSelectedVideo({id: 0, title: "", description: "", duration: "", categories: [{id: 0, category: ""}]});
         setVideoWorkshop("new");
         setSearchFields({title: "", duration: "", category: ""});
     }
@@ -156,7 +167,7 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
                             <div style={{display: "flex", flexDirection: "column", justifyContent: "flex-start"}}>
                                 {video.categories.map((category, index) => {
                                     return (
-                                        <label style={{width: "100px"}}>{category}</label>
+                                        <label style={{width: "100px"}}>{category.category}</label>
                                     )
                                 })}
                             </div>

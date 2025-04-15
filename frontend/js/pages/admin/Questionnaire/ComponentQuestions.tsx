@@ -1,18 +1,6 @@
 import { useEffect, FC, Dispatch, SetStateAction } from "react";
-import { Questionnaire, Question } from "./QuestionnaireBuilder"
+import { Questionnaire, Question, QuestionnaireStates } from "./QuestionnaireBuilder"
 
-// Interface for the parent's states
-interface QuestionnaireStates {
-    questionnaires:             Questionnaire[];        setQuestionnaires:          Dispatch<SetStateAction<Questionnaire[]>>;
-    questions:                  Map<string, Question>;  setQuestions:               Dispatch<SetStateAction<Map<string, Question>>>;
-    questionnaireVisibility:    string;                 setQuestionnaireVisibility: Dispatch<SetStateAction<string>>;
-    questionnaireList:          Questionnaire[];        setQuestionnaireList:       Dispatch<SetStateAction<Questionnaire[]>>;
-    questionType:               string;                 setQuestionType:            Dispatch<SetStateAction<string>>; 
-    questionForms:              Question;               setQuestionForms:           Dispatch<SetStateAction<Question>>;
-    questionnaireWorkshop:      string;                 setQuestionnaireWorkshop:   Dispatch<SetStateAction<string>>;
-    currentQuestionnaire:       Questionnaire;          setCurrentQuestionnaire:    Dispatch<SetStateAction<Questionnaire>>;
-    questionIsSelected:         boolean;                setQuestionIsSelected:      Dispatch<SetStateAction<boolean>>;
-}
 
 // Global variable to declare only on load. this keeps track of each types question count
 let questionCount = [0, 0, 0, 0];
@@ -26,10 +14,11 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
     questionForms,              setQuestionForms,
     questionnaireWorkshop,      setQuestionnaireWorkshop,
     currentQuestionnaire,       setCurrentQuestionnaire, 
-    questionIsSelected,         setQuestionIsSelected}) => {
+    questionIsSelected,         setQuestionIsSelected,
+    previewQuestionnaire,       setPreviewQuestionnaire}) => {
 
 
-
+    let indexCounter = 100;
     // which question types are we working with??
     // creates those form fields and shows a list of them
     const addQuestionForms = () => {
@@ -50,10 +39,10 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                 { // This checks if the button clicked was a checkbox or multichoice type question card and displays the fields accordingly
                     (questionType === "checkbox" || questionType === "multichoice") && (
                     <>
-                        <button style={{width: "300px"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, ""] })}>Add Answer</button>
+                        <button style={{width: "300px"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, {id: 0, answer: ""}] })}>Add Answer</button>
                         {questionForms.answers.map((answer, index) =>(
                             <div style={{display: "flex", flexDirection:"row"}} key={index}>
-                                <input onChange={(e) => updateAnswer(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index]} />
+                                <input onChange={(e) => updateAnswer(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index].answer} />
                                 <button onClick={async () => removeAnswerField(index)}>X</button>
                             </div>
                         ))}
@@ -88,8 +77,8 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                                 if (type === "multichoice") {
                                     return (
                                         <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                            <input type="radio" name={questionForms.question} value={answer} />
-                                            <label htmlFor={questionForms.question}>{answer}</label>
+                                            <input type="radio" name={questionForms.question} value={answer.answer} />
+                                            <label htmlFor={questionForms.question}>{answer.answer}</label>
                                         </div>
                                     )
                                 
@@ -97,8 +86,8 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                                 else if (type === "checkbox") {
                                     return (
                                         <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                            <input type="checkbox" name={questionForms.question} value={answer} />
-                                            <label htmlFor={questionForms.question}>{answer}</label>
+                                            <input type="checkbox" name={questionForms.question} value={answer.answer} />
+                                            <label htmlFor={questionForms.question}>{answer.answer}</label>
                                         </div>
                                     )
                                 
@@ -141,7 +130,8 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
     // Updates the formData answers every time a answer field is added or removed
     const updateAnswer = (index: number, value: string) => {
         const newAnswers = [...questionForms.answers];
-        newAnswers[index] = value;
+        newAnswers[index].answer = value;
+        newAnswers[index].id = 0;
         setQuestionForms({ ...questionForms, answers: newAnswers });
     }
     
@@ -154,12 +144,12 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
     }
 
     // Helper Function to click on a question item from the list.
-    const selectQuestion = (question: {id: string; type: string; question: string; answers: string[]}) => {
+    const selectQuestion = (question: {id: number; type: string; question: string; answers: {id: number, answer: string}[]}) => {
         if (questionForms.id === question.id) setQuestionIsSelected(false);
         else setQuestionIsSelected(true);
 
         setQuestionForms(current => 
-        current.id === question.id  ?  {id: "", type: questionType, question: "", answers: ["", ""]} : question);
+        current.id === question.id  ?  {id: 0, type: questionType, question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}]} : question);
     }
     
     // Adds the completed question to the questions array.
@@ -170,7 +160,9 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
             return;
         }
 
-        const id = (Math.random() * 999999).toString();
+        const id = indexCounter;
+        indexCounter++;
+
         questionForms.id = id;
 
         setQuestions(new Map(questions.set(questionForms.id, questionForms)));
@@ -178,7 +170,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
             clearForms();
         } else {
             setQuestionIsSelected(false);
-            setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+            setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
         }
         
     }
@@ -198,7 +190,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
             clearForms();
         } else {
             setQuestionIsSelected(false);
-            setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+            setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
         }
     }
 
@@ -212,7 +204,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
             clearForms();
         } else {
             setQuestionIsSelected(false);
-            setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+            setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
         }
     }
 
@@ -222,13 +214,13 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
     
         setCurrentQuestionnaire({ ...currentQuestionnaire, questions: [ ...currentQuestionnaire.questions, questionForms.id ] });
         setQuestionIsSelected(false);
-        setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+        setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
     }
     
     function clearForms() {
-        setCurrentQuestionnaire({ id: "", name: "", status: "", responses: "", lastModified: "", questions: []});
+        setCurrentQuestionnaire({ id: 0, name: "", status: "", started: 0, completed: 0, lastModified: new Date().toISOString(), questions: []});
         setQuestionIsSelected(false);
-        setQuestionForms({ id: "", type: "multichoice", question: "", answers: ["", ""] });
+        setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
     }
 
     // Checks how many questionnaires each question type has been used in

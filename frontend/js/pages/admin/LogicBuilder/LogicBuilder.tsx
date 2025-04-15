@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { answer_categoryMappingTable, answerTable, categoryTable, question_questionnaireTable, questionnaireTable, questionTable } from "./database";
+import { answer_categoryMappingTable, answerTable, categoryTable, question_questionnaireTable, questionnaireTable, questionTable } from "../../database";
 
 
 // This whole file can probably be split into 2 or 3 separate components.
