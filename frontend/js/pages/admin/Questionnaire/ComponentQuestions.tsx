@@ -5,6 +5,8 @@ import { Questionnaire, Question, QuestionnaireStates } from "./QuestionnaireBui
 // Global variable to declare only on load. this keeps track of each types question count
 let questionCount = [0, 0, 0, 0];
 
+
+
 const ComponentQuestions: FC<QuestionnaireStates> = ({ 
     questionnaires,             setQuestionnaires,
     questions,                  setQuestions,

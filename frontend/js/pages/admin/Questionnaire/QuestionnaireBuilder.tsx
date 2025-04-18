@@ -8,7 +8,6 @@ import ComponentQuestions from "./ComponentQuestions";
 import ComponentPreview from "./ComponentPreview";
 import { answerTable, question_questionnaireTable, questionnaireTable, questionTable } from "../../database";
 
-
 export type Question = {
   id: number;
   type: string;
@@ -44,11 +43,8 @@ export interface QuestionnaireStates {
 }
 
 
-
 // MAIN FUNCTION
 const QuestionnaireBuilder: React.FC = () => {
-  
-
   const [questionnaires,          setQuestionnaires] = useState<Questionnaire[]>([]);
   const [questions,               setQuestions] = useState<Map<number, Question>>(new Map<number, Question>());
   const [questionnaireVisibility, setQuestionnaireVisibility] = useState("All");
@@ -61,7 +57,6 @@ const QuestionnaireBuilder: React.FC = () => {
   const [previewQuestionnaire,    setPreviewQuestionnaire] = useState(false);
   const [recentQuestionnaires,    setRecentQuestionnaires] = useState<Questionnaire[]>([]);
   
-
   // Do this everytime I choose a question card
   // This clears the forms and un selects any selected questions.
   useEffect(() => {
@@ -236,7 +231,7 @@ const QuestionnaireBuilder: React.FC = () => {
           questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
           previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
           recentQuestionnaires={recentQuestionnaires} setRecentQuestionnaires={setRecentQuestionnaires}
-          />
+        />
         <hr/>
         <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
       </>
