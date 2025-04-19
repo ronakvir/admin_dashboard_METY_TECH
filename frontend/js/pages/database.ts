@@ -208,7 +208,7 @@ export const question_questionnaireTable = new Map([
 ]);
 
 export let answer_categoryMappingTableIndex = 11;
-// response_mappingTable(id: number, questionnaireID: number, answerID: number, categoryID: number, inclusive: boolean)
+// response_mappingTable(id: number, questionnaire_id: number, answer_id: number, category_id: number, inclusive: boolean)
 export const answer_categoryMappingTable = new Map([
     [1, { questionnaireID: 1, answerID: 1, categoryID: 1, inclusive: true  }],
     [2, { questionnaireID: 1, answerID: 1, categoryID: 2, inclusive: true  }],

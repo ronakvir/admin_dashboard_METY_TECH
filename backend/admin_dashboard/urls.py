@@ -24,7 +24,7 @@ urlpatterns = [
     path("dashboard/", include("dashboard.urls")),
     path("admin/", admin.site.urls, name="admin"),
     path("api/", include(user_urlpatterns)),
-    path("api/questionnaire/", include(questionnaire_builder_urlpatterns)),
+    path("api/", include(questionnaire_builder_urlpatterns)),
     path("admin/defender/", include("defender.urls")),
     path("jsreverse/", django_js_reverse.views.urls_js, name="js_reverse"),
     path("api/", include(router.urls), name="api"),
