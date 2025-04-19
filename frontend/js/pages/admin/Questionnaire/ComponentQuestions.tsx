@@ -1,5 +1,6 @@
 import { useEffect, FC, Dispatch, SetStateAction } from "react";
-import { Questionnaire, Question, QuestionnaireStates } from "./QuestionnaireBuilder"
+import { QuestionnaireStates } from "./QuestionnaireBuilder"
+import { QuestionnaireService } from "../../../api/services.gen";
 
 
 // Global variable to declare only on load. this keeps track of each types question count
@@ -36,15 +37,15 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                     <h4 style={{display: "flex", justifyContent: "left"}}>Add {questionType} Question</h4>
                     <button style={{display: "inline", maxWidth: "100"}} onClick={() => setQuestionType("")}>Cancel</button>
                 </div>
-                <input onChange={(value) => setQuestionForms({ ...questionForms, [value.target.name]: value.target.value })} name="question" style={{display: "inline", width: "200px"}} type="text" placeholder="Question" value={questionForms.question} />
+                <input onChange={(value) => setQuestionForms({ ...questionForms, text: value.target.value })} name="question" style={{display: "inline", width: "200px"}} type="text" placeholder="Question" value={questionForms.text} />
                 
                 { // This checks if the button clicked was a checkbox or multichoice type question card and displays the fields accordingly
                     (questionType === "checkbox" || questionType === "multichoice") && (
                     <>
-                        <button style={{width: "300px"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, {id: 0, answer: ""}] })}>Add Answer</button>
+                        <button style={{width: "300px"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, {id: 0, text: ""}] })}>Add Answer</button>
                         {questionForms.answers.map((answer, index) =>(
                             <div style={{display: "flex", flexDirection:"row"}} key={index}>
-                                <input onChange={(e) => updateAnswer(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index].answer} />
+                                <input onChange={(e) => addAnswerField(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index].text} />
                                 <button onClick={async () => removeAnswerField(index)}>X</button>
                             </div>
                         ))}
@@ -65,7 +66,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
             {/* This is the question preview box */}
             <div style={{display: "grid", flexWrap: "nowrap", gridTemplateColumns: "repeat(1, minmax(160px, 1fr))", gap: "10px"}}>
                 <div style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
-                    <h5>{questionForms.question}</h5>
+                    <h5>{questionForms.text}</h5>
                     { (() => {
                         let type = questionForms.type;
                         if (type === "slider") {
@@ -79,8 +80,8 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                                 if (type === "multichoice") {
                                     return (
                                         <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                            <input type="radio" name={questionForms.question} value={answer.answer} />
-                                            <label htmlFor={questionForms.question}>{answer.answer}</label>
+                                            <input type="radio" name={questionForms.text} value={answer.text} />
+                                            <label htmlFor={questionForms.text}>{answer.text}</label>
                                         </div>
                                     )
                                 
@@ -88,8 +89,8 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                                 else if (type === "checkbox") {
                                     return (
                                         <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                            <input type="checkbox" name={questionForms.question} value={answer.answer} />
-                                            <label htmlFor={questionForms.question}>{answer.answer}</label>
+                                            <input type="checkbox" name={questionForms.text} value={answer.text} />
+                                            <label htmlFor={questionForms.text}>{answer.text}</label>
                                         </div>
                                     )
                                 
@@ -110,12 +111,12 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                 </thead>
                 <tbody style={{overflowY: "auto"}}>
                 { (() => {
-                const tempQuestions = Array.from(questions);
-                return tempQuestions.map(([key, question]) => {
+
+                return questions.map((question) => {
                     if (question.type !== questionType) return;
                     return (
                     <tr className="questionRow" onClick={() => selectQuestion(question)} style={{height: "20px", backgroundColor: questionForms.id === question.id ? "grey" : "white"}}>
-                        <td style={{justifyContent: "left"}}>{question.question}</td>
+                        <td style={{justifyContent: "left"}}>{question.text}</td>
                     </tr>
                     );
                 })
@@ -130,9 +131,9 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
     }
 
     // Updates the formData answers every time a answer field is added or removed
-    const updateAnswer = (index: number, value: string) => {
+    const addAnswerField = (index: number, value: string) => {
         const newAnswers = [...questionForms.answers];
-        newAnswers[index].answer = value;
+        newAnswers[index].text = value;
         newAnswers[index].id = 0;
         setQuestionForms({ ...questionForms, answers: newAnswers });
     }
@@ -146,94 +147,115 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
     }
 
     // Helper Function to click on a question item from the list.
-    const selectQuestion = (question: {id: number; type: string; question: string; answers: {id: number, answer: string}[]}) => {
+    const selectQuestion = (question: {id: number; type: string; text: string; answers: {id: number, text: string}[]}) => {
         if (questionForms.id === question.id) setQuestionIsSelected(false);
         else setQuestionIsSelected(true);
 
-        setQuestionForms(current => 
-        current.id === question.id  ?  {id: 0, type: questionType, question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}]} : question);
+        setQuestionForms(current => current.id === question.id  ?  {id: 0, type: questionType, text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}]} : question);
     }
     
-    // Adds the completed question to the questions array.
-    // This will eventually be changed to adding it to the database.
+    // Adds the completed question to the Database.
     const addQuestion = () => {
-        if (questionForms.question.trim() == "") {
-            alert("You must enter a question first!");
-            return;
-        }
+        if (questionForms.text.trim() == "") {alert("You must enter a question first!"); return;}
 
-        const id = indexCounter;
-        indexCounter++;
+        QuestionnaireService.addQuestion(questionForms)
+            .then( response => {
+                const tempQuestions = [ ...questions ]
+                tempQuestions.push(response);
+                setQuestions(tempQuestions);
 
-        questionForms.id = id;
+                if (questionnaireWorkshop === "") {
+                    clearForms();
+                } else {
+                    setQuestionIsSelected(false);
+                    setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
+                }
+            })
+            .catch( error => console.log(error))
 
-        setQuestions(new Map(questions.set(questionForms.id, questionForms)));
-        if (questionnaireWorkshop === "") {
-            clearForms();
-        } else {
-            setQuestionIsSelected(false);
-            setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
-        }
-        
     }
 
     // modify Question Button Action
     const modifyQuestion = () => {
-        if (questionForms.question.trim() == "") {
-            alert("You must enter a question first!");
-            return;
-        }
+        if (questionForms.text.trim() == "") {alert("You must enter a question first!"); return;}
 
-        const updatedQuestions = new Map(questions);
-        updatedQuestions.set(questionForms.id, questionForms);
+        QuestionnaireService.addQuestion(questionForms)
+            .then( response => {
+                // Get the index of the question  in the question list
+                let index = 0;
+                questions.some( (question, i) => {
+                    if (question.id === response.id) {
+                        index = i;
+                        return true;
+                    } 
+                })
 
-        setQuestions(updatedQuestions);
-        if (questionnaireWorkshop === "") {
-            clearForms();
-        } else {
-            setQuestionIsSelected(false);
-            setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
+                // Replace the modified Question locally
+                const tempQuestions = [ ...questions ]
+                tempQuestions[index] = response;
+                setQuestions(tempQuestions);
+
+                // Reset components
+                if (questionnaireWorkshop === "") {
+                    clearForms();
+                } else {
+                    setQuestionIsSelected(false);
+                    setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
+                }
+            })
+            .catch( error => console.log(error))
         }
-    }
 
     // Delete Question Button Action
     const deleteQuestion = () => {
-        const updatedQuestions = new Map(questions);
-        updatedQuestions.delete(questionForms.id);
+        QuestionnaireService.deleteQuestion(questionForms.id)
+            .then( () => {
+                let index = 0;
+                questions.some( (question, i) => {
+                    if (question.id === questionForms.id) {
+                        index = i;
+                        return true;
+                    } 
+                })
+                const tempQuestions = [ ...questions ]
+                
+                tempQuestions.splice(index, 1);
+                setQuestions(tempQuestions);
 
-        setQuestions(updatedQuestions);
-        if (questionnaireWorkshop === "") {
-            clearForms();
-        } else {
-            setQuestionIsSelected(false);
-            setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
-        }
+                if (questionnaireWorkshop === "") {
+                    clearForms();
+                } else {
+                    setQuestionIsSelected(false);
+                    setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
+                }
+            })
+            .catch( error => console.log(error))
     }
 
     // Add the selected question to the current Questionnaire
     const addToQuestionnaire = () => {
         if (!questionIsSelected) return;
     
-        setCurrentQuestionnaire({ ...currentQuestionnaire, questions: [ ...currentQuestionnaire.questions, questionForms.id ] });
+        setCurrentQuestionnaire({ ...currentQuestionnaire, questions: [ ...currentQuestionnaire.questions, questionForms ] });
         setQuestionIsSelected(false);
-        setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
+        setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
     }
     
     function clearForms() {
-        setCurrentQuestionnaire({ id: 0, name: "", status: "", started: 0, completed: 0, lastModified: new Date().toISOString(), questions: []});
+        setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
         setQuestionIsSelected(false);
-        setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
+        setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
     }
 
     // Checks how many questionnaires each question type has been used in
     useEffect(() => {
         questionCount = [0, 0, 0, 0];
         questionnaires.forEach( (questionnaire) => {
-            questionnaire.questions.forEach((id)=> {
-                if (questions.get(id)?.type === "multichoice") questionCount[0]++;
-                else if (questions.get(id)?.type === "checkbox") questionCount[1]++;
-                else if (questions.get(id)?.type === "slider") questionCount[2]++;
-                else if (questions.get(id)?.type === "text") questionCount[3]++;
+            questionnaire.questions.forEach((question)=> {
+                if (question.type === "multichoice") questionCount[0]++;
+                else if (question.type === "checkbox") questionCount[1]++;
+                else if (question.type === "slider") questionCount[2]++;
+                else if (question.type === "text") questionCount[3]++;
             })
         })
     });

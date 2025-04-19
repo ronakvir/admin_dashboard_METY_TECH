@@ -1,5 +1,6 @@
 import { useEffect, FC, Dispatch, SetStateAction, useState } from "react";
-import { Questionnaire, QuestionnaireStates } from "./QuestionnaireBuilder"
+import { QuestionnaireStates } from "./QuestionnaireBuilder"
+import { Questionnaire, QuestionnaireFull } from "../../../api/types.gen";
 
 
 const ComponentList: FC<QuestionnaireStates> = ({ 
@@ -18,7 +19,7 @@ const ComponentList: FC<QuestionnaireStates> = ({
     
     // Updates the filterable list of questionnaires depending on which button they click
     useEffect(() => {
-        let tempQuestionnaires:Questionnaire[] = [];
+        let tempQuestionnaires:QuestionnaireFull[] = [];
         for (let i = 0; i < questionnaires.length; i++) {
             if (questionnaires[i].status === questionnaireVisibility || questionnaireVisibility === "All") {
                 tempQuestionnaires.push(questionnaires[i]);
@@ -29,16 +30,16 @@ const ComponentList: FC<QuestionnaireStates> = ({
 
      // Update the questionnaire form fields when we open the workshop view.
     useEffect(() => {
-        setCurrentQuestionnaire({ id: 0, name: "", status: "", started: 0, completed: 0, lastModified: new Date().toISOString(), questions: []});
+        setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
         setQuestionType("multichoice");
     },[questionnaireWorkshop]);
     
-    const editQuestionnaire = (questionnaire: Questionnaire) => {
+    const editQuestionnaire = (questionnaire: QuestionnaireFull) => {
         setQuestionnaireWorkshop("modify");
         setCurrentQuestionnaire(questionnaire);
     }
 
-    const previewQuestionnaireButton = (questionnaire: Questionnaire) => {
+    const previewQuestionnaireButton = (questionnaire: QuestionnaireFull) => {
         setCurrentQuestionnaire(questionnaire);
         setPreviewQuestionnaire(true)
     }
@@ -57,15 +58,15 @@ const ComponentList: FC<QuestionnaireStates> = ({
             </div>
             <h4 style={{display: "flex", justifyContent: "left"}}>{questionnaireVisibility} Questionnaires</h4>
             <div style={{display: "flex", flexDirection: "column", overflowY: "auto"}}>
-                {questionnaireList.map((questionnaire: Questionnaire) => {
+                {questionnaireList.map((questionnaire: QuestionnaireFull) => {
                     // Dont populate with items that dont match the filter
-                    if (!filter.test(questionnaire.name.toLowerCase())) return;
+                    if (!filter.test(questionnaire.title.toLowerCase())) return;
                     // Only populate 5 items
                     //if (count >= 5) return;
                     //count++;
                     return (
                         <div style={{display: "flex", justifyContent: "left", flexDirection: "row", width: "fit-content", height: "35px", backgroundColor: "lightgrey", margin: "5px", borderRadius: "10px", padding:"5px"}}>
-                            <p style={{display: "flex", justifyContent: "left",width: "250px"}}>{questionnaire.name}</p>
+                            <p style={{display: "flex", justifyContent: "left",width: "250px"}}>{questionnaire.title}</p>
                             <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.questions.length} questions</p>
                             <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.status}</p>
                             <p style={{display: "flex", justifyContent: "left", width: "140px"}}>{questionnaire.completed} responses</p>
