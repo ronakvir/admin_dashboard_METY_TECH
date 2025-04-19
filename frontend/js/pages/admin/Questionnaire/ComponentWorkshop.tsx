@@ -1,5 +1,5 @@
 import { useEffect, FC, Dispatch, SetStateAction } from "react";
-import { Questionnaire, Question, QuestionnaireStates } from "./QuestionnaireBuilder"
+import { QuestionnaireStates } from "./QuestionnaireBuilder"
 import { QuestionnaireService } from "../../../api";
 import { question_questionnaireTable, question_questionnaireTableIndex, questionnaireTable, questionnaireTableIndex } from "../../database";
 
@@ -27,56 +27,29 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
 
     // Finalize and create the questionnaire
     const createQuestionnaire = () => {
-        //if (currentQuestionnaire.questions.length < 8) {alert("Must attach at least 8 questions!"); return;}
-        
-            /*
-        QuestionnaireService.questionnaireApiQuestionnairesCreate({ requestBody: currentQuestionnaire })
-            .then((response) => {
-                alert("Questionnaire Created Successfully!");
+        if (currentQuestionnaire.questions.length < 8) {alert("Must attach at least 8 questions!"); return;}
+            
+        QuestionnaireService.addQuestionnaires(currentQuestionnaire)
+            .then( response => {
+
                 setQuestionnaires([ ...questionnaires, response ]);
                 setQuestionnaireWorkshop("");
                 clearForms();
             })
-            .catch((error) => {
+            .catch( error => {
                 console.error("Error creating questionnaire:", error);
                 alert("failure");
             });
-            */
-
-        // TEST CODE:
-        const newID = questionnaireTableIndexLocal++;
-        currentQuestionnaire.lastModified = new Date().toISOString();
-        
-        questionnaireTable.set(newID, {
-            name: currentQuestionnaire.name,
-            status: currentQuestionnaire.status,
-            started: currentQuestionnaire.started,
-            completed: currentQuestionnaire.completed,
-            lastModified: currentQuestionnaire.lastModified
-        });
-        
-        for (const questionID of currentQuestionnaire.questions) {
-            const mapID = question_questionnaireTableIndexLocal++;
-            question_questionnaireTable.set(mapID, { questionnaireID: newID, questionID });
-        }
-
-        currentQuestionnaire.id = questionnaireTableIndexLocal;
-        setQuestionnaires([ ...questionnaires, currentQuestionnaire ]);
-        setQuestionnaireWorkshop("");
-        clearForms();
-
-
-        // END TEST CODE
     };
 
     // Finalize and create the questionnaire
     const modifyQuestionnaire = () => {
-        if (currentQuestionnaire.questions.length < 8 || currentQuestionnaire.name == "") {
+        if (currentQuestionnaire.questions.length < 8 || currentQuestionnaire.title == "") {
             alert("You must have at least 8 questions and name the questionnaire!");
             return;
         }
         
-        currentQuestionnaire.lastModified = new Date().toISOString();
+        currentQuestionnaire.last_modified = new Date().toISOString();
 
         let index = questionnaires.findIndex(questionnaire => questionnaire.id === currentQuestionnaire.id);
         let updatedQuestionnaires = [ ...questionnaires ];
@@ -97,9 +70,9 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
     }
 
     function clearForms() {
-        setCurrentQuestionnaire({ id: 0, name: "", status: "", started: 0, completed: 0, lastModified: new Date().toISOString(), questions: []});
+        setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
         setQuestionIsSelected(false);
-        setQuestionForms({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
+        setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
     }
     
     // This is the view that lets you create a new questionnaire or modify a current one
@@ -110,7 +83,7 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
                 <h3>Modify existing Questionnaire:</h3>
             }
             <h6>Questionnaire Name:</h6>
-            <input style={{width: "830px"}} value={currentQuestionnaire.name} onChange={(value) => setCurrentQuestionnaire({...currentQuestionnaire, name: value.target.value})} />
+            <input style={{width: "830px"}} value={currentQuestionnaire.title} onChange={(value) => setCurrentQuestionnaire({...currentQuestionnaire, title: value.target.value})} />
             <h6>Questionnaire Status:</h6>
             <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
                 <button style={{backgroundColor: currentQuestionnaire.status === "Active" ? "darkgrey" : "", width: "270px"}} onClick={() => setCurrentQuestionnaire({...currentQuestionnaire, status: "Active"})}>Active</button>
@@ -122,11 +95,11 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
             <div style={{display: "grid", gridTemplateColumns: "repeat(4, minmax(160px, 1fr))", gap: "10px", width: "830px"}}>
                 { (() => {
                 //const tempQuestions = Array.from(currentQuestionnaire.questions);
-                return currentQuestionnaire.questions.map((id, index) => (
+                return currentQuestionnaire.questions.map((question, index) => (
 
                     <div style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
-                        <p>Question: {questions.get(id)?.question}</p>
-                        <p>Type: {questions.get(id)?.type}</p>
+                        <p>Question: {question.text}</p>
+                        <p>Type: {question.type}</p>
                         <button onClick={() => removeFromQuestionnaire(index)}>Remove</button>
                     </div>
 

@@ -1,5 +1,5 @@
 import { useEffect, FC, Dispatch, SetStateAction, useState } from "react";
-import { Questionnaire, Question, QuestionnaireStates } from "./QuestionnaireBuilder"
+import { QuestionnaireStates } from "./QuestionnaireBuilder"
 import { answer_categoryMappingTable, categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
 
 
@@ -21,18 +21,17 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
     const [matchedVideos, setMatchedVideos] = useState<{id: Number, title: string, duration: string, description: string}[]>([]);
 
     const returnToDashboard = () => {
-        setCurrentQuestionnaire({ id: 0, name: "", status: "", started: 0, completed: 0, lastModified: new Date().toISOString(), questions: []});
+        setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
         setPreviewQuestionnaire(false);
     }
 
-    const updateResponses = (answer: {id: number, answer: string}, index: number) => {
+    const updateResponses = (answer: {id: number, text: string}, index: number) => {
         const tempResponses = [ ...qResponses ]
         tempResponses[index] = answer.id;
         setQResponses(tempResponses);
     }
 
     const submitAnswers = () => {
-        console.log("TEST");
         const tempMatched: number[] = [];
 
         answer_categoryMappingTable.forEach((mapping) => {
@@ -75,15 +74,14 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
         <>
             <div style={{display: "flex", flexDirection: "column", gap: "10px"}}>
             <button style={{width: "415px"}} onClick={() => returnToDashboard()}> Return to Dashboard</button>
-                <h4>{currentQuestionnaire.name}</h4>
+                <h4>{currentQuestionnaire.title}</h4>
                 <div style={{display: "grid", gridTemplateColumns: "repeat(4, minmax(160px, 1fr))", gap: "10px", width: "830px"}}>
                     { (() => {
-                    return currentQuestionnaire.questions.map((id, index) => {
-                        let question = questions.get(id);
+                    return currentQuestionnaire.questions.map((question, index) => {
                         return (
                             
                         <div key={index} style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
-                            <h5>{question?.question}</h5>
+                            <h5>{question?.text}</h5>
                             { (() => {
                                 let type = question?.type;
                                 if (type === "slider") {
@@ -97,8 +95,8 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                                         if (type === "multichoice") {
                                             return (
                                                 <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                                    <input onChange={() => updateResponses(answer, index)} type="radio" name={question?.question} value={answer.answer} />
-                                                    <label htmlFor={question?.question}>{answer.answer}</label>
+                                                    <input onChange={() => updateResponses(answer, index)} type="radio" name={question.text} value={answer.text} />
+                                                    <label htmlFor={question?.text}>{answer.text}</label>
                                                 </div>
                                             )
                                      
@@ -106,8 +104,8 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                                         else if (type === "checkbox") {
                                             return (
                                                 <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                                    <input type="checkbox" name={question?.question} value={answer.answer} />
-                                                    <label htmlFor={question?.question}>{answer.answer}</label>
+                                                    <input type="checkbox" name={question.text} value={answer.text} />
+                                                    <label htmlFor={question.text}>{answer.text}</label>
                                                 </div>
                                             )
                                      
