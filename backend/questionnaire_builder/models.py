@@ -12,7 +12,6 @@ class VideoCategory(models.Model):
     video = models.ForeignKey(Video, on_delete=models.CASCADE, null=False)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=False)
 
-# Create your models here.
 class Questionnaire(models.Model):
     title = models.CharField(max_length=255, null=False)
     status = models.CharField(max_length=255, null=False)

@@ -5,7 +5,12 @@ from . import views
 
 
 urlpatterns = [
-    # path('api/questionnaires/', QuestionnaireCreateAPIView.as_view(), name='questionnaire-create'),
+    path('questionnairebuilder/addquestionnaire/', views.CreateQuestionnaire.as_view(), name='CreateQuestionnaire'),
+    path('questionnairebuilder/getquestionnaires/', views.getQuestionnaires.as_view(), name='getQuestionnaires'),
+    path('questionnairebuilder/addquestion/', views.CreateQuestion.as_view(), name='CreateQuestion'),
+    path('questionnairebuilder/deletequestion/<int:id>', views.DeleteQuestion.as_view(), name='DeleteQuestion'),
+    path('questionnairebuilder/getquestions/', views.getQuestions.as_view(), name='getQuestions'),
+    path('questionnairebuilder/getvideos/', views.getVideosFromPreview.as_view(), name='getVideosFromPreview'),
     path('logicbuilder/getquestionnaires/', views.GetQuestionnaireForLogicPage.as_view(), name='GetQuestionnaireForLogicPage'),
     path('logicbuilder/getquestions/<int:questionnaire_id>', views.GetQuestionWithAnswersAndCategories.as_view(), name='GetQuestionWithAnswersAndCategories'),
     path('logicbuilder/getcategories/', views.GetCategories.as_view(), name='GetCategories'),

@@ -1,13 +1,14 @@
 from rest_framework import serializers
-from .models import Answer, AnswerCategoryMapping, Category, Question, Questionnaire
+from .models import Answer, AnswerCategoryMapping, Category, Question, Questionnaire, QuestionnaireQuestion, Video
 
-# class QuestionAnswerSerializer(serializers.ModelSerializer):
+# QUESTIONNAIRE BUILDER PAGE
+# class CreateQuestionAnswerSerializer(serializers.ModelSerializer):
 #     class Meta:
-#         model = QuestionAnswer
+#         model = Answer
 #         fields = ('value', 'order', 'input')
 
-# class QuestionSerializer(serializers.ModelSerializer):
-#     answers = QuestionAnswerSerializer(many=True)
+# class CreateQuestionSerializer(serializers.ModelSerializer):
+#     answers = CreateQuestionAnswerSerializer(many=True)
 
 #     class Meta:
 #         model = Question
@@ -17,11 +18,11 @@ from .models import Answer, AnswerCategoryMapping, Category, Question, Questionn
 #         answers_data = validated_data.pop('answers')
 #         question = Question.objects.create(**validated_data)
 #         for answer_data in answers_data:
-#             QuestionAnswer.objects.create(question=question, **answer_data)
+#             Answer.objects.create(question=question, **answer_data)
 #         return question
 
-# class QuestionnaireSerializer(serializers.ModelSerializer):
-#     questions = QuestionSerializer(many=True)
+# class CreateQuestionnaireSerializer(serializers.ModelSerializer):
+#     questions = CreateQuestionSerializer(many=True)
 
 #     class Meta:
 #         model = Questionnaire
@@ -34,9 +35,56 @@ from .models import Answer, AnswerCategoryMapping, Category, Question, Questionn
 #             answers_data = question_data.pop('answers')
 #             question = Question.objects.create(questionnaire=questionnaire, **question_data)
 #             for answer_data in answers_data:
-#                 QuestionAnswer.objects.create(question=question, **answer_data)
+#                 Answer.objects.create(question=question, **answer_data)
 #         return questionnaire
 
+class QuestionnaireSerializer(serializers.ModelSerializer):
+    questions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Questionnaire
+        fields = ('id', 'title', 'status', 'completed', 'started', 'last_modified', 'questions')
+
+    def get_questions(self, questionnaire):
+        matchedRows = QuestionnaireQuestion.objects.filter(questionnaire=questionnaire)
+        questions = [row.question for row in matchedRows]
+        return QuestionSerializer(questions, many=True).data
+
+class QuestionSerializer(serializers.ModelSerializer):
+    answers = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Question
+        fields = ('id', 'text', 'type', 'answers')
+
+    def get_answers(self, question):
+        answers = Answer.objects.filter(question=question)
+        return AnswerSerializer(answers, many=True).data
+
+class AnswerSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Answer
+        fields = ('id', 'text')
+
+class answerFilterSerializer(serializers.Serializer):
+    include_ids = serializers.ListField(
+        child=serializers.IntegerField(), required=False
+    )
+    exclude_ids = serializers.ListField(
+        child=serializers.IntegerField(), required=False
+    )
+
+# QUESTIONNAIRE BUILDER PAGE
+
+class VideoSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Video
+        fields = ('id', 'title', 'duration', 'decription')
+
+
+# LOGIC BUILDER PAGE
 class QuestionnaireForLogicPageSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -101,3 +149,4 @@ class AnswerCategoryMappingSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnswerCategoryMapping
         fields = ('id', 'questionnaire_id', 'answer_id', 'category_id', 'inclusive')
+# LOGIC BUILDER PAGE

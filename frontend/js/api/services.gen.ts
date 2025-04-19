@@ -32,6 +32,11 @@ import type {
   AnswerCategoryMapping,
   AnswerCategoryMappingNoID,
   AddMappingRequest,
+  QuestionnaireFull,
+  QuestionFull,
+  QuestionnaireNoID,
+  FilterByIDs,
+  VideoSimple,
 } from "./types.gen";
 
 export class ApiService {
@@ -54,6 +59,54 @@ export class ApiService {
 }
 
 export class QuestionnaireService {
+  public static getQuestionnaires(): CancelablePromise<QuestionnaireFull[]> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/questionnairebuilder/getquestionnaires/",
+    });
+  }  
+
+  public static getQuestions(): CancelablePromise<QuestionFull[]> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/questionnairebuilder/getquestions/",
+    });
+  }  
+  
+  public static addQuestionnaires(data: QuestionnaireFull): CancelablePromise<QuestionnaireFull> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/questionnairebuilder/addquestionnaire/",
+      body: data,
+      mediaType: "application/json",
+    });
+  }  
+
+  public static addQuestion(data: QuestionFull): CancelablePromise<QuestionFull> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/questionnairebuilder/addquestion/",
+      body: data,
+      mediaType: "application/json",
+    });
+  }  
+  
+  public static deleteQuestion(id: number): CancelablePromise<Message> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: `/api/questionnairebuilder/deletequestion/${id}`,
+    });
+  }  
+
+  public static getVideos(data: FilterByIDs): CancelablePromise<VideoSimple[]> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/questionnairebuilder/getvideos/",
+      body: data,
+      mediaType: "application/json",
+    });
+  }  
+  
   /**
    * @param data The data for the request.
    * @param data.requestBody

@@ -52,6 +52,32 @@ export type Question = {
   answers: Answer[];
 };
 
+export type QuestionnaireNoID = {
+  title: string;
+  status: string;
+  completed: number;
+  started: number;
+  last_modified: string;
+  questions: QuestionFull[];
+};
+
+export type QuestionnaireFull = {
+  id: number;
+  title: string;
+  status: string;
+  completed: number;
+  started: number;
+  last_modified: string;
+  questions: QuestionFull[];
+};
+
+export type QuestionFull = {
+  id: number;
+  text: string;
+  type: string;
+  answers: Answer[];
+};
+
 export type Answer = {
   id: number;
   text: string;
@@ -83,6 +109,19 @@ export type AnswerCategories = {
 export type Category = {
   id: number;
   text: string;
+}
+
+
+export type VideoSimple = {
+  id: number;
+  title: string;
+  duration: string;
+  description: string;
+}
+
+export type FilterByIDs = {
+  inclusive: number[];
+  exclusive: number[];
 }
 
 export type AnswerCategoryMappingNoID = {
@@ -212,14 +251,61 @@ export type $OpenApiTs = {
       };
     };
   };
-  "/api/questionnaire/api/questionnaires/": {
-    post: {
-      req: QuestionnaireApiQuestionnairesCreateData;
+
+
+  "/api/questionnairebuilder/getquestionnaires/": {
+    get: {
       res: {
-        201: Questionnaire;
+        200: QuestionnaireFull[];
       };
     };
   };
+
+  "/api/questionnairebuilder/addquestionnaire/": {
+    post: {
+      req: QuestionnaireFull;
+      res: {
+        201: QuestionnaireFull;
+      };
+    };
+  };
+
+
+  "/api/questionnairebuilder/getquestions/": {
+    get: {
+      res: {
+        200: QuestionFull[];
+      };
+    };
+  };
+
+  "/api/questionnairebuilder/addquestion/": {
+    post: {
+      req: QuestionFull;
+      res: {
+        201: QuestionFull;
+      };
+    };
+  };
+
+  "/api/questionnairebuilder/deletequestion/{id}": {
+    post: {
+      res: {
+        204: Message;
+      };
+    };
+  };
+
+  "/api/questionnairebuilder/getVideos/": {
+    post: {
+      req: FilterByIDs;
+      res: {
+        201: VideoSimple[];
+      };
+    };
+  };
+
+
 
   "/api/logicbuilder/getquestionnaires/": {
     get: {

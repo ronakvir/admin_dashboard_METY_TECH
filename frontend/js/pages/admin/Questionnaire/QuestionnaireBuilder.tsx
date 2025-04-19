@@ -7,133 +7,69 @@ import ComponentWorkshop from "./ComponentWorkshop";
 import ComponentQuestions from "./ComponentQuestions";
 import ComponentPreview from "./ComponentPreview";
 import { answerTable, question_questionnaireTable, questionnaireTable, questionTable } from "../../database";
+import { QuestionnaireFull, QuestionFull } from "../../../api/types.gen";
+import { QuestionnaireService } from "../../../api/services.gen";
 
-export type Question = {
-  id: number;
-  type: string;
-  question: string;
-  answers: {
-    id: number;
-    answer: string;
-  }[];
-}
 
-export type Questionnaire = {
-  id: number;
-  name: string;
-  status: string;
-  started: number;
-  completed: number;
-  lastModified: string;
-  questions: number[];
-}
 
 export interface QuestionnaireStates {
-    questionnaires:             Questionnaire[];        setQuestionnaires:          Dispatch<SetStateAction<Questionnaire[]>>;
-    questions:                  Map<number, Question>;  setQuestions:               Dispatch<SetStateAction<Map<number, Question>>>;
+    questionnaires:             QuestionnaireFull[];        setQuestionnaires:          Dispatch<SetStateAction<QuestionnaireFull[]>>;
+    questions:                  QuestionFull[];  setQuestions:               Dispatch<SetStateAction<QuestionFull[]>>;
     questionnaireVisibility:    string;                 setQuestionnaireVisibility: Dispatch<SetStateAction<string>>;
-    questionnaireList:          Questionnaire[];        setQuestionnaireList:       Dispatch<SetStateAction<Questionnaire[]>>;
+    questionnaireList:          QuestionnaireFull[];        setQuestionnaireList:       Dispatch<SetStateAction<QuestionnaireFull[]>>;
     questionType:               string;                 setQuestionType:            Dispatch<SetStateAction<string>>; 
-    questionForms:              Question;               setQuestionForms:           Dispatch<SetStateAction<Question>>;
+    questionForms:              QuestionFull;               setQuestionForms:           Dispatch<SetStateAction<QuestionFull>>;
     questionnaireWorkshop:      string;                 setQuestionnaireWorkshop:   Dispatch<SetStateAction<string>>;
-    currentQuestionnaire:       Questionnaire;          setCurrentQuestionnaire:    Dispatch<SetStateAction<Questionnaire>>;
+    currentQuestionnaire:       QuestionnaireFull;          setCurrentQuestionnaire:    Dispatch<SetStateAction<QuestionnaireFull>>;
     questionIsSelected:         boolean;                setQuestionIsSelected:      Dispatch<SetStateAction<boolean>>;
     previewQuestionnaire:       boolean;                setPreviewQuestionnaire:    Dispatch<SetStateAction<boolean>>; 
-    recentQuestionnaires:       Questionnaire[];        setRecentQuestionnaires:    Dispatch<SetStateAction<Questionnaire[]>>; 
+    recentQuestionnaires:       QuestionnaireFull[];        setRecentQuestionnaires:    Dispatch<SetStateAction<QuestionnaireFull[]>>; 
 }
 
 
 // MAIN FUNCTION
 const QuestionnaireBuilder: React.FC = () => {
-  const [questionnaires,          setQuestionnaires] = useState<Questionnaire[]>([]);
-  const [questions,               setQuestions] = useState<Map<number, Question>>(new Map<number, Question>());
+  const [questionnaires,          setQuestionnaires] = useState<QuestionnaireFull[]>([]);
+  const [questions,               setQuestions] = useState<QuestionFull[]>([]);
   const [questionnaireVisibility, setQuestionnaireVisibility] = useState("All");
-  const [questionnaireList,       setQuestionnaireList] = useState<Questionnaire[]>([]);
+  const [questionnaireList,       setQuestionnaireList] = useState<QuestionnaireFull[]>([]);
   const [questionType,            setQuestionType] = useState("");
-  const [questionForms,           setQuestionForms] = useState<Question>({ id: 0, type: "multichoice", question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}] });
+  const [questionForms,           setQuestionForms] = useState<QuestionFull>({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
   const [questionnaireWorkshop,   setQuestionnaireWorkshop] = useState("");
-  const [currentQuestionnaire,    setCurrentQuestionnaire] = useState<Questionnaire>({ id: 0, name: "", status: "", started: 0, completed: 0, lastModified: new Date().toISOString(), questions: []});
+  const [currentQuestionnaire,    setCurrentQuestionnaire] = useState<QuestionnaireFull>({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
   const [questionIsSelected,      setQuestionIsSelected] = useState(false);
   const [previewQuestionnaire,    setPreviewQuestionnaire] = useState(false);
-  const [recentQuestionnaires,    setRecentQuestionnaires] = useState<Questionnaire[]>([]);
+  const [recentQuestionnaires,    setRecentQuestionnaires] = useState<QuestionnaireFull[]>([]);
   
   // Do this everytime I choose a question card
   // This clears the forms and un selects any selected questions.
   useEffect(() => {
     setQuestionIsSelected(false);
-    setQuestionForms({id: 0, type: questionType, question: "", answers: [{id: 0, answer: ""}, {id: 0, answer: ""}]});
+    setQuestionForms({id: 0, type: questionType, text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}]});
 
   },[questionType] );
 
   useEffect(() => {
-    const tempQuestions = new Map<number, Question>();
 
-    function buildQuestions(): void {
-      for (const [questionID, qRow] of questionTable.entries()) {
-        const answers = Array.from(answerTable.entries())
-          .filter(([_, a]) => a.questionID === questionID)
-          .map(([answerID, a]) => ({
-            id: answerID,
-            answer: a.text
-          }));
-    
-        const question: Question = {
-          id: questionID,
-          type: qRow.type,
-          question: qRow.question,
-          answers
-        };
-    
-        tempQuestions.set(questionID, question);
-      }
-      setQuestions(tempQuestions);
+    const getData = () => {
+      QuestionnaireService.getQuestionnaires()
+        .then( response => {
+          console.log(response)
+          setQuestionnaires(response);
+        })
+        .catch( error => console.log(error) )
+
+      QuestionnaireService.getQuestions()
+        .then( response => {
+          console.log("SUP")
+          console.log(response)
+          setQuestions(response);
+        })
+        .catch( error => console.log(error) )
     }
 
-    function getAllQuestionnaires(): Questionnaire[] {
-      const tempQuestionnaires: Questionnaire[] = [];
-    
-      for (const [questionnaireID, qnRow] of questionnaireTable.entries()) {
-        const questionIDs = Array.from(question_questionnaireTable.values())
-          .filter(rel => rel.questionnaireID === questionnaireID)
-          .map(rel => rel.questionID);
-    
-        const questionnaire: Questionnaire = {
-          id: questionnaireID,
-          name: qnRow.name,
-          status: qnRow.status,
-          started: qnRow.started, 
-          completed: qnRow.completed, 
-          lastModified: qnRow.lastModified,
-          questions: questionIDs
-        };
-    
-        tempQuestionnaires.push(questionnaire);
-      }
-      setQuestionnaires(tempQuestionnaires);
-      
-      return questionnaires;
-    }
-
-    getAllQuestionnaires();
-    buildQuestions();
+    getData();
   },[] );
-
-  // Print off the questions array for debugging
-  const showQuestions = () => {
-    if (questions.size === 0) return <></>;
-
-    const questionsArray = Array.from(questions);
-    return questionsArray.map(([id, question], index) => (
-      <div>
-        <p>Type {index+1}: {question.type}</p>
-        <p>Question {index+1}: {question.question}</p>
-        {question.answers.map((answer, answerIndex) => (
-          <p key={answerIndex}>Answer {answerIndex+1}: {answer.answer}</p>
-        ))}
-        <hr/>
-      </div>
-    ))
-  };
 
   // Logic to determine if we show the questionnaire list, or the questionnaire workshop
   const questionnaireSection = ()  => {
