@@ -105,7 +105,6 @@ const CQuestionnaireSelection: React.FC<LogicBuilderStates> = ({
     
     return (
         <>
-
             <h6>Select Questionnaire</h6>
             <select onChange={async (event) => selectQuestionnaire(parseInt(event.target.value))}>
             <option value="0" key="">Choose a questionnaire to configure</option>

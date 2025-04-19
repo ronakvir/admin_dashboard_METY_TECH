@@ -1,5 +1,19 @@
 ROOT
-└── LogicBuilder
-    └── CQuestionnaireSelection
-        ├── CLogicWorkshop
-        └── CQuestionnaireTable
+└── ...
+    └── LogicBuilder
+        └── CQuestionnaireSelection
+            ├── CLogicWorkshop
+            └── CQuestionnaireTable
+
+
+Logic Builder:
+    Base Page for the for the administrator's logic builder.
+
+CQuestionnaireSelection: 
+    Component that renders the select element and fetches associated data when the user selects the questionnaireID
+
+CLogicWorkshop
+    Componnt that renders the response-category mapping tool fields, and acts on user interaction
+
+CQuestionnaireTable   
+    Component that renders the question-response-category table, and acts on user interaction

@@ -13,7 +13,7 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
     
     
     // Opens the edit links component
-    const clickEditLinkButton = (question: QuestionCategory, answer: { id: number; value: string; categories: { id: number; value: string; }[]; }) => {
+    const editLinksButton = (question: QuestionCategory, answer: { id: number; value: string; categories: { id: number; value: string; }[]; }) => {
         const modifiedQuestion = { id: question.id, question: question.question, answer: answer }
         setSelectedLink(modifiedQuestion); 
         setLinkWorkshop(true);
@@ -21,7 +21,7 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
     }
 
     // Delete matching link from the database, update frontend with results.
-    const deleteLinks = (answerID: number) => {
+    const deleteLinksButtonn = (answerID: number) => {
         if (!confirm("Are you sure you would like to delete the links to this response?")) return;
         // DO API CALL HERE
 
@@ -45,22 +45,96 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
         setQuestionList(tempQuestionList);
     }
 
-    const expandQuestion = (questionIndex: number) => {
+    const expandQuestionButton = (questionIndex: number) => {
         const tempExpandedQuestions: boolean[] = [ ...expandedQuestions ];
         tempExpandedQuestions[questionIndex] = true;
         setExpandedQuestions(tempExpandedQuestions);
     }
 
-    const collapseQuestion = (questionIndex: number) => {
+    const collapseQuestionButton = (questionIndex: number) => {
         const tempExpandedQuestions: boolean[] = [ ...expandedQuestions ];
         tempExpandedQuestions[questionIndex] = false;
         setExpandedQuestions(tempExpandedQuestions);
     }
 
+    const expandedRowJSX = (question: QuestionCategory, questionIndex: number) => {
+        return (   
+           <tr onClick={() => collapseQuestionButton(questionIndex)}  key={questionIndex} style={{transition: "all 0.3 ease", border: "1px solid"}}>
+                <td style={{display: "flex", flexDirection: "row", margin: "5px"}}>   
+                    <div style={{border: "1px solid", marginRight: "5px"}}>⮝</div>                                  
+                    {question.question}
+                    
+                </td>
+                <td>
+                <div style={{display: "flex", flexDirection: "column"}}>   
+                    {question.answers.map((answer, answerIndex) => {
+                    return (
+                        <>                 
+                        {answer.value}
+                        <br/>
+                        </>   
+                    ) 
+                    })}
+                </div>
+                </td>
+                <td>
+                <div style={{display: "flex", flexDirection: "column"}}>   
+                    {question.answers.map((answer, answerIndex) => {
+                        return (
+                        <>                 
+                            Categories Linked: {answer.categories.length}
+                            <br/>
+                        </>   
+                        ) 
+                    })}
+                    </div>
+                </td>
+                <td>
+                    <div style={{display: "flex", flexDirection: "column"}}>   
+                    {question.answers.map((answer, answerIndex) => {
+                        return (
+                        <>     
+                            <div style={{display: "flex", flexDirection: "row", height:"23px"}}>
+                                
+                                <button onClick={(e) => {e.stopPropagation(); editLinksButton(question, answer)}}>E</button>
+                                <button onClick={(e) => {e.stopPropagation(); deleteLinksButtonn(answer.id)}}>X</button>
+                            </div>
+                        </>   
+                        ) 
+                    })}
+                    </div>
+                </td>
+            </tr> 
+        )
+    }
+
+    const collapsedRowJSX = (question: QuestionCategory, questionIndex: number) => {
+        return(
+            <tr onClick={() => expandQuestionButton(questionIndex)} key={questionIndex} style={{transition: "all 0.3 ease", border: "1px solid"}}>
+                <td style={{display: "flex", flexDirection: "row", margin: "5px"}}>   
+                    <div style={{border: "1px solid", marginRight: "5px"}}>⮟</div>                                  
+                    {question.question}
+                    
+                </td>
+                {(() => {
+                    const answerCount = question.answers.length;
+                    const mappedCount = question.answers.filter(answer => (answer.categories.length > 0)).length;
+
+                    return(
+                        <td>
+                            {mappedCount} of {answerCount} mapped responses
+                        </td>
+                    );
+                })()}
+                    
+                <td></td>
+                <td></td>
+            </tr> 
+        )
+    }
+
     return (
         <>
-            
-
             {questionList.length > 0 &&
             <div style={{display:"flex", flexDirection: "row", alignItems: "flex-start"}}>
                 <table>
@@ -74,79 +148,15 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
                     </tr>
                     </thead>
                     <tbody>
-                    {questionList.map((question, questionIndex) => {
-                        return( 
-                            !expandedQuestions[questionIndex] ?
-
-                            <tr onClick={() => expandQuestion(questionIndex)} key={questionIndex} style={{border: "1px solid"}}>
-                                <td style={{display: "flex", flexDirection: "row", margin: "5px"}}>   
-                                    <div style={{border: "1px solid", marginRight: "5px"}}>⮝</div>                                  
-                                    {question.question}
-                                    
-                                </td>
-                                {(() => {
-                                    const answerCount = question.answers.length;
-                                    const mappedCount = question.answers.filter(answer => (answer.categories.length > 0)).length;
-
-                                    return(
-                                        <td>
-                                            {mappedCount} of {answerCount} mapped responses
-                                        </td>
-                                    );
-                                })()}
-                                    
-                                <td></td>
-                                <td></td>
-                            </tr>    :
-
-                            <tr onClick={() => collapseQuestion(questionIndex)}  key={questionIndex} style={{border: "1px solid"}}>
-                                <td style={{display: "flex", flexDirection: "row", margin: "5px"}}>   
-                                    <div style={{border: "1px solid", marginRight: "5px"}}>⮟</div>                                  
-                                    {question.question}
-                                    
-                                </td>
-                                <td>
-                                <div style={{display: "flex", flexDirection: "column"}}>   
-                                    {question.answers.map((answer, answerIndex) => {
-                                    return (
-                                        <>                 
-                                        {answer.value}
-                                        <br/>
-                                        </>   
-                                    ) 
-                                    })}
-                                </div>
-                                </td>
-                                <td>
-                                <div style={{display: "flex", flexDirection: "column"}}>   
-                                    {question.answers.map((answer, answerIndex) => {
-                                        return (
-                                        <>                 
-                                            Categories Linked: {answer.categories.length}
-                                            <br/>
-                                        </>   
-                                        ) 
-                                    })}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style={{display: "flex", flexDirection: "column"}}>   
-                                    {question.answers.map((answer, answerIndex) => {
-                                        return (
-                                        <>     
-                                            <div style={{display: "flex", flexDirection: "row", height:"23px"}}>
-                                                
-                                                <button onClick={(e) => {e.stopPropagation(); clickEditLinkButton(question, answer)}}>E</button>
-                                                <button onClick={(e) => {e.stopPropagation(); deleteLinks(answer.id)}}>X</button>
-                                            </div>
-                                        </>   
-                                        ) 
-                                    })}
-                                    </div>
-                                </td>
-                            </tr> 
-                        )
-                    })}
+                    {/* Renders the Question-Response-Category Table - The ternary condition determines if the row is expanded or condensed*/
+                        questionList.map((question, questionIndex) => {
+                            return( 
+                                !expandedQuestions[questionIndex] ?
+                                collapsedRowJSX(question, questionIndex) :
+                                expandedRowJSX(question, questionIndex)
+                            )
+                        })
+                    }
                     </tbody>
                 </table>
             </div>

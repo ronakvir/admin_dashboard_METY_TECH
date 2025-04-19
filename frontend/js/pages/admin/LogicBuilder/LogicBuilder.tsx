@@ -25,29 +25,43 @@ export type Questionnaire_ID_Name = {
   name: string;
 }
 
+export type SelectedQuestion = {
+  id: number;
+  question: string; 
+  answer: { 
+    id: number;
+    value: string; 
+    categories: {
+      id: number;
+      value: string; 
+    } []
+  } 
+}
+
 export interface LogicBuilderStates {
-    questionnaireList:      Questionnaire_ID_Name[];                                                                                                     setQuestionnaireList:      Dispatch<SetStateAction<Questionnaire_ID_Name[]>>;
-    categoryList:           { id: number, category: string }[];                                                                                          setCategoryList:           Dispatch<SetStateAction<{ id: number, category: string }[]>>;
-    questionList:           QuestionCategory[];                                                                                                          setQuestionList:           Dispatch<SetStateAction<QuestionCategory[]>>;
-    selectedLink:           { id: number, question: string, answer: { id: number, value: string, categories: { id: number, value: string }[] } };        setSelectedLink:           Dispatch<SetStateAction<{ id: number, question: string, answer: { id: number, value: string, categories: { id: number, value: string }[] } }>>;
-    linkWorkshop:           boolean;                                                                                                                     setLinkWorkshop:           Dispatch<SetStateAction<boolean>>; 
-    selectedQuestionnaire:  Questionnaire_ID_Name;                                                                                                       setSelectedQuestionnaire:  Dispatch<SetStateAction<Questionnaire_ID_Name>>;
-    expandedQuestions:      boolean[];                                                                                                                   setExpandedQuestions:      Dispatch<SetStateAction<boolean[]>>;
+    questionnaireList:      Questionnaire_ID_Name[];                setQuestionnaireList:      Dispatch<SetStateAction<Questionnaire_ID_Name[]>>;
+    categoryList:           { id: number, category: string }[];     setCategoryList:           Dispatch<SetStateAction<{ id: number, category: string }[]>>;
+    questionList:           QuestionCategory[];                     setQuestionList:           Dispatch<SetStateAction<QuestionCategory[]>>;
+    selectedLink:           SelectedQuestion;                       setSelectedLink:           Dispatch<SetStateAction<SelectedQuestion>>;
+    linkWorkshop:           boolean;                                setLinkWorkshop:           Dispatch<SetStateAction<boolean>>; 
+    selectedQuestionnaire:  Questionnaire_ID_Name;                  setSelectedQuestionnaire:  Dispatch<SetStateAction<Questionnaire_ID_Name>>;
+    expandedQuestions:      boolean[];                              setExpandedQuestions:      Dispatch<SetStateAction<boolean[]>>;
 }
 
 const LogicBuilder: React.FC = () => {
     const [ questionnaireList, setQuestionnaireList ] = useState<Questionnaire_ID_Name[]>([]);
     const [ categoryList, setCategoryList ] = useState([{ id: 0, category: "" }]);
     const [ questionList, setQuestionList ] = useState<QuestionCategory[]>([]);
-    const [ selectedLink, setSelectedLink ] = useState({ id: 0, question: "", answer: { id: 0, value: "", categories: [{ id: 0, value: "" }] } });
-
+    const [ selectedLink, setSelectedLink ] = useState<SelectedQuestion>({} as SelectedQuestion);
     const [ linkWorkshop, setLinkWorkshop ] = useState(false);
     const [ selectedQuestionnaire, setSelectedQuestionnaire ] = useState<Questionnaire_ID_Name>({} as Questionnaire_ID_Name);
     const [ expandedQuestions, setExpandedQuestions ] = useState<boolean[]>([])
 
+
+    // fetch name/ID of questionnaires from the database on page load
     useEffect(() => {
       setQuestionList([]);
-      // fetch name/ID of questionnaires from the database on page load
+      
       const getDatabaseInformation = async () => {
         const tempQuestionnaireList = [{ id: 0, name: "" }];
         tempQuestionnaireList.splice(0, tempQuestionnaireList.length);
@@ -67,6 +81,7 @@ const LogicBuilder: React.FC = () => {
       }
       getDatabaseInformation();
     }, []);
+
 
     return (
       <>
