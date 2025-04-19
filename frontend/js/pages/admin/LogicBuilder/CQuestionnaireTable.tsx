@@ -1,6 +1,8 @@
+import { AnswerLogicPage, QuestionLogicPage } from "../../../api/types.gen";
+import { LogicPageService } from "../../../api/services.gen";
 import { categoryTable, question_questionnaireTable, questionTable, answerTable, answer_categoryMappingTable } from "../../database";
 import CLogicWorkshop from "./CLogicWorkshop";
-import { LogicBuilderStates, QuestionCategory } from "./LogicBuilder"
+import { LogicBuilderStates } from "./LogicBuilder"
 
 const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({ 
     questionnaireList,      setQuestionnaireList,
@@ -13,8 +15,8 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
     
     
     // Opens the edit links component
-    const editLinksButton = (question: QuestionCategory, answer: { id: number; value: string; categories: { id: number; value: string; }[]; }) => {
-        const modifiedQuestion = { id: question.id, question: question.question, answer: answer }
+    const editLinksButton = (question: QuestionLogicPage, answer: AnswerLogicPage) => {
+        const modifiedQuestion = { id: question.id, text: question.text, answer: answer }
         setSelectedLink(modifiedQuestion); 
         setLinkWorkshop(true);
         console.log(JSON.stringify(answer));
@@ -23,26 +25,23 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
     // Delete matching link from the database, update frontend with results.
     const deleteLinksButtonn = (answerID: number) => {
         if (!confirm("Are you sure you would like to delete the links to this response?")) return;
-        // DO API CALL HERE
 
-        // TEMP CODE
-        const tempMappingDatabase = answer_categoryMappingTable;
-        tempMappingDatabase.forEach(( mapping, key ) => {
-        if ( selectedQuestionnaire.id === mapping.questionnaireID && answerID === mapping.answerID) {
-            answer_categoryMappingTable.delete(key);
-        }
-        })
-
-        const tempQuestionList = [ ...questionList ];
-        questionList.forEach((question, questionIndex) => {
-        question.answers.some((answer, answerindex) => {
-            if (answerID === answer.id) {
-            tempQuestionList[questionIndex].answers[answerindex].categories = [];
-            }
-        })
-        })
-        // END TEMP CODE
-        setQuestionList(tempQuestionList);
+        LogicPageService.deleteMapping(selectedQuestionnaire.id, answerID)
+            .then(() => {
+                // Remove the mapping from the list in memory
+                const tempQuestionList = [ ...questionList ];
+                questionList.forEach((question, questionIndex) => {
+                    question.answers.some((answer, answerindex) => {
+                        if (answerID === answer.id) {
+                            tempQuestionList[questionIndex].answers[answerindex].categories = [];
+                        }
+                    })
+                })
+                setQuestionList(tempQuestionList);
+            })
+            .catch( error => {
+                console.log(error);
+            })
     }
 
     const expandQuestionButton = (questionIndex: number) => {
@@ -57,12 +56,12 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
         setExpandedQuestions(tempExpandedQuestions);
     }
 
-    const expandedRowJSX = (question: QuestionCategory, questionIndex: number) => {
+    const expandedRowJSX = (question: QuestionLogicPage, questionIndex: number) => {
         return (   
            <tr onClick={() => collapseQuestionButton(questionIndex)}  key={questionIndex} style={{transition: "all 0.3 ease", border: "1px solid"}}>
                 <td style={{display: "flex", flexDirection: "row", margin: "5px"}}>   
                     <div style={{border: "1px solid", marginRight: "5px"}}>⮝</div>                                  
-                    {question.question}
+                    {question.text}
                     
                 </td>
                 <td>
@@ -70,7 +69,7 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
                     {question.answers.map((answer, answerIndex) => {
                     return (
                         <>                 
-                        {answer.value}
+                        {answer.text}
                         <br/>
                         </>   
                     ) 
@@ -108,12 +107,12 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
         )
     }
 
-    const collapsedRowJSX = (question: QuestionCategory, questionIndex: number) => {
+    const collapsedRowJSX = (question: QuestionLogicPage, questionIndex: number) => {
         return(
             <tr onClick={() => expandQuestionButton(questionIndex)} key={questionIndex} style={{transition: "all 0.3 ease", border: "1px solid"}}>
                 <td style={{display: "flex", flexDirection: "row", margin: "5px"}}>   
                     <div style={{border: "1px solid", marginRight: "5px"}}>⮟</div>                                  
-                    {question.question}
+                    {question.text}
                     
                 </td>
                 {(() => {

@@ -40,23 +40,70 @@ export type PatchedUser = {
   last_login?: string | null;
 };
 
-export type Question = {
-  value: string;
-  order: number;
-  answers: Array<QuestionAnswer>;
-};
-
-export type QuestionAnswer = {
-  value: string;
-  order: number;
-  input: string;
-};
-
 export type Questionnaire = {
   name: string;
   status: string;
-  questions: Array<Question>;
+  questions: Question[];
 };
+
+export type Question = {
+  id: number;
+  text: string;
+  answers: Answer[];
+};
+
+export type Answer = {
+  id: number;
+  text: string;
+};
+
+
+export type QuestionnaireLogicPage = {
+  id: number;
+  title: string;
+};
+
+export type QuestionLogicPage = {
+  id: number;
+  text: string;
+  answers: AnswerLogicPage[];
+};
+
+export type AnswerLogicPage = {
+  id: number;
+  text: string;
+  categories: AnswerCategories[]
+};
+
+export type AnswerCategories = {
+  id: number;
+  text: string;
+  inclusive: boolean;
+}
+export type Category = {
+  id: number;
+  text: string;
+}
+
+export type AnswerCategoryMappingNoID = {
+  questionnaire_id: number;
+  answer_id: number;
+  category_id: number;
+  inclusive: boolean;
+}
+
+export type AddMappingRequest = {
+  requestBody: AnswerCategoryMappingNoID;
+}
+
+
+export type AnswerCategoryMapping = {
+  id: number;
+  questionnaire_id: number;
+  answer_id: number;
+  category_id: number;
+  inclusive: boolean;
+}
 
 export type User = {
   readonly id: number;
@@ -118,6 +165,7 @@ export type UsersRetrieveData = {
   id: number;
 };
 
+
 export type UsersRetrieveResponse = User;
 
 export type UsersUpdateData = {
@@ -172,6 +220,48 @@ export type $OpenApiTs = {
       };
     };
   };
+
+  "/api/logicbuilder/getquestionnaires/": {
+    get: {
+      res: {
+        200: QuestionnaireLogicPage[];
+      };
+    };
+  };
+
+  "/api/logicbuilder/deletemapping/{questionnaire_id}/{answer_id}": {
+    delete: {
+      res: {
+        204: Message;
+      };
+    };
+  };
+
+  "/api/logicbuilder/addmapping/": {
+    post: {
+      req: AnswerCategoryMappingNoID;
+      res: {
+        201: AnswerCategoryMapping;
+      };
+    };
+  };
+
+  "/api/logicbuilder/getcategories/": {
+    get: {
+      res: {
+        200: Category[];
+      };
+    };
+  };
+
+  "/api/logicbuilder/getquestions/{questionnaire_id}": {
+    get: {
+      res: {
+        200: QuestionLogicPage[];
+      };
+    };
+  };
+
   "/api/rest/rest-check/": {
     get: {
       res: {
