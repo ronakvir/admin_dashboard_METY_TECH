@@ -27,7 +27,7 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
 
     // Finalize and create the questionnaire
     const createQuestionnaire = () => {
-        if (currentQuestionnaire.questions.length < 8) {alert("Must attach at least 8 questions!"); return;}
+        //if (currentQuestionnaire.questions.length < 8) {alert("Must attach at least 8 questions!"); return;}
             
         QuestionnaireService.addQuestionnaires(currentQuestionnaire)
             .then( response => {

@@ -58,6 +58,16 @@ export class ApiService {
   }
 }
 
+
+export class DevService {
+  public static resetData(): CancelablePromise<Message> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/resetalldata/",
+    });
+  }  
+}
+
 export class QuestionnaireService {
   public static getQuestionnaires(): CancelablePromise<QuestionnaireFull[]> {
     return __request(OpenAPI, {

@@ -16,4 +16,6 @@ urlpatterns = [
     path('logicbuilder/getcategories/', views.GetCategories.as_view(), name='GetCategories'),
     path('logicbuilder/deletemapping/<int:questionnaire_id>/<int:answer_id>', views.DeleteAnswerCategoryMapping.as_view(), name='DeleteAnswerCategoryMapping'),
     path('logicbuilder/addmapping/', views.AddAnswerCategoryMapping.as_view(), name='AddAnswerCategoryMapping'),
+
+    path('resetalldata/', views.ResetDatabaseData.as_view(), name='ResetDatabaseData'),
 ]
