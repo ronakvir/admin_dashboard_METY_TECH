@@ -1,6 +1,7 @@
 import { useEffect, FC, Dispatch, SetStateAction, useState } from "react";
 import { QuestionnaireStates } from "./QuestionnaireBuilder"
 import { Questionnaire, QuestionnaireFull } from "../../../api/types.gen";
+import { QuestionnaireService } from "../../../api/services.gen";
 
 
 const ComponentList: FC<QuestionnaireStates> = ({ 
@@ -19,6 +20,8 @@ const ComponentList: FC<QuestionnaireStates> = ({
     
     // Updates the filterable list of questionnaires depending on which button they click
     useEffect(() => {
+        console.log("Triggering Use Effect");
+        console.log(JSON.stringify(questionnaires));
         let tempQuestionnaires:QuestionnaireFull[] = [];
         for (let i = 0; i < questionnaires.length; i++) {
             if (questionnaires[i].status === questionnaireVisibility || questionnaireVisibility === "All") {
@@ -28,7 +31,8 @@ const ComponentList: FC<QuestionnaireStates> = ({
         setQuestionnaireList(tempQuestionnaires);
     },[questionnaireVisibility, questionnaires]);
 
-     // Update the questionnaire form fields when we open the workshop view.
+
+    // Update the questionnaire form fields when we open the workshop view.
     useEffect(() => {
         setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
         setQuestionType("multichoice");
@@ -44,15 +48,29 @@ const ComponentList: FC<QuestionnaireStates> = ({
         setPreviewQuestionnaire(true)
     }
 
+    const deleteQuestionnaireButton = (questionnaire_id: number) => {
+        if(!confirm("Are you sure you would like to delete this questionnaire? This action cannot be reversed.")) return;
+        QuestionnaireService.deleteQuestionnaire(questionnaire_id)
+            .then( response => {
+                let index = questionnaires.findIndex( questionnaire => questionnaire_id === questionnaire.id );
+                
+                const tempQuestionnaires = [ ...questionnaires ];
+                tempQuestionnaires.splice(index, 1);
+                setQuestionnaires(tempQuestionnaires);
+            })
+            .catch( error => console.log(error) )
+    }
+
     //let count = 0;
     return (
         <div style={{display: "flex", flexDirection: "column"}}>
             <div style={{display: "flex"}}>
-                <button onClick={() => setQuestionnaireVisibility("All")} >All Questionnaires</button>
-                <button onClick={() => setQuestionnaireVisibility("Template")}>Templates</button>
-                <button onClick={() => setQuestionnaireVisibility("Active")}>Published</button>
+                <button onClick={() => setQuestionnaireVisibility("All")} >All</button>
+                <button onClick={() => setQuestionnaireVisibility("Published")}>Published</button>
                 <button onClick={() => setQuestionnaireVisibility("Draft")}>Drafts</button>
-                <p>Filter</p>
+                <button onClick={() => setQuestionnaireVisibility("Template")}>Templates</button>
+                
+                <label>Filter</label>
                 <input onChange={(value) => setFilter(new RegExp(`.*${value.target.value.toLowerCase()}.*`))}></input>
                 <button onClick={() => setQuestionnaireWorkshop("new")}>Create New</button>
             </div>
@@ -75,6 +93,9 @@ const ComponentList: FC<QuestionnaireStates> = ({
                             </button>
                             <button style={{borderRadius: "10px", justifyContent: "left"}} onClick={ () => previewQuestionnaireButton(questionnaire)} >
                                 Preview
+                            </button>
+                            <button style={{borderRadius: "10px", justifyContent: "left", backgroundColor: "lightcoral", color: "black"}} onClick={ () => deleteQuestionnaireButton(questionnaire.id)} >
+                                Delete
                             </button>
                         </div>
                     )

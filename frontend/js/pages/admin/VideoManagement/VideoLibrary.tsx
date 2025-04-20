@@ -1,30 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ComponentVideoSearch from "./ComponentVideoSearch"
 import ComponentWorkshop from "./ComponentWorkshop";
-
-export type SearchFields = {
-  title: string;
-  duration: string;
-  category: string;
-}
-export type VideoData = {
-  id: number;
-  title: string;
-  description: string;
-  duration: string;
-  categories: {
-    id: number; 
-    category: string;
-  }[];
-}
+import { Category, VideoData, VideoSearchFields } from "../../../api/types.gen";
+import { LogicPageService } from "../../../api/services.gen";
 
 
 const VideoLibrary: React.FC = () => {
+  const [ searchFields, setSearchfields ] = useState<VideoSearchFields>({title: "", duration: "", category: ""});
+  const [ videoList, setVideoList ] = useState<VideoData[]>([]);
+  const [ selectedVideo, setSelectedVideo ] = useState({id: 0, title: "", description: "", duration: "", categories: [{ id: 0, text: "" }]});
+  const [ videoWorkshop, setVideoWorkshop ] = useState<string>("");
+  const [ categoryList, setCategoryList ] = useState<Category[]>([]);
 
-  const [searchFields, setSearchfields] = useState<SearchFields>({title: "", duration: "", category: ""});
-  const [videoList, setVideoList] = useState<VideoData[]>([]);
-  const [selectedVideo, setSelectedVideo] = useState({id: 0, title: "", description: "", duration: "", categories: [{ id: 0, category: "" }]});
-  const [videoWorkshop, setVideoWorkshop] = useState<string>("");
+  useEffect (() => {
+    LogicPageService.getCategories()
+      .then( response => setCategoryList(response) )
+      .catch( error => console.log(error) )
+  }, [])
 
   return (
     <>
@@ -36,12 +28,14 @@ const VideoLibrary: React.FC = () => {
             videoList={videoList} setVideoList={setVideoList}
             selectedVideo={selectedVideo} setSelectedVideo={setSelectedVideo}
             videoWorkshop={videoWorkshop} setVideoWorkshop={setVideoWorkshop}
+            categoryList={categoryList} setCategoryList={setCategoryList}
           /> :
           <ComponentWorkshop 
             searchFields={searchFields} setSearchFields={setSearchfields}
             videoList={videoList} setVideoList={setVideoList}
             selectedVideo={selectedVideo} setSelectedVideo={setSelectedVideo}
             videoWorkshop={videoWorkshop} setVideoWorkshop={setVideoWorkshop}
+            categoryList={categoryList} setCategoryList={setCategoryList}
           />
       }
 

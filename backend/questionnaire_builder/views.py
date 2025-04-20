@@ -5,10 +5,11 @@ from rest_framework import generics, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Answer, AnswerCategoryMapping, Category, Question, Questionnaire, QuestionnaireQuestion, Video, VideoCategory
-from .serializers import AnswerCategoryMappingSerializer, CategorySerializer, QuestionSerializer, QuestionWithAnswersAndCategoriesSerializer, QuestionnaireForLogicPageSerializer, QuestionnaireSerializer, VideoSerializer, answerFilterSerializer
+from .serializers import AnswerCategoryMappingSerializer, CategorySerializer, GetVideoWithCategoriesSerializer, QuestionSerializer, QuestionWithAnswersAndCategoriesSerializer, QuestionnaireForLogicPageSerializer, QuestionnaireSerializer, VideoSerializer, answerFilterSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.db import connection, transaction
 from rest_framework import serializers
+from django.db.models import Subquery, Count, Q
 
 # QUESTIONNAIRE PAGE
 # class AddQuestionnaire(generics.CreateAPIView):
@@ -24,44 +25,60 @@ from rest_framework import serializers
 
 
 # QUESTIONNAIRE PAGE
+
+# Create new Questionnaire Record - Propogates to question
 class CreateQuestionnaire(APIView):
     def post(self, request):
-
-        serializedData = QuestionnaireSerializer(data=request.data)
+        serializedData = QuestionnaireSerializer(data = request.data)
         if serializedData.is_valid():
-            questionnaire = self.save_full_questionnaire(request.data)
-            responseData = QuestionnaireSerializer(questionnaire).data
-            return Response(responseData, status=status.HTTP_201_CREATED)
+            questionnaire_id = request.data.get("id")
+            # Modify Existing Record
+            if questionnaire_id != 0:
+                oldQuestionnaire = Questionnaire.objects.get(id=questionnaire_id)
+                self.modifyQuestionnaire(request.data, oldQuestionnaire)
+                return Response({"id": questionnaire_id}, status=status.HTTP_204_NO_CONTENT)
+            # Create New Record
+            else:
+                questionnaire_id = self.createQuestionnaire(request.data)
+                return Response({"id": questionnaire_id}, status=status.HTTP_201_CREATED)
         return Response({ "detail": "Invalid Data", "errors": serializedData.errors }, status=status.HTTP_400_BAD_REQUEST)
    
-    def save_full_questionnaire(self, data):
-        print("TESTING")
-        print(data)
+    def createQuestionnaire(self, questionnaireData):
+        # Create Questionnaire Record
         questionnaire = Questionnaire.objects.create(
-            title=data["title"],
-            status=data["status"],
-            started=data["started"],
-            completed=data["completed"],
-            last_modified=data["last_modified"]
+            title = questionnaireData["title"],
+            status = questionnaireData["status"],
+            started = questionnaireData["started"],
+            completed = questionnaireData["completed"],
+            last_modified = questionnaireData["last_modified"]
         )
-
-        for question_data in data["questions"]:
-            question = Question.objects.create(
-                text=question_data["text"],
-                type=question_data["type"]
-            )
-
+        # Create Mapping Records
+        for question_id in questionnaireData["questions"]:
+            question = Question.objects.get(id = question_id)
             QuestionnaireQuestion.objects.create(
                 questionnaire=questionnaire,
                 question=question
             )
+        return questionnaire.id
+    
+    def modifyQuestionnaire(self, newData, oldQuestionnaire):
+        
+        oldQuestionnaire.title=newData["title"]
+        oldQuestionnaire.status=newData["status"]
+        oldQuestionnaire.started=newData["started"]
+        oldQuestionnaire.completed=newData["completed"]
+        oldQuestionnaire.last_modified=newData["last_modified"]
+        oldQuestionnaire.save()
 
-            for answer_data in question_data["answers"]:
-                Answer.objects.create(
-                    question=question,
-                    text=answer_data["text"]
-                )
-        return questionnaire
+        oldQuestionnaire.questionnairequestion_set.all().delete()
+
+        # Create Mapping Records
+        for question_id in newData["questions"]:
+            question = Question.objects.get(id = question_id)
+            QuestionnaireQuestion.objects.create(
+                questionnaire=oldQuestionnaire,
+                question=question
+            )
     
 class CreateQuestion(APIView):
     def post(self, request):
@@ -69,8 +86,6 @@ class CreateQuestion(APIView):
         if serializedData.is_valid():
             question_id = request.data.get("id")
             if question_id != 0:
-                print("WHAT ")
-                print(question_id)
                 oldQuestion = Question.objects.get(id=question_id)
                 question = self.modifyQuestion(request.data, oldQuestion)
                 responseData = QuestionSerializer(question).data
@@ -123,6 +138,13 @@ class getQuestionnaires(APIView):
         matchingRows = Questionnaire.objects.all()
         data = QuestionnaireSerializer(matchingRows, many=True).data
         return Response(data, status=status.HTTP_200_OK)
+    
+class DeleteQuestionnaire(APIView):
+    def delete(self, request, id):
+        deleted = Questionnaire.objects.get(id=id).delete()
+        if deleted:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({ "detail": "Not Found" }, status=status.HTTP_404_NOT_FOUND)
 
 class getQuestions(APIView):
     def get(self, request):
@@ -130,25 +152,56 @@ class getQuestions(APIView):
         data = QuestionSerializer(matchingRows, many=True).data
         return Response(data, status=status.HTTP_200_OK)
 
-class getVideosFromPreview(APIView):
+class getVideosForPreview(APIView):
     def post(self, request):
-        serializedData = answerFilterSerializer(data=request.data)
-        if serializedData.is_valid():
-            inclusive = serializedData.validated_data.get("inclusive", [])
-            exclusive = serializedData.validated_data.get("exclusive", [])
+        #serializedData = answerFilterSerializer(data=request.data)
+        # if serializedData.is_valid():
 
-            matchingRows = AnswerCategoryMapping.objects.filter(id__in=inclusive).exclude(id__in=exclusive)
-            categories = [row.category for row in matchingRows]
-            videoCats = VideoCategory.objects.filter(category__in=categories)
-            videoData = [row.video for row in videoCats]
+        answerCategoryRows = AnswerCategoryMapping.objects.filter(
+            questionnaire_id = request.data.get("questionnaire_id"), 
+            answer_id__in = request.data.get("answer_ids")
+        )
 
-            data = VideoSerializer(videoData, many=True).data
-            return Response(data, status=status.HTTP_200_OK)
+        includedCategoryIDs = list(
+            answerCategoryRows.filter(inclusive=True).values_list("category_id", flat=True)
+        )
+        
+        rankedVideos = (
+            Video.objects
+            .filter(videocategory__category_id__in = includedCategoryIDs)
+            .annotate(count = Count(
+                "videocategory__category_id",
+                filter=Q(videocategory__category_id__in = includedCategoryIDs),
+                distinct=True
+            ))
+            .order_by('-count')
+        )
+        responseData = []
+        print(rankedVideos)
+        for video in rankedVideos:
+            responseData.append({
+                "id": video.id,
+                "title": video.title,
+                "duration": video.duration,
+                "description": video.description,
+                "count": video.count
+            }) 
+
+        return Response(responseData, status=status.HTTP_200_OK)
 
 # QUESTIONNAIRE PAGE END
 
 
-# LOGIC PAGE
+
+
+
+
+
+
+
+
+
+# LOGIC BUILDER PAGE
 class GetQuestionnaireForLogicPage(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
@@ -175,7 +228,9 @@ class DeleteAnswerCategoryMapping(APIView):
         if deleted:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response({ "detail": "Not Found" }, status=status.HTTP_404_NOT_FOUND)
-    
+
+# Create New Answer-Category Mapping record
+# Input Data Structure: ('id', 'questionnaire_id', 'answer_id', 'category_id', 'inclusive')
 class AddAnswerCategoryMapping(APIView):
     def post(self, request):
         serializedData = AnswerCategoryMappingSerializer(data=request.data)
@@ -183,7 +238,111 @@ class AddAnswerCategoryMapping(APIView):
             serializedData.save()
             return Response(serializedData.data, status=status.HTTP_201_CREATED)
         return Response({ "detail": "Invalid Data", "errors": serializedData.errors }, status=status.HTTP_400_BAD_REQUEST)
-# LOGIC PAGE
+# LOGIC BUILDER PAGE
+
+
+
+
+
+
+
+
+
+
+# VIDEO MANAGEMENT PAGE START
+
+class GetVideos(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, title, duration, category):
+        
+        title = "" if title == "_" else title
+        duration = "" if duration == "_" else duration
+        category = "" if category == "_" else category
+
+        categoryRows = Category.objects.filter(text__iregex=fr".*{category}.*")
+        video_ids = VideoCategory.objects.filter(category__in=categoryRows).values_list("video_id", flat=True).distinct()
+
+        videos = Video.objects.filter(id__in=video_ids, title__iregex=fr".*{title}.*", duration__iregex=fr".*{duration}.*")
+
+        responseData = GetVideoWithCategoriesSerializer(videos, many=True).data
+        return Response(responseData, status=status.HTTP_200_OK)
+    
+
+class DeleteVideo(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self, request, id):
+        deleted = Video.objects.get(id=id).delete()
+
+        if deleted:
+            return Response({"message": "Successfully Deleted Video"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Failed Action"}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class CreateVideo(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        serializedData = VideoSerializer(data=request.data)
+        if serializedData.is_valid():
+            videoData = request.data
+            if videoData["id"] != 0:
+                videoID = self.modifyVideo(videoData)
+                return Response({"id": videoID}, status=status.HTTP_201_CREATED)
+            else:
+                videoID = self.createVideo(videoData)
+                return Response({"id": videoID}, status=status.HTTP_201_CREATED)
+        return Response({ "detail": "Failed to Create Video" }, status=status.HTTP_400_BAD_REQUEST)
+
+    def createVideo(self, videoData):
+        video = Video.objects.create(
+            title = videoData["title"],
+            duration = videoData["duration"],
+            description = videoData["description"]
+        )
+
+
+        for categoryData in videoData["categories"]:
+            try:
+                categoryRow = Category.objects.get(text = categoryData["text"])
+            except:
+                categoryRow = Category.objects.create(text = categoryData["text"])
+
+            VideoCategory.objects.create(
+                video = video,
+                category = categoryRow
+            )
+
+        return video.id
+    
+    def modifyVideo(self, videoData):
+        Video.objects.filter(id = videoData["id"]).update(
+            title = videoData["title"],
+            duration = videoData["duration"],
+            description = videoData["description"]
+        )
+        originalVideo = Video.objects.get(id = videoData["id"])
+        originalVideo.videocategory_set.all().delete()
+
+        for categoryData in videoData["categories"]:
+            try:
+                categoryRow = Category.objects.get(text = categoryData["text"])
+            except:
+                categoryRow = Category.objects.create(text = categoryData["text"])
+
+            VideoCategory.objects.create(
+                video = originalVideo,
+                category = categoryRow
+            )
+
+        return originalVideo.id
+
+
+# VIDEO MANAGEMENT PAGE END
+
+
+
+
+
+
 
 
 
@@ -296,16 +455,16 @@ class DataStorage:
 
 
     questionnaireData = [
-        {"title": "Beginner Full-Body Assessment", "status": "active", "started": 120, "completed": 95, "last_modified": timezone.now()},
-        {"title": "Cardio Readiness Survey", "status": "active", "started": 80, "completed": 60, "last_modified": timezone.now()},
-        {"title": "Strength Training Preferences", "status": "inactive", "started": 45, "completed": 30, "last_modified": timezone.now()},
-        {"title": "Flexibility & Mobility Check", "status": "active", "started": 70, "completed": 55, "last_modified": timezone.now()},
-        {"title": "Upper Body Focus Questionnaire", "status": "inactive", "started": 35, "completed": 25, "last_modified": timezone.now()},
-        {"title": "Lower Body Focus Questionnaire", "status": "active", "started": 60, "completed": 50, "last_modified": timezone.now()},
-        {"title": "Posture & Core Stability Assessment", "status": "active", "started": 90, "completed": 75, "last_modified": timezone.now()},
-        {"title": "HIIT Program Fit Survey", "status": "inactive", "started": 40, "completed": 28, "last_modified": timezone.now()},
-        {"title": "Recovery & Rest Habits", "status": "active", "started": 65, "completed": 58, "last_modified": timezone.now()},
-        {"title": "Pre-Workout Nutrition Check", "status": "active", "started": 50, "completed": 40, "last_modified": timezone.now()},
+        {"title": "Beginner Full-Body Assessment", "status": "Published", "started": 120, "completed": 95, "last_modified": timezone.now()},
+        {"title": "Cardio Readiness Survey", "status": "Published", "started": 80, "completed": 60, "last_modified": timezone.now()},
+        {"title": "Strength Training Preferences", "status": "Draft", "started": 45, "completed": 30, "last_modified": timezone.now()},
+        {"title": "Flexibility & Mobility Check", "status": "Published", "started": 70, "completed": 55, "last_modified": timezone.now()},
+        {"title": "Upper Body Focus Questionnaire", "status": "Draft", "started": 35, "completed": 25, "last_modified": timezone.now()},
+        {"title": "Lower Body Focus Questionnaire", "status": "Published", "started": 60, "completed": 50, "last_modified": timezone.now()},
+        {"title": "Posture & Core Stability Assessment", "status": "Published", "started": 90, "completed": 75, "last_modified": timezone.now()},
+        {"title": "HIIT Program Fit Survey", "status": "Draft", "started": 40, "completed": 28, "last_modified": timezone.now()},
+        {"title": "Recovery & Rest Habits", "status": "Published", "started": 65, "completed": 58, "last_modified": timezone.now()},
+        {"title": "Pre-Workout Nutrition Check", "status": "Template", "started": 50, "completed": 40, "last_modified": timezone.now()},
     ]
 
     questionQuestionnaireMappings = [
@@ -464,7 +623,6 @@ class DataStorage:
         {"questionnaire_id": 1, "answer_id": 36, "category_id": 9, "inclusive": False},
     ]
 
-
 class ResetDatabaseData(APIView):
 
     # Insert into database
@@ -498,7 +656,7 @@ class ResetDatabaseData(APIView):
                             question = questionRow, 
                             text = answer
                         )
-                    #question = Question.objects.get(id=1000)
+
                         
                 for questionnaire in DataStorage.questionnaireData:
                     Questionnaire.objects.create(

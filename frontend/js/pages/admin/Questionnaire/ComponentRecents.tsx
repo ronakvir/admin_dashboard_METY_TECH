@@ -1,6 +1,7 @@
 import { Dispatch, FC, SetStateAction, useEffect} from "react";
 import { QuestionnaireStates } from "./QuestionnaireBuilder"
 import { QuestionnaireFull } from "../../../api/types.gen";
+import { QuestionnaireService } from "../../../api/services.gen";
 
 
 
@@ -54,7 +55,7 @@ const ComponentRecents: FC<QuestionnaireStates> = ({
         setRecentQuestionnaires(tempRecentQuestionnaires);
     }
 
-    const editQuestionnaire = (questionnaire: QuestionnaireFull) => {
+    const editQuestionnaireButton = (questionnaire: QuestionnaireFull) => {
         setQuestionnaireWorkshop("modify");
         setCurrentQuestionnaire(questionnaire);
     }
@@ -62,6 +63,23 @@ const ComponentRecents: FC<QuestionnaireStates> = ({
     const previewQuestionnaireButton = (questionnaire: QuestionnaireFull) => {
         setCurrentQuestionnaire(questionnaire);
         setPreviewQuestionnaire(true)
+    }
+
+    const deleteQuestionnaireButton = (questionnaire_id: number) => {
+        if(!confirm("Are you sure you would like to delete this questionnaire? This action cannot be reversed.")) return;
+        QuestionnaireService.deleteQuestionnaire(questionnaire_id)
+            .then( response => {
+               
+
+                let index = questionnaires.findIndex( questionnaire => questionnaire_id === questionnaire.id );
+                
+                console.log("Index: " + index);
+                console.log("Length: " + questionnaires.length);
+                const tempQuestionnaires = [ ...questionnaires ];
+                tempQuestionnaires.splice(index, 1);
+                setQuestionnaires(tempQuestionnaires);
+            })
+            .catch( error => console.log(error) )
     }
 
     // The Questionnaire Cards
@@ -73,14 +91,17 @@ const ComponentRecents: FC<QuestionnaireStates> = ({
                     return recentQuestionnaires.map((questionnaire, index) => {
                         return  (
                             <div style={{width: "200px", height: "225px", backgroundColor: "lightgrey", borderRadius: "15px", overflow: "hidden", margin: "5px", padding: "10px"}}>
-                            <h3>{questionnaire.title}</h3>
-                            <p>{questionnaire.questions.length} questions - {questionnaire.status} - {questionnaire.completed} responses</p>
-                            <button onClick={ () => editQuestionnaire(questionnaire) }>
-                                Edit
-                            </button>
-                            <button onClick={ () => previewQuestionnaireButton(questionnaire)} >
-                                Preview
-                            </button>
+                                <h3>{questionnaire.title}</h3>
+                                <p>{questionnaire.questions.length} questions - {questionnaire.status} - {questionnaire.completed} responses</p>
+                                <button style={{borderRadius: "10px", justifyContent: "left"}} onClick={ () => editQuestionnaireButton(questionnaire) }>
+                                    Edit
+                                </button>
+                                <button style={{borderRadius: "10px", justifyContent: "left"}} onClick={ () => previewQuestionnaireButton(questionnaire)} >
+                                    Preview
+                                </button>
+                                <button style={{borderRadius: "10px", justifyContent: "left", backgroundColor: "lightcoral", color: "black"}} onClick={ () => deleteQuestionnaireButton(questionnaire.id)} >
+                                    Delete
+                                </button>
                             </div>
                         );
                     })
