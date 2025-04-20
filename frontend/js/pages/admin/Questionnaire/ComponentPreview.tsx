@@ -1,6 +1,8 @@
 import { useEffect, FC, Dispatch, SetStateAction, useState } from "react";
 import { QuestionnaireStates } from "./QuestionnaireBuilder"
 import { answer_categoryMappingTable, categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
+import { QuestionnaireService } from "../../../api/services.gen";
+import { VideoCount } from "../../../api/types.gen";
 
 
 const ComponentPreview: FC<QuestionnaireStates> = ({ 
@@ -18,7 +20,7 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
 
     const [tempSliderValue, setTempSliderValue] = useState(50);
     const [qResponses, setQResponses] = useState<number[]>(new Array(currentQuestionnaire.questions.length));
-    const [matchedVideos, setMatchedVideos] = useState<{id: Number, title: string, duration: string, description: string}[]>([]);
+    const [matchedVideos, setMatchedVideos] = useState<VideoCount[]>([]);
 
     const returnToDashboard = () => {
         setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
@@ -34,40 +36,50 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
     const submitAnswers = () => {
         const tempMatched: number[] = [];
 
-        answer_categoryMappingTable.forEach((mapping) => {
-            if (currentQuestionnaire.id !== mapping.questionnaireID) return;
-            qResponses.forEach((responseID) => {
-                if (responseID !== mapping.answerID) return;
-                tempMatched.push(mapping.categoryID);
+        const requestData = {
+            questionnaire_id: currentQuestionnaire.id,
+            answer_ids: qResponses
+        }
+        QuestionnaireService.getVideos(requestData)
+            .then( response => {
+                setMatchedVideos(response)
             })
-        })
-        const tempVideoIDs: number[] = [];
-        videoCategoriesMappingTable.forEach((mapping) => {
-            tempMatched.forEach((catID) => {
-                if (catID === mapping.categoryID) {
-                    tempVideoIDs.push(mapping.videoID);
-                }
-            })
-        })
+            .catch( error => console.log(error) )
+
+        // answer_categoryMappingTable.forEach((mapping) => {
+        //     if (currentQuestionnaire.id !== mapping.questionnaireID) return;
+        //     qResponses.forEach((responseID) => {
+        //         if (responseID !== mapping.answerID) return;
+        //         tempMatched.push(mapping.categoryID);
+        //     })
+        // })
+        // const tempVideoIDs: number[] = [];
+        // videoCategoriesMappingTable.forEach((mapping) => {
+        //     tempMatched.forEach((catID) => {
+        //         if (catID === mapping.categoryID) {
+        //             tempVideoIDs.push(mapping.videoID);
+        //         }
+        //     })
+        // })
 
 
-        // Creating an array with unique values, ordered by most appearing value.
-        const freqMap = new Map<number, number>();
-        tempVideoIDs.forEach(num => {
-            freqMap.set(num, (freqMap.get(num) || 0) + 1);
-        });
+        // // Creating an array with unique values, ordered by most appearing value.
+        // const freqMap = new Map<number, number>();
+        // tempVideoIDs.forEach(num => {
+        //     freqMap.set(num, (freqMap.get(num) || 0) + 1);
+        // });
         
-        const uniqueVideos = [...new Set(tempVideoIDs)];
-        uniqueVideos.sort((a, b) => (freqMap.get(b)! - freqMap.get(a)!));
+        // const uniqueVideos = [...new Set(tempVideoIDs)];
+        // uniqueVideos.sort((a, b) => (freqMap.get(b)! - freqMap.get(a)!));
 
 
 
-        const tempVideos = [{ id: 0, title: '', duration: '', description: '' }]
-        tempVideos.splice(0, 1);
-        uniqueVideos.forEach((videoID) => {
-            tempVideos.push({id: videoID, title: videoTable.get(videoID)?.title as string, duration: videoTable.get(videoID)?.duration as string, description: videoTable.get(videoID)?.description as string});
-        })
-        setMatchedVideos(tempVideos);
+        // const tempVideos = [{ id: 0, title: '', duration: '', description: '' }]
+        // tempVideos.splice(0, 1);
+        // uniqueVideos.forEach((videoID) => {
+        //     tempVideos.push({id: videoID, title: videoTable.get(videoID)?.title as string, duration: videoTable.get(videoID)?.duration as string, description: videoTable.get(videoID)?.description as string});
+        // })
+        // setMatchedVideos(tempVideos);
     }
 
     return (
@@ -96,7 +108,7 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                                             return (
                                                 <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
                                                     <input onChange={() => updateResponses(answer, index)} type="radio" name={question.text} value={answer.text} />
-                                                    <label htmlFor={question?.text}>{answer.text}</label>
+                                                    <label htmlFor={question?.text}>{answer.text} - id: {answer.id}</label>
                                                 </div>
                                             )
                                      
@@ -126,7 +138,7 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                         return (
                         <>
                             <p>
-                                {index+1}: {video.title}
+                                {index+1} ({video.count}): {video.title}
                             </p>
                         </> 
                         )

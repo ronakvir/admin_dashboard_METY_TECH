@@ -132,6 +132,7 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ('id', 'text')
 
+
 class AnswerCategoryMappingSerializer(serializers.ModelSerializer):
     questionnaire_id = serializers.PrimaryKeyRelatedField(
         queryset=Questionnaire.objects.all(),
@@ -150,3 +151,24 @@ class AnswerCategoryMappingSerializer(serializers.ModelSerializer):
         model = AnswerCategoryMapping
         fields = ('id', 'questionnaire_id', 'answer_id', 'category_id', 'inclusive')
 # LOGIC BUILDER PAGE
+
+
+# Video MANAGEMENT PAGE START
+
+class GetVideoWithCategoriesSerializer(serializers.ModelSerializer):
+    categories = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Video
+        fields = ('id', 'title', 'duration', 'description', 'categories')
+
+    def get_categories(self, video):
+        videoCategories = video.videocategory_set.select_related("category").all()
+        categories = [row.category for row in videoCategories]
+        return CategorySerializer(categories, many=True).data
+
+class VideoSerializer(serializers.ModelSerializer):
+    categories = CategorySerializer(many=True)
+    class Meta:
+        model = Video
+        fields = ('id', 'title', 'duration', 'description', 'categories')

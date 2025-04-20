@@ -31,21 +31,21 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
 
         <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
 
-            <div style={{display: "flex", flexDirection: "column", gap: "5px", justifyContent: "left"}}>
+            <div style={{display: "flex", flexDirection: "column", gap: "5px", justifyContent: "left", flex: 1}}>
                 {/* This is the "Add Question" form field section */}
                 <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
-                    <h4 style={{display: "flex", justifyContent: "left"}}>Add {questionType} Question</h4>
-                    <button style={{display: "inline", maxWidth: "100"}} onClick={() => setQuestionType("")}>Cancel</button>
+                    <h4 style={{display: "flex", justifyContent: "left", width: "300px"}}>{questionType} Question</h4>
+                    <button style={{display: "inline", flex: 1, height: "auto"}} onClick={() => setQuestionType("")}>Cancel</button>
                 </div>
-                <input onChange={(value) => setQuestionForms({ ...questionForms, text: value.target.value })} name="question" style={{display: "inline", width: "200px"}} type="text" placeholder="Question" value={questionForms.text} />
+                <input onChange={(value) => setQuestionForms({ ...questionForms, text: value.target.value })} name="question" style={{display: "inline", width: "100%", height: "auto"}} type="text" placeholder="Question" value={questionForms.text} />
                 
                 { // This checks if the button clicked was a checkbox or multichoice type question card and displays the fields accordingly
                     (questionType === "checkbox" || questionType === "multichoice") && (
                     <>
-                        <button style={{width: "300px"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, {id: 0, text: ""}] })}>Add Answer</button>
+                        <button style={{width: "100%", height: "auto"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, {id: 0, text: ""}] })}>Add Answer</button>
                         {questionForms.answers.map((answer, index) =>(
-                            <div style={{display: "flex", flexDirection:"row"}} key={index}>
-                                <input onChange={(e) => addAnswerField(index, e.target.value)} name="answer" style={{display: "inline", maxWidth: "200px"}} type="text" placeholder="Answer" value={questionForms.answers[index].text} />
+                            <div style={{display: "flex", flexDirection:"row", width: "100%", height: "auto"}} key={index}>
+                                <input onChange={(e) => addAnswerField(index, e.target.value)} name="answer" type="text" placeholder="Answer" value={questionForms.answers[index].text} style={{flex: 1}}/>
                                 <button onClick={async () => removeAnswerField(index)}>X</button>
                             </div>
                         ))}
@@ -55,76 +55,73 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                 {/* This builds the question viewer with the items you can select */}
                 {questionIsSelected ? 
                     <>
-                        <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => modifyQuestion()}>Modify Question</button>
-                        <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => deleteQuestion()}>Delete Question</button>
+                        <button style={{display: "inline", width: "100%"}} onClick={async () => modifyQuestion()}>Modify Question</button>
+                        <button style={{display: "inline", width: "100%"}} onClick={async () => deleteQuestion()}>Delete Question</button>
                     </> :
                     <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => addQuestion()}>Add Question</button>
                 }
                 
             </div>
 
-            {/* This is the question preview box */}
-            <div style={{display: "grid", flexWrap: "nowrap", gridTemplateColumns: "repeat(1, minmax(160px, 1fr))", gap: "10px"}}>
-                <div style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
-                    <h5>{questionForms.text}</h5>
+            {/* This builds the question viewer with the items you can select */}
+            <div style={{display: "flex", flexDirection: "column", flex: 1}}>
+                <div style={{display: "flex", flexDirection: "row"}}>
+                    <h4>Questions</h4>
+                    {questionnaireWorkshop !== "" ? <button onClick={() => addToQuestionnaire()}style={{width: "100%", height: "auto"}}>Add to Questionnaire</button> : <></>}
+                </div>
+                <div style={{height: "300px", width: "100%", gap: "5px", justifyContent: "right", borderStyle: "solid", borderColor: "black", overflowY: "auto"}}>
                     { (() => {
-                        let type = questionForms.type;
-                        if (type === "slider") {
-                            return <input type="range" style={{width: "100%", padding: "20px", }} onChange={() => ""}/>;
-                        }
-                        else if (type === "text") {
-                            return <input style={{height: "auto", width: "100%", padding: "5px 10px", }}></input>;
-                        }
-                        else {
-                            return questionForms.answers.map((answer, index) => {
-                                if (type === "multichoice") {
-                                    return (
-                                        <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                            <input type="radio" name={questionForms.text} value={answer.text} />
-                                            <label htmlFor={questionForms.text}>{answer.text}</label>
-                                        </div>
-                                    )
-                                
-                                }
-                                else if (type === "checkbox") {
-                                    return (
-                                        <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                                            <input type="checkbox" name={questionForms.text} value={answer.text} />
-                                            <label htmlFor={questionForms.text}>{answer.text}</label>
-                                        </div>
-                                    )
-                                
-                                }
-                            })
-                        }
+                        return questions.map((question) => {
+                            if (question.type !== questionType) return;
+                            return (
+                            <div className="questionRow" onClick={() => selectQuestion(question)} style={{margin: "5px", height: "20px", backgroundColor: questionForms.id === question.id ? "grey" : "white", overflow: "hidden", textOverflow: "ellipses", whiteSpace: "nowrap"}}>
+                                {question.text}
+                            </div>
+                            );
+                        })
                     })()}
                 </div>
+                
             </div>
 
-            {/* This builds the question viewer with the items you can select */}
-            <div style={{height: "250px", width: "300px", gap: "5px", justifyContent: "right", borderStyle: "solid", borderColor:"black"}}>
-            <table>
-                <thead>
-                <tr>
-                    <th>Question</th>
-                </tr>
-                </thead>
-                <tbody style={{overflowY: "auto"}}>
-                { (() => {
-
-                return questions.map((question) => {
-                    if (question.type !== questionType) return;
-                    return (
-                    <tr className="questionRow" onClick={() => selectQuestion(question)} style={{height: "20px", backgroundColor: questionForms.id === question.id ? "grey" : "white"}}>
-                        <td style={{justifyContent: "left"}}>{question.text}</td>
-                    </tr>
-                    );
-                })
-                })()}
-
-                </tbody>
-            </table>
-            {questionnaireWorkshop !== "" ? <button onClick={() => addToQuestionnaire()}>Add to Questionnaire</button> : <></>}
+            {/* This is the question preview box */}
+            <div style={{display: "flex", flexDirection: "column", flex: 1}}>
+                <h4>Preview</h4>
+                <div style={{display: "grid", flexWrap: "nowrap", gridTemplateColumns: "repeat(1, minmax(160px, 1fr))", gap: "10px", width: "100%", height: "300px"}}>
+                    <div style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
+                        <h5>{questionForms.text}</h5>
+                        { (() => {
+                            let type = questionForms.type;
+                            if (type === "slider") {
+                                return <input type="range" style={{width: "100%", padding: "20px", }} onChange={() => ""}/>;
+                            }
+                            else if (type === "text") {
+                                return <input style={{height: "auto", width: "100%", padding: "5px 10px", }}></input>;
+                            }
+                            else {
+                                return questionForms.answers.map((answer, index) => {
+                                    if (type === "multichoice") {
+                                        return (
+                                            <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
+                                                <input type="radio" name={questionForms.text} value={answer.text} />
+                                                <label htmlFor={questionForms.text}>{answer.text}</label>
+                                            </div>
+                                        )
+                                    
+                                    }
+                                    else if (type === "checkbox") {
+                                        return (
+                                            <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
+                                                <input type="checkbox" name={questionForms.text} value={answer.text} />
+                                                <label htmlFor={questionForms.text}>{answer.text}</label>
+                                            </div>
+                                        )
+                                    }
+                                })
+                            }
+                        })()}
+                    </div>
+                </div>
             </div>
         </div>
         )

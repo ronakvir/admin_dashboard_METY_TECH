@@ -41,9 +41,13 @@ export type PatchedUser = {
 };
 
 export type Questionnaire = {
-  name: string;
+  id: number;
+  title: string;
   status: string;
-  questions: Question[];
+  completed: number;
+  started: number;
+  last_modified: string;
+  questions: number[];
 };
 
 export type Question = {
@@ -83,6 +87,23 @@ export type Answer = {
   text: string;
 };
 
+export type VideoSearchFields = {
+  title: string;
+  duration: string;
+  category: string;
+}
+
+export type VideoData = {
+  id: number;
+  title: string;
+  description: string;
+  duration: string;
+  categories: {
+    id: number; 
+    text: string;
+  }[];
+}
+
 
 export type QuestionnaireLogicPage = {
   id: number;
@@ -112,11 +133,12 @@ export type Category = {
 }
 
 
-export type VideoSimple = {
+export type VideoCount = {
   id: number;
   title: string;
   duration: string;
   description: string;
+  count: number;
 }
 
 export type FilterByIDs = {
@@ -252,6 +274,39 @@ export type $OpenApiTs = {
     };
   };
 
+  "/api/resetalldata/": {
+    get: {
+      res: {
+        204: Message[];
+      };
+    };
+  };
+
+  "/api/videomanagement/getvideos/{title}/{duration}/{category}": {
+    post: {
+      res: {
+        200: VideoData[];
+      };
+    };
+  };
+
+  "/api/videomanagement/deletevideo/{id}": {
+    post: {
+      res: {
+        204: Message;
+      };
+    };
+  };
+
+  "/api/videomanagement/createvideo/": {
+    post: {
+      req: VideoData;
+      res: {
+        201: {id: number};
+      };
+    };
+  };
+  
 
   "/api/questionnairebuilder/getquestionnaires/": {
     get: {
@@ -261,11 +316,19 @@ export type $OpenApiTs = {
     };
   };
 
-  "/api/questionnairebuilder/addquestionnaire/": {
+  "/api/questionnairebuilder/createquestionnaire/": {
     post: {
-      req: QuestionnaireFull;
+      req: Questionnaire;
       res: {
-        201: QuestionnaireFull;
+        201: {id: number};
+      };
+    };
+  };
+
+  "/api/questionnairebuilder/deletequestionnaire/{id}": {
+    delete: {
+      res: {
+        204: Message;
       };
     };
   };
@@ -289,7 +352,7 @@ export type $OpenApiTs = {
   };
 
   "/api/questionnairebuilder/deletequestion/{id}": {
-    post: {
+    delete: {
       res: {
         204: Message;
       };
@@ -298,9 +361,9 @@ export type $OpenApiTs = {
 
   "/api/questionnairebuilder/getVideos/": {
     post: {
-      req: FilterByIDs;
+      req: {questionnaire_id: number, answer_ids: number[]};
       res: {
-        201: VideoSimple[];
+        201: VideoCount[];
       };
     };
   };

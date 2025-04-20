@@ -36,7 +36,9 @@ import type {
   QuestionFull,
   QuestionnaireNoID,
   FilterByIDs,
-  VideoSimple,
+  VideoData,
+  VideoSearchFields,
+  VideoCount,
 } from "./types.gen";
 
 export class ApiService {
@@ -83,12 +85,30 @@ export class QuestionnaireService {
     });
   }  
   
-  public static addQuestionnaires(data: QuestionnaireFull): CancelablePromise<QuestionnaireFull> {
+  /* 
+    input data: {  
+      id: number;
+      title: string;
+      status: string;
+      completed: number;
+      started: number;
+      last_modified: string;
+      questions: number[]; 
+    }
+  */
+  public static createQuestionnaire(data: Questionnaire): CancelablePromise<{id: number}> {
     return __request(OpenAPI, {
       method: "POST",
-      url: "/api/questionnairebuilder/addquestionnaire/",
+      url: "/api/questionnairebuilder/createquestionnaire/",
       body: data,
       mediaType: "application/json",
+    });
+  }  
+
+  public static deleteQuestionnaire(id: number): CancelablePromise<Message> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: `/api/questionnairebuilder/deletequestionnaire/${id}`,
     });
   }  
 
@@ -108,7 +128,7 @@ export class QuestionnaireService {
     });
   }  
 
-  public static getVideos(data: FilterByIDs): CancelablePromise<VideoSimple[]> {
+  public static getVideos(data: {questionnaire_id: number, answer_ids: number[]}): CancelablePromise<VideoCount[]> {
     return __request(OpenAPI, {
       method: "POST",
       url: "/api/questionnairebuilder/getvideos/",
@@ -133,6 +153,39 @@ export class QuestionnaireService {
       mediaType: "application/json",
     });
   }
+}
+export class VideoManagementService {
+  public static getVideos(data: VideoSearchFields): CancelablePromise<VideoData[]> {
+    const title = data.title == "" ? "_" : data.title;
+    const duration = data.duration == "" ? "_" : data.duration;
+    const category = data.category == "" ? "_" : data.category;
+
+    return __request(OpenAPI, {
+      method: "GET",
+      url: `/api/videomanagement/getvideos/${title}/${duration}/${category}`,
+    });
+  }  
+
+  public static deleteVideo(id: number): CancelablePromise<Message> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: `/api/videomanagement/deletevideo/${id}`,
+    });
+  }  
+
+  public static createVideo(data: VideoData): CancelablePromise<{id: number}> {
+    const { csrftoken } = cookie.parse(document.cookie);
+
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/videomanagement/createvideo/",
+      body: data,
+      mediaType: "application/json",
+      headers: {
+        "X-CSRFToken": csrftoken,
+      }
+    });
+  }  
 }
 
 export class LogicPageService {

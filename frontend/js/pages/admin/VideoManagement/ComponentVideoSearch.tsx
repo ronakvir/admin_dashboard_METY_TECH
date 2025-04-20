@@ -1,19 +1,22 @@
 import { Dispatch, SetStateAction } from "react";
-import { SearchFields, VideoData } from "./VideoLibrary";
 import { categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
+import { Category, VideoData, VideoSearchFields } from "../../../api/types.gen";
+import { VideoManagementService } from "../../../api/services.gen";
 
 interface VideoManagementStates {
-    searchFields:               SearchFields;       setSearchFields:            Dispatch<SetStateAction<SearchFields>>;
+    searchFields:               VideoSearchFields;       setSearchFields:            Dispatch<SetStateAction<VideoSearchFields>>;
     videoList:                  VideoData[];        setVideoList:               Dispatch<SetStateAction<VideoData[]>>; 
     selectedVideo:              VideoData;          setSelectedVideo:           Dispatch<SetStateAction<VideoData>>; 
     videoWorkshop:              string;             setVideoWorkshop:           Dispatch<SetStateAction<string>>;
+    categoryList:               Category[];         setCategoryList:            Dispatch<SetStateAction<Category[]>>;
 }
 
 const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
     searchFields, setSearchFields,
     videoList, setVideoList,
     selectedVideo, setSelectedVideo,
-    videoWorkshop, setVideoWorkshop}) => {
+    videoWorkshop, setVideoWorkshop,
+    categoryList, setCategoryList,}) => {
     
     const cycleDurationField = (direction: number) => {
         const dropdownBox = document.getElementById("durations") as HTMLSelectElement;
@@ -43,47 +46,6 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
         setSearchFields(tempSearchFields);
     }
 
-    const searchButton = () => {
-        setVideoList([]);
-        
-        // Call API Here
-
-        // Start testing code:
-        const titleRegex = new RegExp(`.*` + searchFields.title.toLowerCase() + `.*`);
-        const durationRegex = new RegExp(`.*` + searchFields.duration.toLowerCase() + `.*`);
-        const categoryRegex = new RegExp(`.*` + searchFields.category.toLowerCase() + `.*`);
-
-        const tempVideoList: VideoData[] = Array.from(videoTable).filter(([key1, video]) => {
-            const titleCheck = titleRegex.test(video.title.toLowerCase());
-            const durationCheck = durationRegex.test(video.duration.toLowerCase());
-            const categoryCheck = Array.from(videoCategoriesMappingTable).some(([, videoCategory]) => {
-                if (videoCategory.videoID === key1) {
-                    return categoryRegex.test(categoryTable.get(videoCategory.categoryID)?.category.toLowerCase() as string);
-                }
-            })
-
-            return (titleCheck && durationCheck && categoryCheck);
-        })
-        .map(([key, video]) => {
-            const categories = Array.from(videoCategoriesMappingTable)
-            .filter(([, videoCategory]) => key === videoCategory.videoID)
-            .map(([catID, category]) => {return {id: category.categoryID, category: categoryTable.get(category.categoryID)?.category}})
-            .filter((cat): cat is {id: number, category: string} => cat.category !== undefined);
-            return {
-                id: key,
-                title: video.title,
-                description: video.description,
-                duration: video.duration,
-                categories
-            }
-        })
-        console.log(tempVideoList);
-        // End Testing Code
-
-        setVideoList(tempVideoList);
-    }
-
-
     const modifyVideoButton = (video: VideoData) => {
         setVideoList([]);
         setSelectedVideo(video);
@@ -92,31 +54,42 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
         return;
     }
 
-    const deleteVideoButton = (videoTobeDeleted: VideoData) => {
-        if (confirm("This will permanently delete this video. Are you sure?")) {
-            // CALL DELETE API HERE
-
-            // START TESTING CODE - Simulated deleting from database
-            videoTable.delete(videoTobeDeleted.id);
-            // END TESTING CODE
-
-            const tempVideoList = [ ...videoList ];
-            for(let i = 0; i < videoList.length; i++) {
-                if (videoList[i].id === videoTobeDeleted.id) {
-                    tempVideoList.splice(i, 1);
-                    setVideoList(tempVideoList);
-                    break;
-                }
-            }
-            setSearchFields({title: "", duration: "", category: ""});
-        }
-    }
-
     const addVideoButton = () => {
         setVideoList([]);
-        setSelectedVideo({id: 0, title: "", description: "", duration: "", categories: [{id: 0, category: ""}]});
+        setSelectedVideo({id: 0, title: "", description: "", duration: "", categories: [{id: 0, text: ""}]});
         setVideoWorkshop("new");
         setSearchFields({title: "", duration: "", category: ""});
+    }
+
+    // GET VIDEOS API
+    const searchButton = () => {
+        setVideoList([]);
+        const requestData = {
+            title: searchFields.title,
+            duration: searchFields.duration,
+            category: searchFields.category
+        }
+
+        VideoManagementService.getVideos(requestData)
+            .then( response => {
+                setVideoList(response);
+            })
+            .catch( error => console.log(error) )
+    }
+
+    // DELETE VIDEO API
+    const deleteVideoButton = (videoID: number) => {
+        if (confirm("This will permanently delete this video. Are you sure?")) {
+            VideoManagementService.deleteVideo(videoID)
+                .then( response => {
+                    const tempVideoList = [ ...videoList ];
+                    const index = videoList.findIndex( video => video.id === videoID);
+                    tempVideoList.splice(index, 1);
+                    setVideoList(tempVideoList);
+                    setSearchFields({title: "", duration: "", category: ""});
+                })
+                .catch( error => console.log(error) )
+        }
     }
 
     return (
@@ -143,7 +116,14 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
                     <button onClick={() => {cycleDurationField(1)}}>&gt;</button>
                 </div>
                 {/* I want to implement this category text field so that it shows a preview of the available options as you start typeing */}
-                <input style={{flex: "1"}} type="text" placeholder="Category" onChange={updateCategoryState}></input>
+                <input list="categoryList" style={{flex: "1"}} type="text" placeholder="Category" onChange={updateCategoryState}></input>
+                <datalist id="categoryList">
+                    {categoryList.map(category => {
+                        return (
+                            <option value={category.text} />
+                        )
+                    })}
+                </datalist>
                 <br/>
                 <button style={{flex: "1"}} onClick={() => searchButton()}>Search</button>
             </div>
@@ -152,9 +132,9 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
 
             {videoList.length > 0 ?
             <div style={{display: "flex", flexDirection: "row", justifyContent: "flex-start", border: "1px solid black", backgroundColor: "lightgrey"}}>
-                <label style={{width: "500px"}}>Title</label>
+                <label style={{width: "350px"}}>Title</label>
                 <label style={{width: "100px"}}>Duration</label>
-                <label style={{width: "100px"}}>Categories</label>
+                <label style={{width: "250px"}}>Categories</label>
             </div> :
             <></>
             }
@@ -162,17 +142,17 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
                 return(
                     <>
                         <div style={{display: "flex", flexDirection: "row", justifyContent: "flex-start", border: "1px solid black"}}>
-                            <label style={{width: "500px"}}>{video.title}</label>
+                            <label style={{width: "350px"}}>{video.title}</label>
                             <label style={{width: "100px"}}>{video.duration}</label>
                             <div style={{display: "flex", flexDirection: "column", justifyContent: "flex-start"}}>
                                 {video.categories.map((category, index) => {
                                     return (
-                                        <label style={{width: "100px"}}>{category.category}</label>
+                                        <label style={{width: "250px"}}>{category.text}</label>
                                     )
                                 })}
                             </div>
-                            <button onClick={() => modifyVideoButton(video)}>Modify</button>
-                            <button onClick={() => deleteVideoButton(video)}>Delete</button>
+                            <button style={{height: "auto"}} onClick={() => modifyVideoButton(video)}>Modify</button>
+                            <button style={{height: "auto"}} onClick={() => deleteVideoButton(video.id)}>Delete</button>
                         </div>
                     </>
                 )
