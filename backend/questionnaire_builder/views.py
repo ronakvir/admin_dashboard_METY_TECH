@@ -154,17 +154,13 @@ class getQuestions(APIView):
 
 class getVideosForPreview(APIView):
     def post(self, request):
-        #serializedData = answerFilterSerializer(data=request.data)
-        # if serializedData.is_valid():
 
         answerCategoryRows = AnswerCategoryMapping.objects.filter(
             questionnaire_id = request.data.get("questionnaire_id"), 
             answer_id__in = request.data.get("answer_ids")
         )
 
-        includedCategoryIDs = list(
-            answerCategoryRows.filter(inclusive=True).values_list("category_id", flat=True)
-        )
+        includedCategoryIDs = list(answerCategoryRows.filter(inclusive=True).values_list("category_id", flat=True))
         
         rankedVideos = (
             Video.objects

@@ -35,6 +35,15 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                 {/* This is the "Add Question" form field section */}
                 <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
                     <h4 style={{display: "flex", justifyContent: "left", width: "300px"}}>{questionType} Question</h4>
+                    {/* This builds the question viewer with the items you can select */}
+                    {questionIsSelected ? 
+                        <>
+                            <button style={{display: "inline"}} onClick={async () => modifyQuestion()}>Modify</button>
+                            <button style={{display: "inline"}} onClick={async () => deleteQuestion()}>Delete</button>
+                        </> :
+                        <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => addQuestion()}>Add</button>
+                    }
+                
                     <button style={{display: "inline", flex: 1, height: "auto"}} onClick={() => setQuestionType("")}>Cancel</button>
                 </div>
                 <input onChange={(value) => setQuestionForms({ ...questionForms, text: value.target.value })} name="question" style={{display: "inline", width: "100%", height: "auto"}} type="text" placeholder="Question" value={questionForms.text} />
@@ -42,7 +51,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                 { // This checks if the button clicked was a checkbox or multichoice type question card and displays the fields accordingly
                     (questionType === "checkbox" || questionType === "multichoice") && (
                     <>
-                        <button style={{width: "100%", height: "auto"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, {id: 0, text: ""}] })}>Add Answer</button>
+                        
                         {questionForms.answers.map((answer, index) =>(
                             <div style={{display: "flex", flexDirection:"row", width: "100%", height: "auto"}} key={index}>
                                 <input onChange={(e) => addAnswerField(index, e.target.value)} name="answer" type="text" placeholder="Answer" value={questionForms.answers[index].text} style={{flex: 1}}/>
@@ -52,15 +61,8 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                     </>
                     )
                 }
-                {/* This builds the question viewer with the items you can select */}
-                {questionIsSelected ? 
-                    <>
-                        <button style={{display: "inline", width: "100%"}} onClick={async () => modifyQuestion()}>Modify Question</button>
-                        <button style={{display: "inline", width: "100%"}} onClick={async () => deleteQuestion()}>Delete Question</button>
-                    </> :
-                    <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => addQuestion()}>Add Question</button>
-                }
-                
+                <button style={{width: "100%", height: "auto"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, {id: 0, text: ""}] })}>Add Answer</button>
+
             </div>
 
             {/* This builds the question viewer with the items you can select */}
