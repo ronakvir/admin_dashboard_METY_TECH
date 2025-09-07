@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import TemplateView
 
 import django_js_reverse.views
 from common.routes import routes as common_routes
@@ -40,4 +41,7 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
+    # Catch-all for frontend routes
+    path("register/", TemplateView.as_view(template_name="common/index.html"), name="register"),
+    path("dashboard/", TemplateView.as_view(template_name="common/index.html"), name="dashboard"),
 ]

@@ -4,6 +4,251 @@ info:
   version: 0.1.0
   description: A Django project boilerplate with Vinta's best practices
 paths:
+  /api/admin-invites/:
+    get:
+      operationId: admin_invites_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      tags:
+      - admin-invites
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminInviteList'
+          description: ''
+    post:
+      operationId: admin_invites_create
+      tags:
+      - admin-invites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminInvite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminInvite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminInvite'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInvite'
+          description: ''
+  /api/admin-invites/{id}/:
+    get:
+      operationId: admin_invites_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this admin invite.
+        required: true
+      tags:
+      - admin-invites
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInvite'
+          description: ''
+    put:
+      operationId: admin_invites_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this admin invite.
+        required: true
+      tags:
+      - admin-invites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminInvite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminInvite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminInvite'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInvite'
+          description: ''
+    patch:
+      operationId: admin_invites_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this admin invite.
+        required: true
+      tags:
+      - admin-invites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminInvite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminInvite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminInvite'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInvite'
+          description: ''
+    delete:
+      operationId: admin_invites_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this admin invite.
+        required: true
+      tags:
+      - admin-invites
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/admin-invites/create/:
+    post:
+      operationId: admin_invites_create_create
+      tags:
+      - admin-invites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateInvite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateInvite'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInvite'
+          description: ''
+  /api/admin-invites/verify-token/:
+    post:
+      operationId: admin_invites_verify_token_create
+      tags:
+      - admin-invites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyToken'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VerifyToken'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VerifyToken'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyToken'
+          description: ''
+  /api/admin-management/:
+    get:
+      operationId: admin_management_retrieve
+      description: Get all admin users (staff users)
+      tags:
+      - admin-management
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: admin_management_partial_update
+      description: Disable/Enable an admin user (superusers cannot be disabled)
+      tags:
+      - admin-management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
   /api/api/logout/:
     post:
       operationId: api_logout_create
@@ -205,6 +450,21 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/current-user/:
+    get:
+      operationId: current_user_retrieve
+      description: Get current logged in user information
+      tags:
+      - current-user
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
   /api/logicbuilder/addmapping/:
     post:
       operationId: logicbuilder_addmapping_create
@@ -691,6 +951,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/Login'
           description: ''
+  /api/users/register/:
+    post:
+      operationId: users_register_create
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Register'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Register'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Register'
+          description: ''
   /api/videomanagement/createvideo/:
     post:
       operationId: videomanagement_createvideo_create
@@ -798,6 +1085,59 @@ components:
       - id
       - key
       - name
+    AdminInvite:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        token:
+          type: string
+          format: uuid
+          readOnly: true
+        is_active:
+          type: boolean
+        invited_by:
+          type: integer
+          readOnly: true
+        invited_by_email:
+          type: string
+          readOnly: true
+        used_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        used_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        used_by_email:
+          type: string
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created
+      - email
+      - id
+      - invited_by
+      - invited_by_email
+      - modified
+      - token
+      - used_at
+      - used_by
+      - used_by_email
     AnswerCategoryMapping:
       type: object
       properties:
@@ -833,6 +1173,14 @@ components:
       - answer_id
       - category_id
       - questionnaire_id
+    CreateInvite:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
     CreateQuestionRequest:
       type: object
       properties:
@@ -957,6 +1305,29 @@ components:
           type: string
       required:
       - message
+    PaginatedAdminInviteList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminInvite'
     PaginatedUserList:
       type: object
       required:
@@ -1003,6 +1374,48 @@ components:
           type: string
           format: date-time
           nullable: true
+    PatchedAdminInvite:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        token:
+          type: string
+          format: uuid
+          readOnly: true
+        is_active:
+          type: boolean
+        invited_by:
+          type: integer
+          readOnly: true
+        invited_by_email:
+          type: string
+          readOnly: true
+        used_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        used_by:
+          type: integer
+          readOnly: true
+          nullable: true
+        used_by_email:
+          type: string
+          readOnly: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        modified:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedUser:
       type: object
       properties:
@@ -1068,6 +1481,23 @@ components:
       - answers
       - id
       - text
+    Register:
+      type: object
+      properties:
+        token:
+          type: string
+          format: uuid
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        password_confirm:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - password_confirm
+      - token
     User:
       type: object
       properties:
@@ -1107,6 +1537,14 @@ components:
       - email
       - id
       - modified
+    VerifyToken:
+      type: object
+      properties:
+        token:
+          type: string
+          format: uuid
+      required:
+      - token
     VideoResponse:
       type: object
       properties:
