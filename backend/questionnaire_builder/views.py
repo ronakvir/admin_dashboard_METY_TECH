@@ -619,6 +619,69 @@ class DataStorage:
         {"questionnaire_id": 1, "answer_id": 36, "category_id": 9, "inclusive": False},
     ]
 
+# PUBLIC API FOR PUBLISHED QUESTIONNAIRES
+class GetPublishedQuestionnaire(APIView):
+    """
+    Public API endpoint to get published questionnaire by title.
+    Returns questionnaire title, questions, question types, and answer choices.
+    """
+    permission_classes = []  # No authentication required for public API
+    
+    def get(self, request):
+        title = request.GET.get('title', '').strip()
+        
+        if not title:
+            return Response(
+                {"error": "Title parameter is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Find published questionnaire by title (case-insensitive)
+            questionnaire = Questionnaire.objects.filter(
+                title__iexact=title, 
+                status='Published'
+            ).first()
+            
+            if not questionnaire:
+                return Response(
+                    {"error": f"No published questionnaire found with title: {title}"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Get all questions for this questionnaire
+            questionnaire_questions = QuestionnaireQuestion.objects.filter(
+                questionnaire=questionnaire
+            )
+            questions = [qq.question for qq in questionnaire_questions]
+            
+            # Build response data
+            response_data = {
+                "title": questionnaire.title,
+                "questions": []
+            }
+            
+            for question in questions:
+                # Get all answers for this question
+                answers = Answer.objects.filter(question=question)
+                answer_choices = [{"id": answer.id, "text": answer.text} for answer in answers]
+                
+                question_data = {
+                    "id": question.id,
+                    "text": question.text,
+                    "type": question.type,
+                    "answer_choices": answer_choices
+                }
+                response_data["questions"].append(question_data)
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 class ResetDatabaseData(APIView):
 
     # Insert into database

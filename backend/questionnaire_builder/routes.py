@@ -24,4 +24,7 @@ urlpatterns = [
     path('videomanagement/createvideo/', views.CreateVideo.as_view(), name='CreateVideo'),
 
     path('resetalldata/', views.ResetDatabaseData.as_view(), name='ResetDatabaseData'),
+    
+    # Public API for published questionnaires
+    path('public/questionnaire/', views.GetPublishedQuestionnaire.as_view(), name='GetPublishedQuestionnaire'),
 ]
