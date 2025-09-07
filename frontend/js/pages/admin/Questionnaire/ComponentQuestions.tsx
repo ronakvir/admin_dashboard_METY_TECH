@@ -1,6 +1,6 @@
 import { useEffect, FC, Dispatch, SetStateAction } from "react";
 import { QuestionnaireStates } from "./QuestionnaireBuilder"
-import { QuestionnaireService } from "../../../api/services.gen";
+import { QuestionnairebuilderService } from "../../../api/services.gen";
 
 
 // Global variable to declare only on load. this keeps track of each types question count
@@ -157,7 +157,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
     const addQuestion = () => {
         if (questionForms.text.trim() == "") {alert("You must enter a question first!"); return;}
 
-        QuestionnaireService.addQuestion(questionForms)
+        QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
             .then( response => {
                 const tempQuestions = [ ...questions ]
                 tempQuestions.push(response);
@@ -178,7 +178,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
     const modifyQuestion = () => {
         if (questionForms.text.trim() == "") {alert("You must enter a question first!"); return;}
 
-        QuestionnaireService.addQuestion(questionForms)
+        QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
             .then( response => {
                 // Get the index of the question  in the question list
                 let index = 0;
@@ -207,7 +207,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
 
     // Delete Question Button Action
     const deleteQuestion = () => {
-        QuestionnaireService.deleteQuestion(questionForms.id)
+        QuestionnairebuilderService.questionnairebuilderDeletequestionDestroy({ id: questionForms.id })
             .then( () => {
                 let index = 0;
                 questions.some( (question, i) => {

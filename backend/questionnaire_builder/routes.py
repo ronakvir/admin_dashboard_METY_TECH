@@ -19,9 +19,16 @@ urlpatterns = [
     path('logicbuilder/deletemapping/<int:questionnaire_id>/<int:answer_id>', views.DeleteAnswerCategoryMapping.as_view(), name='DeleteAnswerCategoryMapping'),
     path('logicbuilder/addmapping/', views.AddAnswerCategoryMapping.as_view(), name='AddAnswerCategoryMapping'),
 
-    path('videomanagement/getvideos/<str:title>/<str:duration>/<str:category>', views.GetVideos.as_view(), name='GetVideos'),
+    path('videomanagement/getvideos/', views.GetVideos.as_view(), name='GetVideos'),
     path('videomanagement/deletevideo/<int:id>', views.DeleteVideo.as_view(), name='DeleteVideo'),
     path('videomanagement/createvideo/', views.CreateVideo.as_view(), name='CreateVideo'),
 
     path('resetalldata/', views.ResetDatabaseData.as_view(), name='ResetDatabaseData'),
+    
+    # API Key Management (Admin only)
+    path('apikeys/', views.APIKeyManagement.as_view(), name='APIKeyManagement'),
+    path('apikeys/<int:key_id>/', views.APIKeyManagement.as_view(), name='APIKeyManagementDetail'),
+    
+    # Public API for published questionnaires
+    path('public/questionnaire/', views.GetPublishedQuestionnaire.as_view(), name='GetPublishedQuestionnaire'),
 ]

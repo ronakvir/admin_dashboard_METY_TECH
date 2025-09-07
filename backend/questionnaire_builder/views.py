@@ -1,15 +1,17 @@
 import traceback
 from urllib import response
 from django.shortcuts import render
+from django.utils import timezone
 from rest_framework import generics, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Answer, AnswerCategoryMapping, Category, Question, Questionnaire, QuestionnaireQuestion, Video, VideoCategory
-from .serializers import AnswerCategoryMappingSerializer, CategorySerializer, GetVideoWithCategoriesSerializer, QuestionSerializer, QuestionWithAnswersAndCategoriesSerializer, QuestionnaireForLogicPageSerializer, QuestionnaireSerializer, VideoSerializer, answerFilterSerializer
+from .models import Answer, AnswerCategoryMapping, Category, Question, Questionnaire, QuestionnaireQuestion, Video, VideoCategory, APIKey
+from .serializers import AnswerCategoryMappingSerializer, CategorySerializer, GetVideoWithCategoriesSerializer, QuestionSerializer, QuestionWithAnswersAndCategoriesSerializer, QuestionnaireForLogicPageSerializer, QuestionnaireSerializer, VideoSerializer, answerFilterSerializer, APIKeySerializer, CreateAPIKeySerializer, APIKeyResponseSerializer, APIKeyStatusSerializer, PublicQuestionnaireSerializer, GetVideosForPreviewSerializer, VideoResponseSerializer, CreateVideoSerializer, VideoSearchSerializer, CreateQuestionRequestSerializer, CreateQuestionnaireRequestSerializer, CreateAnswerCategoryMappingRequestSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.db import connection, transaction
 from rest_framework import serializers
 from django.db.models import Subquery, Count, Q
+from drf_spectacular.utils import extend_schema
 
 # QUESTIONNAIRE PAGE
 # class AddQuestionnaire(generics.CreateAPIView):
@@ -28,29 +30,43 @@ from django.db.models import Subquery, Count, Q
 
 # Create new Questionnaire Record - Propogates to question
 class CreateQuestionnaire(APIView):
+    serializer_class = CreateQuestionnaireRequestSerializer
+    
+    @extend_schema(
+        request=CreateQuestionnaireRequestSerializer,
+        responses={
+            200: {"type": "object", "properties": {"id": {"type": "integer"}}}, 
+            201: {"type": "object", "properties": {"id": {"type": "integer"}}}
+        },
+        summary="Create or update questionnaire",
+        description="Creates a new questionnaire or updates an existing one with questions"
+    )
     def post(self, request):
-        serializedData = QuestionnaireSerializer(data = request.data)
+        serializedData = CreateQuestionnaireRequestSerializer(data=request.data)
         if serializedData.is_valid():
-            questionnaire_id = request.data.get("id")
+            questionnaire_id = serializedData.validated_data.get("id", 0)
             # Modify Existing Record
             if questionnaire_id != 0:
                 oldQuestionnaire = Questionnaire.objects.get(id=questionnaire_id)
-                self.modifyQuestionnaire(request.data, oldQuestionnaire)
-                return Response({"id": questionnaire_id}, status=status.HTTP_204_NO_CONTENT)
+                self.modifyQuestionnaire(serializedData.validated_data, oldQuestionnaire)
+                return Response({"id": questionnaire_id}, status=status.HTTP_200_OK)
             # Create New Record
             else:
-                questionnaire_id = self.createQuestionnaire(request.data)
+                questionnaire_id = self.createQuestionnaire(serializedData.validated_data)
                 return Response({"id": questionnaire_id}, status=status.HTTP_201_CREATED)
-        return Response({ "detail": "Invalid Data", "errors": serializedData.errors }, status=status.HTTP_400_BAD_REQUEST)
+        return Response({ 
+            "detail": "Invalid Data", 
+            "errors": serializedData.errors 
+        }, status=status.HTTP_400_BAD_REQUEST)
    
     def createQuestionnaire(self, questionnaireData):
         # Create Questionnaire Record
         questionnaire = Questionnaire.objects.create(
             title = questionnaireData["title"],
             status = questionnaireData["status"],
-            started = questionnaireData["started"],
-            completed = questionnaireData["completed"],
-            last_modified = questionnaireData["last_modified"]
+            started = questionnaireData.get("started", 0),
+            completed = questionnaireData.get("completed", 0),
+            last_modified = questionnaireData.get("last_modified", timezone.now())
         )
         # Create Mapping Records
         for question_id in questionnaireData["questions"]:
@@ -65,9 +81,9 @@ class CreateQuestionnaire(APIView):
         
         oldQuestionnaire.title=newData["title"]
         oldQuestionnaire.status=newData["status"]
-        oldQuestionnaire.started=newData["started"]
-        oldQuestionnaire.completed=newData["completed"]
-        oldQuestionnaire.last_modified=newData["last_modified"]
+        oldQuestionnaire.started=newData.get("started", oldQuestionnaire.started)
+        oldQuestionnaire.completed=newData.get("completed", oldQuestionnaire.completed)
+        oldQuestionnaire.last_modified=newData.get("last_modified", timezone.now())
         oldQuestionnaire.save()
 
         oldQuestionnaire.questionnairequestion_set.all().delete()
@@ -81,20 +97,31 @@ class CreateQuestionnaire(APIView):
             )
     
 class CreateQuestion(APIView):
+    serializer_class = CreateQuestionRequestSerializer
+    
+    @extend_schema(
+        request=CreateQuestionRequestSerializer,
+        responses={200: QuestionSerializer, 201: QuestionSerializer},
+        summary="Create or update question",
+        description="Creates a new question or updates an existing one with answers"
+    )
     def post(self, request):
-        serializedData = QuestionSerializer(data=request.data)
+        serializedData = CreateQuestionRequestSerializer(data=request.data)
         if serializedData.is_valid():
-            question_id = request.data.get("id")
+            question_id = serializedData.validated_data.get("id", 0)
             if question_id != 0:
                 oldQuestion = Question.objects.get(id=question_id)
-                question = self.modifyQuestion(request.data, oldQuestion)
+                question = self.modifyQuestion(serializedData.validated_data, oldQuestion)
                 responseData = QuestionSerializer(question).data
                 return Response(responseData, status=status.HTTP_200_OK)
             else:
-                question = self.createQuestion(request.data)
+                question = self.createQuestion(serializedData.validated_data)
                 responseData = QuestionSerializer(question).data
-                return Response(responseData, status=status.HTTP_200_OK)
-        return Response({ "detail": "Invalid Data", "errors": serializedData.errors }, status=status.HTTP_400_BAD_REQUEST)
+                return Response(responseData, status=status.HTTP_201_CREATED)
+        return Response({ 
+            "detail": "Invalid Data", 
+            "errors": serializedData.errors 
+        }, status=status.HTTP_400_BAD_REQUEST)
    
     def createQuestion(self, data):
         question = Question.objects.create(
@@ -120,7 +147,7 @@ class CreateQuestion(APIView):
         for answerData in newData["answers"]:
             Answer.objects.create(
                 question=oldQuestion,
-                text=oldQuestion.text
+                text=answerData["text"]
             )
 
         return oldQuestion
@@ -141,10 +168,12 @@ class getQuestionnaires(APIView):
     
 class DeleteQuestionnaire(APIView):
     def delete(self, request, id):
-        deleted = Questionnaire.objects.get(id=id).delete()
-        if deleted:
+        try:
+            questionnaire = Questionnaire.objects.get(id=id)
+            questionnaire.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response({ "detail": "Not Found" }, status=status.HTTP_404_NOT_FOUND)
+        except Questionnaire.DoesNotExist:
+            return Response({ "detail": "Questionnaire not found" }, status=status.HTTP_404_NOT_FOUND)
 
 class getQuestions(APIView):
     def get(self, request):
@@ -153,6 +182,14 @@ class getQuestions(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 class getVideosForPreview(APIView):
+    serializer_class = GetVideosForPreviewSerializer
+    
+    @extend_schema(
+        request=GetVideosForPreviewSerializer,
+        responses={200: VideoResponseSerializer(many=True)},
+        summary="Get videos for questionnaire preview",
+        description="Returns ranked videos based on questionnaire answers and category mappings"
+    )
     def post(self, request):
 
         answerCategoryRows = AnswerCategoryMapping.objects.filter(
@@ -228,12 +265,30 @@ class DeleteAnswerCategoryMapping(APIView):
 # Create New Answer-Category Mapping record
 # Input Data Structure: ('id', 'questionnaire_id', 'answer_id', 'category_id', 'inclusive')
 class AddAnswerCategoryMapping(APIView):
+    serializer_class = CreateAnswerCategoryMappingRequestSerializer
+    
+    @extend_schema(
+        request=CreateAnswerCategoryMappingRequestSerializer,
+        responses={201: AnswerCategoryMappingSerializer},
+        summary="Create answer category mapping",
+        description="Creates a mapping between an answer and a category for a questionnaire"
+    )
     def post(self, request):
-        serializedData = AnswerCategoryMappingSerializer(data=request.data)
+        serializedData = CreateAnswerCategoryMappingRequestSerializer(data=request.data)
         if serializedData.is_valid():
-            serializedData.save()
-            return Response(serializedData.data, status=status.HTTP_201_CREATED)
-        return Response({ "detail": "Invalid Data", "errors": serializedData.errors }, status=status.HTTP_400_BAD_REQUEST)
+            # Create the mapping using the validated data
+            mapping = AnswerCategoryMapping.objects.create(
+                questionnaire_id=serializedData.validated_data['questionnaire_id'],
+                answer_id=serializedData.validated_data['answer_id'],
+                category_id=serializedData.validated_data['category_id'],
+                inclusive=serializedData.validated_data['inclusive']
+            )
+            response_data = AnswerCategoryMappingSerializer(mapping).data
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        return Response({ 
+            "detail": "Invalid Data", 
+            "errors": serializedData.errors 
+        }, status=status.HTTP_400_BAD_REQUEST)
 # LOGIC BUILDER PAGE
 
 
@@ -249,44 +304,81 @@ class AddAnswerCategoryMapping(APIView):
 
 class GetVideos(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request, title, duration, category):
+    serializer_class = VideoSearchSerializer
+    
+    @extend_schema(
+        request=VideoSearchSerializer,
+        responses={200: GetVideoWithCategoriesSerializer(many=True)},
+        summary="Search videos",
+        description="Search videos by title, duration, or category. At least one search parameter must be provided."
+    )
+    def post(self, request):
+        # Validate the request data
+        serializer = VideoSearchSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        title = "" if title == "_" else title
-        duration = "" if duration == "_" else duration
-        category = "" if category == "_" else category
+        # Get validated data
+        title = serializer.validated_data.get('title', '').strip()
+        duration = serializer.validated_data.get('duration', '').strip()
+        category = serializer.validated_data.get('category', '').strip()
+        
+        # Build the query
+        videos_query = Video.objects.all()
+        
+        # Apply category filter if provided
+        if category:
+            category_rows = Category.objects.filter(text__iregex=fr".*{category}.*")
+            video_ids = VideoCategory.objects.filter(category__in=category_rows).values_list("video_id", flat=True).distinct()
+            videos_query = videos_query.filter(id__in=video_ids)
+        
+        # Apply title filter if provided
+        if title:
+            videos_query = videos_query.filter(title__iregex=fr".*{title}.*")
+        
+        # Apply duration filter if provided
+        if duration:
+            videos_query = videos_query.filter(duration__iregex=fr".*{duration}.*")
 
-        categoryRows = Category.objects.filter(text__iregex=fr".*{category}.*")
-        video_ids = VideoCategory.objects.filter(category__in=categoryRows).values_list("video_id", flat=True).distinct()
-
-        videos = Video.objects.filter(id__in=video_ids, title__iregex=fr".*{title}.*", duration__iregex=fr".*{duration}.*")
-
-        responseData = GetVideoWithCategoriesSerializer(videos, many=True).data
-        return Response(responseData, status=status.HTTP_200_OK)
+        response_data = GetVideoWithCategoriesSerializer(videos_query, many=True).data
+        return Response(response_data, status=status.HTTP_200_OK)
     
 
 class DeleteVideo(APIView):
     permission_classes = [IsAuthenticated]
     def delete(self, request, id):
-        deleted = Video.objects.get(id=id).delete()
-
-        if deleted:
+        try:
+            video = Video.objects.get(id=id)
+            video.delete()
             return Response({"message": "Successfully Deleted Video"}, status=status.HTTP_204_NO_CONTENT)
-        return Response({"message": "Failed Action"}, status=status.HTTP_400_BAD_REQUEST)
+        except Video.DoesNotExist:
+            return Response({"message": "Video not found"}, status=status.HTTP_404_NOT_FOUND)
     
 
 class CreateVideo(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = CreateVideoSerializer
+    
+    @extend_schema(
+        request=CreateVideoSerializer,
+        responses={201: {"type": "object", "properties": {"id": {"type": "integer"}}}},
+        summary="Create or update video",
+        description="Creates a new video or updates an existing one with categories"
+    )
     def post(self, request):
-        serializedData = VideoSerializer(data=request.data)
+        serializedData = CreateVideoSerializer(data=request.data)
         if serializedData.is_valid():
-            videoData = request.data
+            videoData = serializedData.validated_data
             if videoData["id"] != 0:
                 videoID = self.modifyVideo(videoData)
                 return Response({"id": videoID}, status=status.HTTP_201_CREATED)
             else:
                 videoID = self.createVideo(videoData)
                 return Response({"id": videoID}, status=status.HTTP_201_CREATED)
-        return Response({ "detail": "Failed to Create Video" }, status=status.HTTP_400_BAD_REQUEST)
+        return Response({ 
+            "detail": "Failed to Create Video", 
+            "errors": serializedData.errors 
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     def createVideo(self, videoData):
         video = Video.objects.create(
@@ -618,6 +710,110 @@ class DataStorage:
         {"questionnaire_id": 1, "answer_id": 35, "category_id": 15, "inclusive": True},
         {"questionnaire_id": 1, "answer_id": 36, "category_id": 9, "inclusive": False},
     ]
+
+# API KEY MANAGEMENT
+class APIKeyManagement(APIView):
+    """
+    Admin-only endpoint for managing API keys.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = APIKeySerializer
+    
+    def get(self, request):
+        """List all API keys"""
+        api_keys = APIKey.objects.all().order_by('-created_at')
+        serializer = APIKeySerializer(api_keys, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        """Create a new API key"""
+        serializer = CreateAPIKeySerializer(data=request.data)
+        if serializer.is_valid():
+            api_key = APIKey.objects.create(name=serializer.validated_data['name'])
+            response_serializer = APIKeyResponseSerializer(api_key)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, key_id):
+        """Delete an API key"""
+        try:
+            api_key = APIKey.objects.get(id=key_id)
+            api_key.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except APIKey.DoesNotExist:
+            return Response(
+                {"error": "API key not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    def patch(self, request, key_id):
+        """Toggle API key active status"""
+        try:
+            api_key = APIKey.objects.get(id=key_id)
+            api_key.is_active = not api_key.is_active
+            api_key.save()
+            serializer = APIKeyStatusSerializer(api_key)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except APIKey.DoesNotExist:
+            return Response(
+                {"error": "API key not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+# PUBLIC API FOR PUBLISHED QUESTIONNAIRES
+class GetPublishedQuestionnaire(APIView):
+    """
+    Public API endpoint to get published questionnaire by title.
+    Returns questionnaire title, questions, question types, and answer choices.
+    Supports both public access and API key authentication.
+    """
+    permission_classes = []  # No authentication required for public API
+    serializer_class = PublicQuestionnaireSerializer
+    
+    def get(self, request):
+        title = request.GET.get('title', '').strip()
+        api_key = request.GET.get('api_key', '').strip()
+        
+        if not title:
+            return Response(
+                {"error": "Title parameter is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # If API key is provided, validate it
+        try:
+            api_key_obj = APIKey.objects.get(key=api_key, is_active=True)
+            # Update last used timestamp
+            api_key_obj.last_used = timezone.now()
+            api_key_obj.save(update_fields=['last_used'])
+        except APIKey.DoesNotExist:
+            return Response(
+                {"error": "Invalid or inactive API key"}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        try:
+            # Find published questionnaire by title (case-insensitive)
+            questionnaire = Questionnaire.objects.filter(
+                title__iexact=title, 
+                status='Published'
+            ).first()
+            
+            if not questionnaire:
+                return Response(
+                    {"error": f"No published questionnaire found with title: {title}"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Use serializer to format response
+            serializer = PublicQuestionnaireSerializer(questionnaire)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class ResetDatabaseData(APIView):
 

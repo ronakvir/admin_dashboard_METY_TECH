@@ -1,8 +1,8 @@
 import { useEffect, FC, Dispatch, SetStateAction, useState } from "react";
 import { QuestionnaireStates } from "./QuestionnaireBuilder"
 import { answer_categoryMappingTable, categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
-import { QuestionnaireService } from "../../../api/services.gen";
-import { VideoCount } from "../../../api/types.gen";
+import { QuestionnairebuilderService } from "../../../api/services.gen";
+import { VideoResponse } from "../../../api/types.gen";
 
 
 const ComponentPreview: FC<QuestionnaireStates> = ({ 
@@ -20,7 +20,7 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
 
     const [tempSliderValue, setTempSliderValue] = useState(50);
     const [qResponses, setQResponses] = useState<number[]>(new Array(currentQuestionnaire.questions.length));
-    const [matchedVideos, setMatchedVideos] = useState<VideoCount[]>([]);
+    const [matchedVideos, setMatchedVideos] = useState<VideoResponse[]>([]);
 
     const returnToDashboard = () => {
         setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
@@ -40,7 +40,7 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
             questionnaire_id: currentQuestionnaire.id,
             answer_ids: qResponses
         }
-        QuestionnaireService.getVideos(requestData)
+        QuestionnairebuilderService.questionnairebuilderGetvideosCreate({ requestBody: requestData })
             .then( response => {
                 setMatchedVideos(response)
             })
