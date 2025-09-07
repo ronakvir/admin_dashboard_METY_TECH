@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../sass/_global.scss";
-import { ApiService, ResetalldataService } from "../../api/services.gen";
+import { ApiService, ResetalldataService, SeeddataService } from "../../api/services.gen";
 
 const SidePanel: React.FC = () => {
     const navigate = useNavigate();
@@ -38,13 +38,32 @@ const SidePanel: React.FC = () => {
       };
 
     
-    const devResetDatabaseData = () => {
-        if (!confirm("This will delete all current database data, and reset it with new baseline data (used for testing). Are you sure you would like to do this?")) return
+    const devResetDatabase = () => {
+        if (!confirm("This will delete all current database data. Are you sure you would like to do this?")) return
         ResetalldataService.resetalldataCreate()
             .then( response => {
                 console.log(response)
+                alert("Database reset successfully!")
+                window.location.reload()
             })
-            .catch( error => console.log(error) )
+            .catch( error => {
+                console.log(error)
+                alert("Error resetting database: " + (error.message || "Unknown error"))
+            })
+    }
+
+    const devSeedDatabase = () => {
+        if (!confirm("This will seed the database with sample data. Database must be empty. Are you sure you would like to do this?")) return
+        SeeddataService.seeddataCreate()
+            .then( response => {
+                console.log(response)
+                alert("Database seeded successfully!")
+                window.location.reload()
+            })
+            .catch( error => {
+                console.log(error)
+                alert("Error seeding database: " + (error.message || "Unknown error"))
+            })
     }
 
       
@@ -73,7 +92,8 @@ const SidePanel: React.FC = () => {
             <div className="nav-section nav-section-dev">
                 <h3 className="nav-section-title">Development</h3>
                 <ul className="nav-list">
-                    <li><button className="nav-item nav-item-dev" onClick={devResetDatabaseData}>Reset Database</button></li>
+                    <li><button className="nav-item nav-item-dev" onClick={devResetDatabase}>Reset Database</button></li>
+                    <li><button className="nav-item nav-item-dev" onClick={devSeedDatabase}>Seed Database</button></li>
                 </ul>
             </div>
         </nav>

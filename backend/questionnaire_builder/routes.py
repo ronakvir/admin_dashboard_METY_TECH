@@ -24,6 +24,7 @@ urlpatterns = [
     path('videomanagement/createvideo/', views.CreateVideo.as_view(), name='CreateVideo'),
 
     path('resetalldata/', views.ResetDatabaseData.as_view(), name='ResetDatabaseData'),
+    path('seeddata/', views.SeedDatabaseData.as_view(), name='SeedDatabaseData'),
     
     # API Key Management (Admin only)
     path('apikeys/', views.APIKeyManagement.as_view(), name='APIKeyManagement'),

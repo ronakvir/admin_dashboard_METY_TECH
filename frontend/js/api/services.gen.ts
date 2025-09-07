@@ -43,6 +43,7 @@ import type {
   QuestionnairebuilderGetvideosCreateResponse,
   ResetalldataCreateResponse,
   RestRestCheckRetrieveResponse,
+  SeeddataCreateResponse,
   UsersListData,
   UsersListResponse,
   UsersCreateData,
@@ -444,6 +445,7 @@ export class QuestionnairebuilderService {
 
 export class ResetalldataService {
   /**
+   * Reset database by clearing all data and resetting auto-increment counters
    * @returns unknown No response body
    * @throws ApiError
    */
@@ -466,6 +468,20 @@ export class RestService {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/rest/rest-check/",
+    });
+  }
+}
+
+export class SeeddataService {
+  /**
+   * Seed database with sample data. Throws error if database is not empty.
+   * @returns unknown No response body
+   * @throws ApiError
+   */
+  public static seeddataCreate(): CancelablePromise<SeeddataCreateResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/seeddata/",
     });
   }
 }

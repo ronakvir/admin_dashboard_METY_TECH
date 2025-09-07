@@ -468,6 +468,8 @@ paths:
   /api/resetalldata/:
     post:
       operationId: resetalldata_create
+      description: Reset database by clearing all data and resetting auto-increment
+        counters
       tags:
       - resetalldata
       security:
@@ -498,6 +500,18 @@ paths:
                       this, the REST API is working!
                   summary: Successful Response
           description: ''
+  /api/seeddata/:
+    post:
+      operationId: seeddata_create
+      description: Seed database with sample data. Throws error if database is not
+        empty.
+      tags:
+      - seeddata
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/users/:
     get:
       operationId: users_list

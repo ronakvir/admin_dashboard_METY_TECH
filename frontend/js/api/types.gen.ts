@@ -277,6 +277,8 @@ export type ResetalldataCreateResponse = unknown;
 
 export type RestRestCheckRetrieveResponse = Message;
 
+export type SeeddataCreateResponse = unknown;
+
 export type UsersListData = {
   /**
    * Number of results to return per page.
@@ -565,6 +567,16 @@ export type $OpenApiTs = {
     get: {
       res: {
         200: Message;
+      };
+    };
+  };
+  "/api/seeddata/": {
+    post: {
+      res: {
+        /**
+         * No response body
+         */
+        200: unknown;
       };
     };
   };

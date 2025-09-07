@@ -711,6 +711,13 @@ class DataStorage:
         {"questionnaire_id": 1, "answer_id": 36, "category_id": 9, "inclusive": False},
     ]
 
+    # Sample API Keys for development
+    apiKeyData = [
+        {"name": "Development API Key", "is_active": True},
+        {"name": "Testing API Key", "is_active": True},
+        {"name": "Demo API Key", "is_active": False},
+    ]
+
 # API KEY MANAGEMENT
 class APIKeyManagement(APIView):
     """
@@ -816,11 +823,13 @@ class GetPublishedQuestionnaire(APIView):
             )
 
 class ResetDatabaseData(APIView):
-
-    # Insert into database
+    """
+    Reset database by clearing all data and resetting auto-increment counters
+    """
     def post(self, request):
         with transaction.atomic():
             try:
+                # Delete all data
                 AnswerCategoryMapping.objects.all().delete()
                 QuestionnaireQuestion.objects.all().delete()
                 Answer.objects.all().delete()
@@ -829,9 +838,10 @@ class ResetDatabaseData(APIView):
                 VideoCategory.objects.all().delete()
                 Category.objects.all().delete()
                 Video.objects.all().delete()
+                APIKey.objects.all().delete()
 
+                # Reset auto-increment counters
                 with connection.cursor() as cursor:
-                    # Clear out database
                     cursor.execute("ALTER TABLE questionnaire_builder_answercategorymapping AUTO_INCREMENT = 1;")   
                     cursor.execute("ALTER TABLE questionnaire_builder_questionnairequestion AUTO_INCREMENT = 1;")  
                     cursor.execute("ALTER TABLE questionnaire_builder_answer AUTO_INCREMENT = 1;")         
@@ -840,7 +850,37 @@ class ResetDatabaseData(APIView):
                     cursor.execute("ALTER TABLE questionnaire_builder_videocategory AUTO_INCREMENT = 1;")
                     cursor.execute("ALTER TABLE questionnaire_builder_category AUTO_INCREMENT = 1;")
                     cursor.execute("ALTER TABLE questionnaire_builder_video AUTO_INCREMENT = 1;")
+                    cursor.execute("ALTER TABLE questionnaire_builder_apikey AUTO_INCREMENT = 1;")
 
+                return Response({ "message": "Database reset successfully" }, status=status.HTTP_200_OK)
+            
+            except Exception as e:
+                traceback.print_exc()
+                return Response({ "error": str(e) }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SeedDatabaseData(APIView):
+    """
+    Seed database with sample data. Throws error if database is not empty.
+    """
+    def post(self, request):
+        with transaction.atomic():
+            try:
+                # Check if database is empty
+                if (AnswerCategoryMapping.objects.exists() or 
+                    QuestionnaireQuestion.objects.exists() or 
+                    Answer.objects.exists() or 
+                    Question.objects.exists() or 
+                    Questionnaire.objects.exists() or 
+                    VideoCategory.objects.exists() or 
+                    Category.objects.exists() or 
+                    Video.objects.exists() or
+                    APIKey.objects.exists()):
+                    return Response({ 
+                        "error": "Database is not empty. Please reset the database first before seeding." 
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                # Create questions and answers
                 for question in DataStorage.questionData:
                     questionRow = Question.objects.create(text=question["text"], type=question["type"])
                     for answer in question["answers"]:
@@ -849,7 +889,7 @@ class ResetDatabaseData(APIView):
                             text = answer
                         )
 
-                        
+                # Create questionnaires
                 for questionnaire in DataStorage.questionnaireData:
                     Questionnaire.objects.create(
                         title = questionnaire["title"],
@@ -858,6 +898,8 @@ class ResetDatabaseData(APIView):
                         completed = questionnaire["completed"],
                         last_modified = questionnaire["last_modified"]
                     )
+
+                # Create question-questionnaire mappings
                 for questionMapping in DataStorage.questionQuestionnaireMappings:
                     questionnaire = Questionnaire.objects.get(id=questionMapping["questionnaire_id"])
                     question = Question.objects.get(id=questionMapping["question_id"])
@@ -866,12 +908,15 @@ class ResetDatabaseData(APIView):
                         question = question
                     )
 
+                # Create videos
                 for video in DataStorage.videoData:
                     Video.objects.create(**video)
 
+                # Create categories
                 for category in DataStorage.categoryData:
                     Category.objects.create(**category)
 
+                # Create video-category mappings
                 for categoryMapping in DataStorage.videoCategoryMapping:
                     video = Video.objects.get(id = categoryMapping["video_id"])
                     category = Category.objects.get(id = categoryMapping["category_id"])
@@ -880,6 +925,7 @@ class ResetDatabaseData(APIView):
                         category = category
                     )
 
+                # Create answer-category mappings
                 for ansCatMapping in DataStorage.answercategoryMapping:
                     category = Category.objects.get(id = ansCatMapping["category_id"])
                     answer = Answer.objects.get(id = ansCatMapping["answer_id"])
@@ -891,7 +937,14 @@ class ResetDatabaseData(APIView):
                         inclusive = ansCatMapping["inclusive"],
                     )
 
-                return Response({ "massage": "Successful Operation" }, status=status.HTTP_204_NO_CONTENT)
+                # Create API keys
+                for apiKey in DataStorage.apiKeyData:
+                    APIKey.objects.create(
+                        name = apiKey["name"],
+                        is_active = apiKey["is_active"]
+                    )
+
+                return Response({ "message": "Database seeded successfully" }, status=status.HTTP_200_OK)
             
             except Exception as e:
                 traceback.print_exc()
