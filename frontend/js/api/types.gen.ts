@@ -12,6 +12,20 @@ export type APIKey = {
   last_used?: string | null;
 };
 
+export type AdminInvite = {
+  readonly id: number;
+  email: string;
+  readonly token: string;
+  is_active?: boolean;
+  readonly invited_by: number;
+  readonly invited_by_email: string;
+  readonly used_at: string | null;
+  readonly used_by: number | null;
+  readonly used_by_email: string;
+  readonly created: string;
+  readonly modified: string;
+};
+
 export type AnswerCategoryMapping = {
   readonly id: number;
   questionnaire_id: number;
@@ -25,6 +39,10 @@ export type CreateAnswerCategoryMappingRequest = {
   answer_id: number;
   category_id: number;
   inclusive?: boolean;
+};
+
+export type CreateInvite = {
+  email: string;
 };
 
 export type CreateQuestionRequest = {
@@ -79,6 +97,13 @@ export type Message = {
   message: string;
 };
 
+export type PaginatedAdminInviteList = {
+  count: number;
+  next?: string | null;
+  previous?: string | null;
+  results: Array<AdminInvite>;
+};
+
 export type PaginatedUserList = {
   count: number;
   next?: string | null;
@@ -96,6 +121,20 @@ export type PatchedAPIKey = {
   is_active?: boolean;
   readonly created_at?: string;
   last_used?: string | null;
+};
+
+export type PatchedAdminInvite = {
+  readonly id?: number;
+  email?: string;
+  readonly token?: string;
+  is_active?: boolean;
+  readonly invited_by?: number;
+  readonly invited_by_email?: string;
+  readonly used_at?: string | null;
+  readonly used_by?: number | null;
+  readonly used_by_email?: string;
+  readonly created?: string;
+  readonly modified?: string;
 };
 
 export type PatchedUser = {
@@ -130,6 +169,12 @@ export type Question = {
   readonly answers: string;
 };
 
+export type Register = {
+  token: string;
+  password: string;
+  password_confirm: string;
+};
+
 export type User = {
   readonly id: number;
   email: string;
@@ -150,6 +195,10 @@ export type User = {
   last_login?: string | null;
 };
 
+export type VerifyToken = {
+  token: string;
+};
+
 export type VideoResponse = {
   id: number;
   title: string;
@@ -163,6 +212,83 @@ export type VideoSearch = {
   duration?: string;
   category?: string;
 };
+
+export type AdminInvitesListData = {
+  /**
+   * Number of results to return per page.
+   */
+  limit?: number;
+  /**
+   * The initial index from which to return the results.
+   */
+  offset?: number;
+};
+
+export type AdminInvitesListResponse = PaginatedAdminInviteList;
+
+export type AdminInvitesCreateData = {
+  requestBody: AdminInvite;
+};
+
+export type AdminInvitesCreateResponse = AdminInvite;
+
+export type AdminInvitesRetrieveData = {
+  /**
+   * A unique integer value identifying this admin invite.
+   */
+  id: number;
+};
+
+export type AdminInvitesRetrieveResponse = AdminInvite;
+
+export type AdminInvitesUpdateData = {
+  /**
+   * A unique integer value identifying this admin invite.
+   */
+  id: number;
+  requestBody: AdminInvite;
+};
+
+export type AdminInvitesUpdateResponse = AdminInvite;
+
+export type AdminInvitesPartialUpdateData = {
+  /**
+   * A unique integer value identifying this admin invite.
+   */
+  id: number;
+  requestBody?: PatchedAdminInvite;
+};
+
+export type AdminInvitesPartialUpdateResponse = AdminInvite;
+
+export type AdminInvitesDestroyData = {
+  /**
+   * A unique integer value identifying this admin invite.
+   */
+  id: number;
+};
+
+export type AdminInvitesDestroyResponse = void;
+
+export type AdminInvitesCreateCreateData = {
+  requestBody: CreateInvite;
+};
+
+export type AdminInvitesCreateCreateResponse = CreateInvite;
+
+export type AdminInvitesVerifyTokenCreateData = {
+  requestBody: VerifyToken;
+};
+
+export type AdminInvitesVerifyTokenCreateResponse = VerifyToken;
+
+export type AdminManagementRetrieveResponse = User;
+
+export type AdminManagementPartialUpdateData = {
+  requestBody?: PatchedUser;
+};
+
+export type AdminManagementPartialUpdateResponse = User;
 
 export type ApiLogoutCreateData = {
   requestBody?: Logout;
@@ -211,6 +337,8 @@ export type ApikeysDestroy2Data = {
 };
 
 export type ApikeysDestroy2Response = void;
+
+export type CurrentUserRetrieveResponse = User;
 
 export type LogicbuilderAddmappingCreateData = {
   requestBody: CreateAnswerCategoryMappingRequest;
@@ -342,6 +470,12 @@ export type UsersLoginCreateData = {
 
 export type UsersLoginCreateResponse = Login;
 
+export type UsersRegisterCreateData = {
+  requestBody: Register;
+};
+
+export type UsersRegisterCreateResponse = Register;
+
 export type VideomanagementCreatevideoCreateData = {
   requestBody: CreateVideo;
 };
@@ -364,6 +498,78 @@ export type VideomanagementGetvideosCreateResponse =
   Array<GetVideoWithCategories>;
 
 export type $OpenApiTs = {
+  "/api/admin-invites/": {
+    get: {
+      req: AdminInvitesListData;
+      res: {
+        200: PaginatedAdminInviteList;
+      };
+    };
+    post: {
+      req: AdminInvitesCreateData;
+      res: {
+        201: AdminInvite;
+      };
+    };
+  };
+  "/api/admin-invites/{id}/": {
+    get: {
+      req: AdminInvitesRetrieveData;
+      res: {
+        200: AdminInvite;
+      };
+    };
+    put: {
+      req: AdminInvitesUpdateData;
+      res: {
+        200: AdminInvite;
+      };
+    };
+    patch: {
+      req: AdminInvitesPartialUpdateData;
+      res: {
+        200: AdminInvite;
+      };
+    };
+    delete: {
+      req: AdminInvitesDestroyData;
+      res: {
+        /**
+         * No response body
+         */
+        204: void;
+      };
+    };
+  };
+  "/api/admin-invites/create/": {
+    post: {
+      req: AdminInvitesCreateCreateData;
+      res: {
+        200: CreateInvite;
+      };
+    };
+  };
+  "/api/admin-invites/verify-token/": {
+    post: {
+      req: AdminInvitesVerifyTokenCreateData;
+      res: {
+        200: VerifyToken;
+      };
+    };
+  };
+  "/api/admin-management/": {
+    get: {
+      res: {
+        200: User;
+      };
+    };
+    patch: {
+      req: AdminManagementPartialUpdateData;
+      res: {
+        200: User;
+      };
+    };
+  };
   "/api/api/logout/": {
     post: {
       req: ApiLogoutCreateData;
@@ -425,6 +631,13 @@ export type $OpenApiTs = {
          * No response body
          */
         204: void;
+      };
+    };
+  };
+  "/api/current-user/": {
+    get: {
+      res: {
+        200: User;
       };
     };
   };
@@ -628,6 +841,14 @@ export type $OpenApiTs = {
       req: UsersLoginCreateData;
       res: {
         200: Login;
+      };
+    };
+  };
+  "/api/users/register/": {
+    post: {
+      req: UsersRegisterCreateData;
+      res: {
+        200: Register;
       };
     };
   };

@@ -33,6 +33,74 @@ export const $APIKey = {
   required: ["created_at", "id", "key", "name"],
 } as const;
 
+export const $AdminInvite = {
+  type: "object",
+  properties: {
+    id: {
+      type: "integer",
+      readOnly: true,
+    },
+    email: {
+      type: "string",
+      format: "email",
+      maxLength: 255,
+    },
+    token: {
+      type: "string",
+      format: "uuid",
+      readOnly: true,
+    },
+    is_active: {
+      type: "boolean",
+    },
+    invited_by: {
+      type: "integer",
+      readOnly: true,
+    },
+    invited_by_email: {
+      type: "string",
+      readOnly: true,
+    },
+    used_at: {
+      type: "string",
+      format: "date-time",
+      readOnly: true,
+      nullable: true,
+    },
+    used_by: {
+      type: "integer",
+      readOnly: true,
+      nullable: true,
+    },
+    used_by_email: {
+      type: "string",
+      readOnly: true,
+    },
+    created: {
+      type: "string",
+      format: "date-time",
+      readOnly: true,
+    },
+    modified: {
+      type: "string",
+      format: "date-time",
+      readOnly: true,
+    },
+  },
+  required: [
+    "created",
+    "email",
+    "id",
+    "invited_by",
+    "invited_by_email",
+    "modified",
+    "token",
+    "used_at",
+    "used_by",
+    "used_by_email",
+  ],
+} as const;
+
 export const $AnswerCategoryMapping = {
   type: "object",
   properties: {
@@ -74,6 +142,17 @@ export const $CreateAnswerCategoryMappingRequest = {
     },
   },
   required: ["answer_id", "category_id", "questionnaire_id"],
+} as const;
+
+export const $CreateInvite = {
+  type: "object",
+  properties: {
+    email: {
+      type: "string",
+      format: "email",
+    },
+  },
+  required: ["email"],
 } as const;
 
 export const $CreateQuestionRequest = {
@@ -233,6 +312,35 @@ export const $Message = {
   required: ["message"],
 } as const;
 
+export const $PaginatedAdminInviteList = {
+  type: "object",
+  required: ["count", "results"],
+  properties: {
+    count: {
+      type: "integer",
+      example: 123,
+    },
+    next: {
+      type: "string",
+      nullable: true,
+      format: "uri",
+      example: "http://api.example.org/accounts/?offset=400&limit=100",
+    },
+    previous: {
+      type: "string",
+      nullable: true,
+      format: "uri",
+      example: "http://api.example.org/accounts/?offset=200&limit=100",
+    },
+    results: {
+      type: "array",
+      items: {
+        $ref: "#/components/schemas/AdminInvite",
+      },
+    },
+  },
+} as const;
+
 export const $PaginatedUserList = {
   type: "object",
   required: ["count", "results"],
@@ -290,6 +398,62 @@ export const $PatchedAPIKey = {
       type: "string",
       format: "date-time",
       nullable: true,
+    },
+  },
+} as const;
+
+export const $PatchedAdminInvite = {
+  type: "object",
+  properties: {
+    id: {
+      type: "integer",
+      readOnly: true,
+    },
+    email: {
+      type: "string",
+      format: "email",
+      maxLength: 255,
+    },
+    token: {
+      type: "string",
+      format: "uuid",
+      readOnly: true,
+    },
+    is_active: {
+      type: "boolean",
+    },
+    invited_by: {
+      type: "integer",
+      readOnly: true,
+    },
+    invited_by_email: {
+      type: "string",
+      readOnly: true,
+    },
+    used_at: {
+      type: "string",
+      format: "date-time",
+      readOnly: true,
+      nullable: true,
+    },
+    used_by: {
+      type: "integer",
+      readOnly: true,
+      nullable: true,
+    },
+    used_by_email: {
+      type: "string",
+      readOnly: true,
+    },
+    created: {
+      type: "string",
+      format: "date-time",
+      readOnly: true,
+    },
+    modified: {
+      type: "string",
+      format: "date-time",
+      readOnly: true,
     },
   },
 } as const;
@@ -377,6 +541,26 @@ export const $Question = {
   required: ["answers", "id", "text"],
 } as const;
 
+export const $Register = {
+  type: "object",
+  properties: {
+    token: {
+      type: "string",
+      format: "uuid",
+    },
+    password: {
+      type: "string",
+      writeOnly: true,
+      minLength: 8,
+    },
+    password_confirm: {
+      type: "string",
+      writeOnly: true,
+    },
+  },
+  required: ["password", "password_confirm", "token"],
+} as const;
+
 export const $User = {
   type: "object",
   properties: {
@@ -421,6 +605,17 @@ export const $User = {
     },
   },
   required: ["created", "email", "id", "modified"],
+} as const;
+
+export const $VerifyToken = {
+  type: "object",
+  properties: {
+    token: {
+      type: "string",
+      format: "uuid",
+    },
+  },
+  required: ["token"],
 } as const;
 
 export const $VideoResponse = {

@@ -4,6 +4,7 @@ import cookie from "cookie";
 import axios from "axios";
 import { OpenAPI } from "./api";
 import Home from "./pages/Home";
+import Register from "./pages/Register";
 import Dashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import QuestionnaireBuilder from "./pages/admin/Questionnaire/QuestionnaireBuilder";
@@ -49,6 +50,11 @@ const App = () => {
           <Route path="/" element={
             <div className="center">
               <Home />
+            </div>}
+          />
+          <Route path="/register" element={
+            <div className="center">
+              <Register />
             </div>}
           />
           <Route path="/dashboard" element={<Dashboard />}>

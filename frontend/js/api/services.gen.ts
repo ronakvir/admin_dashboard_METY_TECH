@@ -4,6 +4,25 @@ import type { CancelablePromise } from "./core/CancelablePromise";
 import { OpenAPI } from "./core/OpenAPI";
 import { request as __request } from "./core/request";
 import type {
+  AdminInvitesListData,
+  AdminInvitesListResponse,
+  AdminInvitesCreateData,
+  AdminInvitesCreateResponse,
+  AdminInvitesRetrieveData,
+  AdminInvitesRetrieveResponse,
+  AdminInvitesUpdateData,
+  AdminInvitesUpdateResponse,
+  AdminInvitesPartialUpdateData,
+  AdminInvitesPartialUpdateResponse,
+  AdminInvitesDestroyData,
+  AdminInvitesDestroyResponse,
+  AdminInvitesCreateCreateData,
+  AdminInvitesCreateCreateResponse,
+  AdminInvitesVerifyTokenCreateData,
+  AdminInvitesVerifyTokenCreateResponse,
+  AdminManagementRetrieveResponse,
+  AdminManagementPartialUpdateData,
+  AdminManagementPartialUpdateResponse,
   ApiLogoutCreateData,
   ApiLogoutCreateResponse,
   ApikeysRetrieveResponse,
@@ -20,6 +39,7 @@ import type {
   ApikeysPartialUpdate2Response,
   ApikeysDestroy2Data,
   ApikeysDestroy2Response,
+  CurrentUserRetrieveResponse,
   LogicbuilderAddmappingCreateData,
   LogicbuilderAddmappingCreateResponse,
   LogicbuilderDeletemappingDestroyData,
@@ -58,6 +78,8 @@ import type {
   UsersDestroyResponse,
   UsersLoginCreateData,
   UsersLoginCreateResponse,
+  UsersRegisterCreateData,
+  UsersRegisterCreateResponse,
   VideomanagementCreatevideoCreateData,
   VideomanagementCreatevideoCreateResponse,
   VideomanagementDeletevideoDestroyData,
@@ -65,6 +87,189 @@ import type {
   VideomanagementGetvideosCreateData,
   VideomanagementGetvideosCreateResponse,
 } from "./types.gen";
+
+export class AdminInvitesService {
+  /**
+   * @param data The data for the request.
+   * @param data.limit Number of results to return per page.
+   * @param data.offset The initial index from which to return the results.
+   * @returns PaginatedAdminInviteList
+   * @throws ApiError
+   */
+  public static adminInvitesList(
+    data: AdminInvitesListData = {},
+  ): CancelablePromise<AdminInvitesListResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/admin-invites/",
+      query: {
+        limit: data.limit,
+        offset: data.offset,
+      },
+    });
+  }
+
+  /**
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns AdminInvite
+   * @throws ApiError
+   */
+  public static adminInvitesCreate(
+    data: AdminInvitesCreateData,
+  ): CancelablePromise<AdminInvitesCreateResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/admin-invites/",
+      body: data.requestBody,
+      mediaType: "application/json",
+    });
+  }
+
+  /**
+   * @param data The data for the request.
+   * @param data.id A unique integer value identifying this admin invite.
+   * @returns AdminInvite
+   * @throws ApiError
+   */
+  public static adminInvitesRetrieve(
+    data: AdminInvitesRetrieveData,
+  ): CancelablePromise<AdminInvitesRetrieveResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/admin-invites/{id}/",
+      path: {
+        id: data.id,
+      },
+    });
+  }
+
+  /**
+   * @param data The data for the request.
+   * @param data.id A unique integer value identifying this admin invite.
+   * @param data.requestBody
+   * @returns AdminInvite
+   * @throws ApiError
+   */
+  public static adminInvitesUpdate(
+    data: AdminInvitesUpdateData,
+  ): CancelablePromise<AdminInvitesUpdateResponse> {
+    return __request(OpenAPI, {
+      method: "PUT",
+      url: "/api/admin-invites/{id}/",
+      path: {
+        id: data.id,
+      },
+      body: data.requestBody,
+      mediaType: "application/json",
+    });
+  }
+
+  /**
+   * @param data The data for the request.
+   * @param data.id A unique integer value identifying this admin invite.
+   * @param data.requestBody
+   * @returns AdminInvite
+   * @throws ApiError
+   */
+  public static adminInvitesPartialUpdate(
+    data: AdminInvitesPartialUpdateData,
+  ): CancelablePromise<AdminInvitesPartialUpdateResponse> {
+    return __request(OpenAPI, {
+      method: "PATCH",
+      url: "/api/admin-invites/{id}/",
+      path: {
+        id: data.id,
+      },
+      body: data.requestBody,
+      mediaType: "application/json",
+    });
+  }
+
+  /**
+   * @param data The data for the request.
+   * @param data.id A unique integer value identifying this admin invite.
+   * @returns void No response body
+   * @throws ApiError
+   */
+  public static adminInvitesDestroy(
+    data: AdminInvitesDestroyData,
+  ): CancelablePromise<AdminInvitesDestroyResponse> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: "/api/admin-invites/{id}/",
+      path: {
+        id: data.id,
+      },
+    });
+  }
+
+  /**
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns CreateInvite
+   * @throws ApiError
+   */
+  public static adminInvitesCreateCreate(
+    data: AdminInvitesCreateCreateData,
+  ): CancelablePromise<AdminInvitesCreateCreateResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/admin-invites/create/",
+      body: data.requestBody,
+      mediaType: "application/json",
+    });
+  }
+
+  /**
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns VerifyToken
+   * @throws ApiError
+   */
+  public static adminInvitesVerifyTokenCreate(
+    data: AdminInvitesVerifyTokenCreateData,
+  ): CancelablePromise<AdminInvitesVerifyTokenCreateResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/admin-invites/verify-token/",
+      body: data.requestBody,
+      mediaType: "application/json",
+    });
+  }
+}
+
+export class AdminManagementService {
+  /**
+   * Get all admin users (staff users)
+   * @returns User
+   * @throws ApiError
+   */
+  public static adminManagementRetrieve(): CancelablePromise<AdminManagementRetrieveResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/admin-management/",
+    });
+  }
+
+  /**
+   * Disable/Enable an admin user (superusers cannot be disabled)
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns User
+   * @throws ApiError
+   */
+  public static adminManagementPartialUpdate(
+    data: AdminManagementPartialUpdateData = {},
+  ): CancelablePromise<AdminManagementPartialUpdateResponse> {
+    return __request(OpenAPI, {
+      method: "PATCH",
+      url: "/api/admin-management/",
+      body: data.requestBody,
+      mediaType: "application/json",
+    });
+  }
+}
 
 export class ApiService {
   /**
@@ -225,6 +430,20 @@ export class ApikeysService {
       path: {
         key_id: data.keyId,
       },
+    });
+  }
+}
+
+export class CurrentUserService {
+  /**
+   * Get current logged in user information
+   * @returns User
+   * @throws ApiError
+   */
+  public static currentUserRetrieve(): CancelablePromise<CurrentUserRetrieveResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/current-user/",
     });
   }
 }
@@ -614,6 +833,23 @@ export class UsersService {
     return __request(OpenAPI, {
       method: "POST",
       url: "/api/users/login/",
+      body: data.requestBody,
+      mediaType: "application/json",
+    });
+  }
+
+  /**
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns Register
+   * @throws ApiError
+   */
+  public static usersRegisterCreate(
+    data: UsersRegisterCreateData,
+  ): CancelablePromise<UsersRegisterCreateResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/users/register/",
       body: data.requestBody,
       mediaType: "application/json",
     });
