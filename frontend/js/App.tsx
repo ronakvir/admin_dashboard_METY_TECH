@@ -11,6 +11,7 @@ import LogicBuilder from "./pages/admin/LogicBuilder/LogicBuilder";
 import VideoLibrary from "./pages/admin/VideoManagement/VideoLibrary";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 import AdminProfile from "./pages/admin/AdminProfile";
+import ApiKeyManagement from "./pages/admin/ApiKeyManagement";
 
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -57,6 +58,7 @@ const App = () => {
             <Route path="/dashboard/logicbuilder" element={<LogicBuilder />} />
             <Route path="/dashboard/analyticsdashboard" element={<AnalyticsDashboard />} />
             <Route path="/dashboard/adminprofile" element={<AdminProfile />} />
+            <Route path="/dashboard/apikeys" element={<ApiKeyManagement />} />
           </Route>
         </Routes>
       </Router>

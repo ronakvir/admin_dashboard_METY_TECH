@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { Category, VideoData, VideoSearchFields } from "../../../api/types.gen";
 import { categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
-import { VideoManagementService } from "../../../api/services.gen";
+import { VideomanagementService } from "../../../api/services.gen";
 
 interface VideoManagementStates {
     searchFields:               VideoSearchFields;       setSearchFields:            Dispatch<SetStateAction<VideoSearchFields>>;
@@ -85,7 +85,7 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
             if (!areAllUnique) {alert("Category fields must be unique"); return;}
 
             console.log(selectedVideo);
-            VideoManagementService.createVideo(selectedVideo)
+            VideomanagementService.videomanagementCreatevideoCreate({ requestBody: selectedVideo })
                 .then( response => {
                     console.log(response.id);
                     setVideoWorkshop("");

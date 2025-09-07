@@ -1,6 +1,6 @@
 import { useEffect, FC, Dispatch, SetStateAction } from "react";
 import { QuestionnaireStates } from "./QuestionnaireBuilder"
-import { QuestionnaireService } from "../../../api";
+import { QuestionnairebuilderService } from "../../../api/services.gen";
 import { question_questionnaireTable, question_questionnaireTableIndex, questionnaireTable, questionnaireTableIndex } from "../../database";
 
 
@@ -33,13 +33,10 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
             id: 0,
             title: currentQuestionnaire.title,
             status: currentQuestionnaire.status,
-            started: 0,
-            completed: 0,
-            last_modified: new Date().toISOString(),
             questions: currentQuestionnaire.questions.map( question => question.id )
         }
 
-        QuestionnaireService.createQuestionnaire(questionnaireRequestData)
+        QuestionnairebuilderService.questionnairebuilderCreatequestionnaireCreate({ requestBody: questionnaireRequestData })
             .then( response => {
                 currentQuestionnaire.id = response.id;
                 setQuestionnaires([ ...questionnaires, currentQuestionnaire ]);
@@ -61,21 +58,17 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
             id: currentQuestionnaire.id,
             title: currentQuestionnaire.title,
             status: currentQuestionnaire.status,
-            started: currentQuestionnaire.started,
-            completed: currentQuestionnaire.completed,
-            last_modified: new Date().toISOString(),
             questions: currentQuestionnaire.questions.map( question => question.id )
         }
 
-        QuestionnaireService.createQuestionnaire(questionnaireRequestData)
-            .then( () => {
+        QuestionnairebuilderService.questionnairebuilderCreatequestionnaireCreate({ requestBody: questionnaireRequestData })
+            .then( (response) => {
                 let index = questionnaires.findIndex( questionnaire => currentQuestionnaire.id === questionnaire.id );
                 
                 const tempQuestionnaires = [ ...questionnaires ];
-                tempQuestionnaires.splice(index, 1);
+                tempQuestionnaires[index] = { ...currentQuestionnaire, id: response.id };
                 setQuestionnaires(tempQuestionnaires);
-
-                setQuestionnaires([ ...questionnaires, currentQuestionnaire ]);
+                
                 setQuestionnaireWorkshop("");
                 clearForms();
             })
@@ -99,7 +92,7 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
 
     const deleteQuestionnaireButton = (questionnaire_id: number) => {
         if(!confirm("Are you sure you would like to delete this questionnaire? This action cannot be reversed.")) return;
-        QuestionnaireService.deleteQuestionnaire(questionnaire_id)
+        QuestionnairebuilderService.questionnairebuilderDeletequestionnaireDestroy({ id: questionnaire_id })
             .then( response => {
                 let index = questionnaires.findIndex( questionnaire => questionnaire_id === questionnaire.id );
                 

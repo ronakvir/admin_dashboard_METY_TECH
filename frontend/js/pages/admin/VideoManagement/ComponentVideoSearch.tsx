@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
 import { Category, VideoData, VideoSearchFields } from "../../../api/types.gen";
-import { VideoManagementService } from "../../../api/services.gen";
+import { VideomanagementService } from "../../../api/services.gen";
 
 interface VideoManagementStates {
     searchFields:               VideoSearchFields;       setSearchFields:            Dispatch<SetStateAction<VideoSearchFields>>;
@@ -70,7 +70,7 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
             category: searchFields.category
         }
 
-        VideoManagementService.getVideos(requestData)
+        VideomanagementService.videomanagementGetvideosCreate({ requestBody: requestData })
             .then( response => {
                 setVideoList(response);
             })
@@ -80,7 +80,7 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
     // DELETE VIDEO API
     const deleteVideoButton = (videoID: number) => {
         if (confirm("This will permanently delete this video. Are you sure?")) {
-            VideoManagementService.deleteVideo(videoID)
+            VideomanagementService.videomanagementDeletevideoDestroy({ id: videoID })
                 .then( response => {
                     const tempVideoList = [ ...videoList ];
                     const index = videoList.findIndex( video => video.id === videoID);

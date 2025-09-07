@@ -1,7 +1,7 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import "../../../sass/_global.scss";
-import { ApiService, DevService } from "../../api/services.gen";
+import { ApiService, ResetalldataService } from "../../api/services.gen";
 
 interface QuestionnaireStates {
     sidePanel: boolean; setSidePanel: Dispatch<SetStateAction<boolean>>;
@@ -27,6 +27,9 @@ const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => 
     const AdminProfile = () => {
         navigate("/dashboard/adminprofile")
     }
+    const ApiKeyManagement = () => {
+        navigate("/dashboard/apikeys")
+    }
 
     const handleLogout = async () => {
         try {
@@ -41,7 +44,7 @@ const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => 
     
     const devResetDatabaseData = () => {
         if (!confirm("This will delete all current database data, and reset it with new baseline data (used for testing). Are you sure you would like to do this?")) return
-        DevService.resetData()
+        ResetalldataService.resetalldataCreate()
             .then( response => {
                 console.log(response)
             })
@@ -57,6 +60,7 @@ const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => 
             <button className="navButton" onClick={VideoLibrary}>Fitness Video Library</button>
             <button className="navButton" onClick={LogicBuilder}>Logic Builder</button>
             <button className="navButton" onClick={AnalyticsDashboard}>Analytics Dashboard</button>
+            <button className="navButton" onClick={ApiKeyManagement}>API Key Management</button>
             <button className="navButton" onClick={AdminProfile}>Admin Profile</button>
             <button className="navButton" onClick={handleLogout}>Logout</button>
             <hr/>

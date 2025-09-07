@@ -1,6 +1,6 @@
 import { LogicBuilderStates } from "./LogicBuilder";
 import { answer_categoryMappingTable, categoryTable } from "../../database";
-import { LogicPageService } from "../../../api/services.gen";
+import { LogicbuilderService } from "../../../api/services.gen";
 import cookie from "cookie";
 import { useState } from "react";
 
@@ -25,7 +25,7 @@ const CLogicWorkshop: React.FC<LogicBuilderStates> = ({
 
             const mappingData = { questionnaire_id: selectedQuestionnaire.id, answer_id: answerID, category_id: categoryID, inclusive: checkedInclusive };
 
-            LogicPageService.addMapping({ requestBody: mappingData })
+            LogicbuilderService.logicbuilderAddmappingCreate({ requestBody: mappingData })
                 .then( response => {
 
                     // get the category text of the added mapping and reflect the change in the UI

@@ -1,4 +1,4 @@
-import { LogicPageService } from "../../../api/services.gen"
+import { LogicbuilderService } from "../../../api/services.gen"
 import { categoryTable, question_questionnaireTable, questionTable, answerTable, answer_categoryMappingTable } from "../../database";
 import CLogicWorkshop from "./CLogicWorkshop";
 import CQuestionnaireTable from "./CQuestionnaireTable";
@@ -36,7 +36,7 @@ const CQuestionnaireSelection: React.FC<LogicBuilderStates> = ({
         })
 
         // API call for Questionnaire List
-        LogicPageService.getQuestions(questionnaireID)
+        LogicbuilderService.logicbuilderGetquestionsRetrieve({ questionnaireId: questionnaireID })
             .then( response => {
                 console.log(response);
                 setQuestionList(response);
@@ -53,7 +53,7 @@ const CQuestionnaireSelection: React.FC<LogicBuilderStates> = ({
             })
 
         // API call for Category List
-        LogicPageService.getCategories()
+        LogicbuilderService.logicbuilderGetcategoriesRetrieve()
             .then( response => {
                 console.log(response);
                 setCategoryList(response);

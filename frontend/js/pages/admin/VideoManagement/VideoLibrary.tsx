@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import ComponentVideoSearch from "./ComponentVideoSearch"
 import ComponentWorkshop from "./ComponentWorkshop";
 import { Category, VideoData, VideoSearchFields } from "../../../api/types.gen";
-import { LogicPageService } from "../../../api/services.gen";
+import { LogicbuilderService } from "../../../api/services.gen";
 
 
 const VideoLibrary: React.FC = () => {
@@ -13,7 +13,7 @@ const VideoLibrary: React.FC = () => {
   const [ categoryList, setCategoryList ] = useState<Category[]>([]);
 
   useEffect (() => {
-    LogicPageService.getCategories()
+    LogicbuilderService.logicbuilderGetcategoriesRetrieve()
       .then( response => setCategoryList(response) )
       .catch( error => console.log(error) )
   }, [])

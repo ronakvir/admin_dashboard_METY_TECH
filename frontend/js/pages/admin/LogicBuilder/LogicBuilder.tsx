@@ -1,7 +1,7 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import CQuestionnaireSelection from "./CQuestionnaireSelection";
 import { Category, QuestionLogicPage, QuestionnaireLogicPage } from "../../../api/types.gen"
-import { LogicPageService } from "../../../api/services.gen";
+import { LogicbuilderService } from "../../../api/services.gen";
 
 export type SelectedQuestion = {
   id: number;
@@ -42,7 +42,7 @@ const LogicBuilder: React.FC = () => {
       setQuestionList([]);
       
       const getDatabaseInformation = async () => {
-        LogicPageService.getQuestionnaires()
+        LogicbuilderService.logicbuilderGetquestionnairesRetrieve()
         .then(response => {
           setQuestionnaireList(response)
         })

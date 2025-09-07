@@ -29,22 +29,200 @@ paths:
               schema:
                 $ref: '#/components/schemas/Logout'
           description: ''
-  /api/questionnaire/api/questionnaires/:
-    post:
-      operationId: questionnaire_api_questionnaires_create
+  /api/apikeys/:
+    get:
+      operationId: apikeys_retrieve
+      description: List all API keys
       tags:
-      - questionnaire
+      - apikeys
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+          description: ''
+    post:
+      operationId: apikeys_create
+      description: Create a new API key
+      tags:
+      - apikeys
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Questionnaire'
+              $ref: '#/components/schemas/APIKey'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Questionnaire'
+              $ref: '#/components/schemas/APIKey'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Questionnaire'
+              $ref: '#/components/schemas/APIKey'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+          description: ''
+    patch:
+      operationId: apikeys_partial_update
+      description: Toggle API key active status
+      tags:
+      - apikeys
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAPIKey'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAPIKey'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAPIKey'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+          description: ''
+    delete:
+      operationId: apikeys_destroy
+      description: Delete an API key
+      tags:
+      - apikeys
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/apikeys/{key_id}/:
+    get:
+      operationId: apikeys_retrieve_2
+      description: List all API keys
+      parameters:
+      - in: path
+        name: key_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - apikeys
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+          description: ''
+    post:
+      operationId: apikeys_create_2
+      description: Create a new API key
+      parameters:
+      - in: path
+        name: key_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - apikeys
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/APIKey'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/APIKey'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/APIKey'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+          description: ''
+    patch:
+      operationId: apikeys_partial_update_2
+      description: Toggle API key active status
+      parameters:
+      - in: path
+        name: key_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - apikeys
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAPIKey'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAPIKey'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAPIKey'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKey'
+          description: ''
+    delete:
+      operationId: apikeys_destroy_2
+      description: Delete an API key
+      parameters:
+      - in: path
+        name: key_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - apikeys
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/logicbuilder/addmapping/:
+    post:
+      operationId: logicbuilder_addmapping_create
+      description: Creates a mapping between an answer and a category for a questionnaire
+      summary: Create answer category mapping
+      tags:
+      - logicbuilder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnswerCategoryMappingRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateAnswerCategoryMappingRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateAnswerCategoryMappingRequest'
         required: true
       security:
       - cookieAuth: []
@@ -53,8 +231,250 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Questionnaire'
+                $ref: '#/components/schemas/AnswerCategoryMapping'
           description: ''
+  /api/logicbuilder/deletemapping/{questionnaire_id}/{answer_id}:
+    delete:
+      operationId: logicbuilder_deletemapping_destroy
+      parameters:
+      - in: path
+        name: answer_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: questionnaire_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - logicbuilder
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/logicbuilder/getcategories/:
+    get:
+      operationId: logicbuilder_getcategories_retrieve
+      tags:
+      - logicbuilder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/logicbuilder/getquestionnaires/:
+    get:
+      operationId: logicbuilder_getquestionnaires_retrieve
+      tags:
+      - logicbuilder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/logicbuilder/getquestions/{questionnaire_id}:
+    get:
+      operationId: logicbuilder_getquestions_retrieve
+      parameters:
+      - in: path
+        name: questionnaire_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - logicbuilder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/public/questionnaire/:
+    get:
+      operationId: public_questionnaire_retrieve
+      description: |-
+        Public API endpoint to get published questionnaire by title.
+        Returns questionnaire title, questions, question types, and answer choices.
+        Supports both public access and API key authentication.
+      tags:
+      - public
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicQuestionnaire'
+          description: ''
+  /api/questionnairebuilder/addquestion/:
+    post:
+      operationId: questionnairebuilder_addquestion_create
+      description: Creates a new question or updates an existing one with answers
+      summary: Create or update question
+      tags:
+      - questionnairebuilder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+          description: ''
+  /api/questionnairebuilder/createquestionnaire/:
+    post:
+      operationId: questionnairebuilder_createquestionnaire_create
+      description: Creates a new questionnaire or updates an existing one with questions
+      summary: Create or update questionnaire
+      tags:
+      - questionnairebuilder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionnaireRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionnaireRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionnaireRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+          description: ''
+  /api/questionnairebuilder/deletequestion/{id}:
+    delete:
+      operationId: questionnairebuilder_deletequestion_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - questionnairebuilder
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/questionnairebuilder/deletequestionnaire/{id}:
+    delete:
+      operationId: questionnairebuilder_deletequestionnaire_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - questionnairebuilder
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/questionnairebuilder/getquestionnaires/:
+    get:
+      operationId: questionnairebuilder_getquestionnaires_retrieve
+      tags:
+      - questionnairebuilder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/questionnairebuilder/getquestions/:
+    get:
+      operationId: questionnairebuilder_getquestions_retrieve
+      tags:
+      - questionnairebuilder
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/questionnairebuilder/getvideos/:
+    post:
+      operationId: questionnairebuilder_getvideos_create
+      description: Returns ranked videos based on questionnaire answers and category
+        mappings
+      summary: Get videos for questionnaire preview
+      tags:
+      - questionnairebuilder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetVideosForPreview'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GetVideosForPreview'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GetVideosForPreview'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VideoResponse'
+          description: ''
+  /api/resetalldata/:
+    post:
+      operationId: resetalldata_create
+      tags:
+      - resetalldata
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/rest/rest-check/:
     get:
       operationId: rest_rest_check_retrieve
@@ -257,8 +677,245 @@ paths:
               schema:
                 $ref: '#/components/schemas/Login'
           description: ''
+  /api/videomanagement/createvideo/:
+    post:
+      operationId: videomanagement_createvideo_create
+      description: Creates a new video or updates an existing one with categories
+      summary: Create or update video
+      tags:
+      - videomanagement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVideo'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateVideo'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateVideo'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+          description: ''
+  /api/videomanagement/deletevideo/{id}:
+    delete:
+      operationId: videomanagement_deletevideo_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - videomanagement
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/videomanagement/getvideos/:
+    post:
+      operationId: videomanagement_getvideos_create
+      description: Search videos by title, duration, or category. At least one search
+        parameter must be provided.
+      summary: Search videos
+      tags:
+      - videomanagement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoSearch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VideoSearch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VideoSearch'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GetVideoWithCategories'
+          description: ''
 components:
   schemas:
+    APIKey:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Key is used for authentication of public API
+          maxLength: 255
+        key:
+          type: string
+          maxLength: 64
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_used:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - created_at
+      - id
+      - key
+      - name
+    AnswerCategoryMapping:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        questionnaire_id:
+          type: integer
+        answer_id:
+          type: integer
+        category_id:
+          type: integer
+        inclusive:
+          type: boolean
+      required:
+      - answer_id
+      - category_id
+      - id
+      - questionnaire_id
+    CreateAnswerCategoryMappingRequest:
+      type: object
+      properties:
+        questionnaire_id:
+          type: integer
+        answer_id:
+          type: integer
+        category_id:
+          type: integer
+        inclusive:
+          type: boolean
+          default: true
+      required:
+      - answer_id
+      - category_id
+      - questionnaire_id
+    CreateQuestionRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          default: 0
+        text:
+          type: string
+        type:
+          type: string
+        answers:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+      required:
+      - answers
+      - text
+      - type
+    CreateQuestionnaireRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          default: 0
+        title:
+          type: string
+        status:
+          type: string
+        questions:
+          type: array
+          items:
+            type: integer
+      required:
+      - questions
+      - status
+      - title
+    CreateVideo:
+      type: object
+      properties:
+        id:
+          type: integer
+          default: 0
+        title:
+          type: string
+        duration:
+          type: string
+        description:
+          type: string
+        categories:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+      required:
+      - categories
+      - description
+      - duration
+      - title
+    GetVideoWithCategories:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        duration:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 255
+        categories:
+          type: string
+          readOnly: true
+      required:
+      - categories
+      - description
+      - duration
+      - id
+      - title
+    GetVideosForPreview:
+      type: object
+      properties:
+        questionnaire_id:
+          type: integer
+        answer_ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - answer_ids
+      - questionnaire_id
     Login:
       type: object
       properties:
@@ -309,6 +966,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    PatchedAPIKey:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Key is used for authentication of public API
+          maxLength: 255
+        key:
+          type: string
+          maxLength: 64
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_used:
+          type: string
+          format: date-time
+          nullable: true
     PatchedUser:
       type: object
       properties:
@@ -343,58 +1023,37 @@ components:
           type: string
           format: date-time
           nullable: true
-    Question:
+    PublicQuestionnaire:
       type: object
       properties:
-        value:
-          type: string
-          maxLength: 255
-        order:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        answers:
-          type: array
-          items:
-            $ref: '#/components/schemas/QuestionAnswer'
-      required:
-      - answers
-      - order
-      - value
-    QuestionAnswer:
-      type: object
-      properties:
-        value:
-          type: string
-          maxLength: 255
-        order:
-          type: integer
-          maximum: 2147483647
-          minimum: -2147483648
-        input:
-          type: string
-          maxLength: 255
-      required:
-      - input
-      - order
-      - value
-    Questionnaire:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 255
-        status:
+        title:
           type: string
           maxLength: 255
         questions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Question'
+          type: string
+          readOnly: true
       required:
-      - name
       - questions
-      - status
+      - title
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        text:
+          type: string
+          maxLength: 255
+        type:
+          type: string
+          maxLength: 255
+        answers:
+          type: string
+          readOnly: true
+      required:
+      - answers
+      - id
+      - text
     User:
       type: object
       properties:
@@ -434,6 +1093,34 @@ components:
       - email
       - id
       - modified
+    VideoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        duration:
+          type: string
+        description:
+          type: string
+        count:
+          type: integer
+      required:
+      - count
+      - description
+      - duration
+      - id
+      - title
+    VideoSearch:
+      type: object
+      properties:
+        title:
+          type: string
+        duration:
+          type: string
+        category:
+          type: string
   securitySchemes:
     cookieAuth:
       type: apiKey

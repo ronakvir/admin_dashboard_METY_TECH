@@ -8,7 +8,7 @@ import ComponentQuestions from "./ComponentQuestions";
 import ComponentPreview from "./ComponentPreview";
 import { answerTable, question_questionnaireTable, questionnaireTable, questionTable } from "../../database";
 import { QuestionnaireFull, QuestionFull } from "../../../api/types.gen";
-import { QuestionnaireService } from "../../../api/services.gen";
+import { QuestionnairebuilderService } from "../../../api/services.gen";
 
 
 
@@ -52,14 +52,14 @@ const QuestionnaireBuilder: React.FC = () => {
   useEffect(() => {
 
     const getData = () => {
-      QuestionnaireService.getQuestionnaires()
+      QuestionnairebuilderService.questionnairebuilderGetquestionnairesRetrieve()
         .then( response => {
           console.log(response)
           setQuestionnaires(response);
         })
         .catch( error => console.log(error) )
 
-      QuestionnaireService.getQuestions()
+      QuestionnairebuilderService.questionnairebuilderGetquestionsRetrieve()
         .then( response => {
           console.log("SUP")
           console.log(response)

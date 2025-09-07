@@ -1,7 +1,7 @@
 import { Dispatch, FC, SetStateAction, useEffect} from "react";
 import { QuestionnaireStates } from "./QuestionnaireBuilder"
 import { QuestionnaireFull } from "../../../api/types.gen";
-import { QuestionnaireService } from "../../../api/services.gen";
+import { QuestionnairebuilderService } from "../../../api/services.gen";
 
 
 
@@ -67,7 +67,7 @@ const ComponentRecents: FC<QuestionnaireStates> = ({
 
     const deleteQuestionnaireButton = (questionnaire_id: number) => {
         if(!confirm("Are you sure you would like to delete this questionnaire? This action cannot be reversed.")) return;
-        QuestionnaireService.deleteQuestionnaire(questionnaire_id)
+        QuestionnairebuilderService.questionnairebuilderDeletequestionnaireDestroy({ id: questionnaire_id })
             .then( response => {
                
 

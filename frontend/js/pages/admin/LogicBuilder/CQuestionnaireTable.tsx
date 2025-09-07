@@ -1,5 +1,5 @@
 import { AnswerLogicPage, QuestionLogicPage } from "../../../api/types.gen";
-import { LogicPageService } from "../../../api/services.gen";
+import { LogicbuilderService } from "../../../api/services.gen";
 import { categoryTable, question_questionnaireTable, questionTable, answerTable, answer_categoryMappingTable } from "../../database";
 import CLogicWorkshop from "./CLogicWorkshop";
 import { LogicBuilderStates } from "./LogicBuilder"
@@ -26,7 +26,7 @@ const CQuestionnaireTable: React.FC<LogicBuilderStates> = ({
     const deleteLinksButtonn = (answerID: number) => {
         if (!confirm("Are you sure you would like to delete the links to this response?")) return;
 
-        LogicPageService.deleteMapping(selectedQuestionnaire.id, answerID)
+        LogicbuilderService.logicbuilderDeletemappingDestroy({ questionnaireId: selectedQuestionnaire.id, answerId: answerID })
             .then(() => {
                 // Remove the mapping from the list in memory
                 const tempQuestionList = [ ...questionList ];
