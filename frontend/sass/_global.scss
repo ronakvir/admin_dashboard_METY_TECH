@@ -4,11 +4,143 @@
     align-items: center;
 }
 
+// Modern Dashboard Layout
+.dashboard-container {
+    min-height: 100vh;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-header {
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.dashboard-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.dashboard-layout {
+    display: flex;
+    flex: 1;
+    min-height: calc(100vh - 80px);
+}
+
+.sidebar {
+    width: 280px;
+    background: white;
+    border-right: 1px solid #e9ecef;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+    overflow-y: auto;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    background: white;
+    overflow-y: auto;
+}
+
+.sidebar-nav {
+    padding: 1.5rem 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-section {
+    margin-bottom: 2rem;
+    padding: 0 1.5rem;
+}
+
+.nav-section:last-child {
+    margin-bottom: 0;
+}
+
+.nav-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+
+.nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-list li {
+    margin-bottom: 0.25rem;
+}
+
+.nav-item {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #495057;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.nav-item:hover {
+    background-color: #f8f9fa;
+    color: #212529;
+    transform: translateX(2px);
+}
+
+.nav-item:active {
+    background-color: #e9ecef;
+    transform: translateX(1px);
+}
+
+.nav-item-logout {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.nav-item-logout:hover {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.nav-section-dev {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+.nav-item-dev {
+    color: #6c757d;
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.nav-item-dev:hover {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
 .container {
     display: flex;
     flex-direction: column;
-
-
 }
 
 .topPanel {
@@ -18,14 +150,9 @@
 
 .notTopPanel {
     display: flex;
-
 }
 
-
-
-
 .navButton {
-
     padding: 10px;
     text-align: center;
     width: 200px;

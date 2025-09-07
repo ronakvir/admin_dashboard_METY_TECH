@@ -1,13 +1,9 @@
-import React, { Dispatch, SetStateAction, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import "../../../sass/_global.scss";
 import { ApiService, ResetalldataService } from "../../api/services.gen";
 
-interface QuestionnaireStates {
-    sidePanel: boolean; setSidePanel: Dispatch<SetStateAction<boolean>>;
-
-}
-const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => {
+const SidePanel: React.FC = () => {
     const navigate = useNavigate();
     const UserManagement = () => {
         navigate("/dashboard/usermanagement")
@@ -53,20 +49,34 @@ const SidePanel: React.FC<QuestionnaireStates> = ({sidePanel, setSidePanel}) => 
 
       
     return (
-        <>
-            <p>Navigation</p><br/>
-            <button className="navButton" onClick={UserManagement}>User Management</button><br/>
-            <button className="navButton" onClick={QuestionnaireBuilder}>Questionnaire Builder</button>
-            <button className="navButton" onClick={VideoLibrary}>Fitness Video Library</button>
-            <button className="navButton" onClick={LogicBuilder}>Logic Builder</button>
-            <button className="navButton" onClick={AnalyticsDashboard}>Analytics Dashboard</button>
-            <button className="navButton" onClick={ApiKeyManagement}>API Key Management</button>
-            <button className="navButton" onClick={AdminProfile}>Admin Profile</button>
-            <button className="navButton" onClick={handleLogout}>Logout</button>
-            <hr/>
-            <label>Dev Tool</label>
-            <button className="navButton" onClick={devResetDatabaseData}>Reset Database</button>
-        </>
+        <nav className="sidebar-nav">
+            <div className="nav-section">
+                <h3 className="nav-section-title">Navigation</h3>
+                <ul className="nav-list">
+                    <li><button className="nav-item" onClick={UserManagement}>User Management</button></li>
+                    <li><button className="nav-item" onClick={QuestionnaireBuilder}>Questionnaire Builder</button></li>
+                    <li><button className="nav-item" onClick={VideoLibrary}>Fitness Video Library</button></li>
+                    <li><button className="nav-item" onClick={LogicBuilder}>Logic Builder</button></li>
+                    <li><button className="nav-item" onClick={AnalyticsDashboard}>Analytics Dashboard</button></li>
+                    <li><button className="nav-item" onClick={ApiKeyManagement}>API Key Management</button></li>
+                    <li><button className="nav-item" onClick={AdminProfile}>Admin Profile</button></li>
+                </ul>
+            </div>
+            
+            <div className="nav-section">
+                <h3 className="nav-section-title">Account</h3>
+                <ul className="nav-list">
+                    <li><button className="nav-item nav-item-logout" onClick={handleLogout}>Logout</button></li>
+                </ul>
+            </div>
+            
+            <div className="nav-section nav-section-dev">
+                <h3 className="nav-section-title">Development</h3>
+                <ul className="nav-list">
+                    <li><button className="nav-item nav-item-dev" onClick={devResetDatabaseData}>Reset Database</button></li>
+                </ul>
+            </div>
+        </nav>
     );
 };
 
