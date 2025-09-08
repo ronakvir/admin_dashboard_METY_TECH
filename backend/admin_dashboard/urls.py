@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
+from django.conf import settings
 
 import django_js_reverse.views
 from common.routes import routes as common_routes
@@ -26,7 +27,6 @@ urlpatterns = [
     path("admin/", admin.site.urls, name="admin"),
     path("api/", include(user_urlpatterns)),
     path("api/", include(questionnaire_builder_urlpatterns)),
-    path("admin/defender/", include("defender.urls")),
     path("jsreverse/", django_js_reverse.views.urls_js, name="js_reverse"),
     path("api/", include(router.urls), name="api"),
     # drf-spectacular
@@ -45,3 +45,7 @@ urlpatterns = [
     path("register/", TemplateView.as_view(template_name="common/index.html"), name="register"),
     path("dashboard/", TemplateView.as_view(template_name="common/index.html"), name="dashboard"),
 ]
+
+# Add defender URLs only if Redis is available
+if hasattr(settings, 'DEFENDER_REDIS_URL') and settings.DEFENDER_REDIS_URL:
+    urlpatterns.append(path("admin/defender/", include("defender.urls")))

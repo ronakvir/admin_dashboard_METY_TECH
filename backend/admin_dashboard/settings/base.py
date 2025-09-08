@@ -25,6 +25,7 @@ DATABASES = {
     "default": config("DATABASE_URL", cast=db_url),
 }
 
+# Base apps
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -37,7 +38,6 @@ INSTALLED_APPS = [
     "import_export",
     "rest_framework",
     "drf_spectacular",
-    "defender",
     "django_guid",
     "common",
     "users",
@@ -45,6 +45,11 @@ INSTALLED_APPS = [
     "dashboard"
 ]
 
+# Add defender only if Redis is available
+if config("REDIS_URL", default=""):
+    INSTALLED_APPS.append("defender")
+
+# Base middleware
 MIDDLEWARE = [
     "django.middleware.gzip.GZipMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -57,9 +62,12 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
-    "defender.middleware.FailedLoginMiddleware",
     "django_guid.middleware.guid_middleware",
 ]
+
+# Add defender middleware only if Redis is available
+if config("REDIS_URL", default=""):
+    MIDDLEWARE.insert(-1, "defender.middleware.FailedLoginMiddleware")
 
 ROOT_URLCONF = "admin_dashboard.urls"
 
@@ -247,8 +255,9 @@ CSP_IMG_SRC = [
     "https://cdn.redoc.ly/redoc/",
 ]
 
-# Django-defender
-DEFENDER_LOGIN_FAILURE_LIMIT = 3
-DEFENDER_COOLOFF_TIME = 300  # 5 minutes
-DEFENDER_LOCKOUT_TEMPLATE = "defender/lockout.html"
-DEFENDER_REDIS_URL = config("REDIS_URL", default="")
+# Django-defender (only if Redis is available)
+if config("REDIS_URL", default=""):
+    DEFENDER_LOGIN_FAILURE_LIMIT = 3
+    DEFENDER_COOLOFF_TIME = 300  # 5 minutes
+    DEFENDER_LOCKOUT_TEMPLATE = "defender/lockout.html"
+    DEFENDER_REDIS_URL = config("REDIS_URL")
