@@ -133,5 +133,6 @@ LOGGING = {
 
 JS_REVERSE_EXCLUDE_NAMESPACES = ["admin"]
 
-# Sentry
-sentry_sdk.init(dsn=SENTRY_DSN, integrations=[DjangoIntegration()], release=COMMIT_SHA)
+# Sentry (disabled due to Python 3.13 compatibility issues)
+# TODO: Re-enable when Sentry SDK supports Python 3.13
+# sentry_sdk.init(dsn=SENTRY_DSN, integrations=[DjangoIntegration()], release=COMMIT_SHA)
