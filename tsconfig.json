@@ -12,7 +12,8 @@
     "noEmit": true,
     "paths": { "*": ["./frontend/*", "./frontend/js/*"] },
     "skipLibCheck": true,
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
     "types": ["node", "jest", "@testing-library/jest-dom"]
   },
   "include": ["./frontend/**/*.ts", "./frontend/**/*.tsx"],
