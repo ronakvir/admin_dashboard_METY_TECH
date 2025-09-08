@@ -13,7 +13,11 @@ poetry install --without dev --no-root --no-interaction
 echo "-----> Poetry done"
 
 echo "-----> Running manage.py check --deploy --fail-level WARNING"
-poetry run backend/manage.py check --deploy --fail-level WARNING
+if [ -n "$DATABASE_URL" ]; then
+    poetry run backend/manage.py check --deploy --fail-level WARNING
+else
+    echo "-----> Skipping Django check (no DATABASE_URL)"
+fi
 
 if [ -n "$ENABLE_DJANGO_COLLECTSTATIC" ] && [ "$ENABLE_DJANGO_COLLECTSTATIC" == 1 ]; then
     echo "-----> Running collectstatic"
@@ -24,7 +28,7 @@ if [ -n "$ENABLE_DJANGO_COLLECTSTATIC" ] && [ "$ENABLE_DJANGO_COLLECTSTATIC" == 
     echo
 fi
 
-if [ -n "$AUTO_MIGRATE" ] && [ "$AUTO_MIGRATE" == 1 ]; then
+if [ -n "$AUTO_MIGRATE" ] && [ "$AUTO_MIGRATE" == 1 ] && [ -n "$DATABASE_URL" ]; then
     echo "-----> Running manage.py migrate"
     poetry run backend/manage.py migrate --noinput
 fi
