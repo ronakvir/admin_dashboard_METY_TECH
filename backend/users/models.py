@@ -39,9 +39,9 @@ class AdminInvite(IndexedTimeStampedModel):
     email = models.EmailField(max_length=255, unique=True)
     token = models.UUIDField(default=uuid.uuid4, unique=True)
     is_active = models.BooleanField(default=True)
-    invited_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_invites')
+    invited_by = models.ForeignKey('User', on_delete=models.CASCADE, related_name='sent_invites')
     used_at = models.DateTimeField(null=True, blank=True)
-    used_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='used_invite')
+    used_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='used_invite')
 
     def __str__(self):
         return f"Invite for {self.email}"

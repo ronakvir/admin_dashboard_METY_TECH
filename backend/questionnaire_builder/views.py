@@ -217,6 +217,7 @@ class getVideosForPreview(APIView):
                 "title": video.title,
                 "duration": video.duration,
                 "description": video.description,
+                "url": video.url,
                 "count": video.count
             }) 
 
@@ -384,7 +385,8 @@ class CreateVideo(APIView):
         video = Video.objects.create(
             title = videoData["title"],
             duration = videoData["duration"],
-            description = videoData["description"]
+            description = videoData["description"],
+            url = videoData.get("url", "")
         )
 
 
@@ -405,7 +407,8 @@ class CreateVideo(APIView):
         Video.objects.filter(id = videoData["id"]).update(
             title = videoData["title"],
             duration = videoData["duration"],
-            description = videoData["description"]
+            description = videoData["description"],
+            url = videoData.get("url", "")
         )
         originalVideo = Video.objects.get(id = videoData["id"])
         originalVideo.videocategory_set.all().delete()
@@ -583,26 +586,26 @@ class DataStorage:
     ]
 
     videoData = [
-        {"title": "Full Body Stretch", "duration": "<15min", "description": "A gentle full-body stretching routine."},
-        {"title": "HIIT Cardio Blast", "duration": "15-30min", "description": "High-intensity interval training for fat burn."},
-        {"title": "Beginner Yoga Flow", "duration": "15-30min", "description": "Relaxing yoga for beginners."},
-        {"title": "Upper Body Strength", "duration": "15-30min", "description": "Strength training focusing on upper body."},
-        {"title": "Core Crusher", "duration": "<15min", "description": "A focused ab and core workout."},
-        {"title": "Lower Body Burner", "duration": "15-30min", "description": "Leg and glute-focused exercise routine."},
-        {"title": "Morning Energy Boost", "duration": "<15min", "description": "Short workout to start your day energized."},
-        {"title": "Boxing Cardio Workout", "duration": "30-45min", "description": "Boxing-style cardio for endurance."},
-        {"title": "Quick Office Stretch", "duration": "<15min", "description": "Stretches you can do at your desk."},
-        {"title": "Low Impact Cardio", "duration": "15-30min", "description": "Heart-pumping cardio with minimal joint impact."},
-        {"title": "Power Pilates", "duration": "30-45min", "description": "Pilates workout for strength and balance."},
-        {"title": "Glute Activation", "duration": "<15min", "description": "Warm-up focused on activating glute muscles."},
-        {"title": "Full Body Dumbbell Workout", "duration": "30-45min", "description": "Strength training using dumbbells."},
-        {"title": "Bodyweight Burn", "duration": "15-30min", "description": "No equipment needed, full body workout."},
-        {"title": "Mobility and Flexibility", "duration": "15-30min", "description": "Improve range of motion and flexibility."},
-        {"title": "Evening Cool Down", "duration": "<15min", "description": "Relaxing exercises to wind down your day."},
-        {"title": "Tabata Cardio", "duration": "<15min", "description": "Tabata-style intervals for max effort."},
-        {"title": "Balance and Stability", "duration": "15-30min", "description": "Exercises to improve balance and posture."},
-        {"title": "Chair Workout", "duration": "15-30min", "description": "Full-body workout using just a chair."},
-        {"title": "Resistance Band Training", "duration": "45-60min", "description": "Strength training using resistance bands."},
+        {"title": "Full Body Stretch", "duration": "12:30", "description": "A gentle full-body stretching routine.", "url": "https://youtube.com/watch?v=example1"},
+        {"title": "HIIT Cardio Blast", "duration": "22:15", "description": "High-intensity interval training for fat burn.", "url": "https://youtube.com/watch?v=example2"},
+        {"title": "Beginner Yoga Flow", "duration": "18:45", "description": "Relaxing yoga for beginners.", "url": "https://youtube.com/watch?v=example3"},
+        {"title": "Upper Body Strength", "duration": "25:30", "description": "Strength training focusing on upper body.", "url": "https://youtube.com/watch?v=example4"},
+        {"title": "Core Crusher", "duration": "8:20", "description": "A focused ab and core workout.", "url": "https://youtube.com/watch?v=example5"},
+        {"title": "Lower Body Burner", "duration": "20:15", "description": "Leg and glute-focused exercise routine.", "url": "https://youtube.com/watch?v=example6"},
+        {"title": "Morning Energy Boost", "duration": "10:45", "description": "Short workout to start your day energized.", "url": "https://youtube.com/watch?v=example7"},
+        {"title": "Boxing Cardio Workout", "duration": "35:20", "description": "Boxing-style cardio for endurance.", "url": "https://youtube.com/watch?v=example8"},
+        {"title": "Quick Office Stretch", "duration": "7:30", "description": "Stretches you can do at your desk.", "url": "https://youtube.com/watch?v=example9"},
+        {"title": "Low Impact Cardio", "duration": "24:45", "description": "Heart-pumping cardio with minimal joint impact.", "url": "https://youtube.com/watch?v=example10"},
+        {"title": "Power Pilates", "duration": "38:15", "description": "Pilates workout for strength and balance.", "url": "https://youtube.com/watch?v=example11"},
+        {"title": "Glute Activation", "duration": "6:45", "description": "Warm-up focused on activating glute muscles.", "url": "https://youtube.com/watch?v=example12"},
+        {"title": "Full Body Dumbbell Workout", "duration": "42:30", "description": "Strength training using dumbbells.", "url": "https://youtube.com/watch?v=example13"},
+        {"title": "Bodyweight Burn", "duration": "28:20", "description": "No equipment needed, full body workout.", "url": "https://youtube.com/watch?v=example14"},
+        {"title": "Mobility and Flexibility", "duration": "26:15", "description": "Improve range of motion and flexibility.", "url": "https://youtube.com/watch?v=example15"},
+        {"title": "Evening Cool Down", "duration": "9:30", "description": "Relaxing exercises to wind down your day.", "url": "https://youtube.com/watch?v=example16"},
+        {"title": "Tabata Cardio", "duration": "14:45", "description": "Tabata-style intervals for max effort.", "url": "https://youtube.com/watch?v=example17"},
+        {"title": "Balance and Stability", "duration": "19:30", "description": "Exercises to improve balance and posture.", "url": "https://youtube.com/watch?v=example18"},
+        {"title": "Chair Workout", "duration": "23:45", "description": "Full-body workout using just a chair.", "url": "https://youtube.com/watch?v=example19"},
+        {"title": "Resistance Band Training", "duration": "52:15", "description": "Strength training using resistance bands.", "url": "https://youtube.com/watch?v=example20"},
     ]
 
     categoryData = [

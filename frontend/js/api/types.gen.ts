@@ -66,6 +66,7 @@ export type CreateVideo = {
   title: string;
   duration: string;
   description: string;
+  url?: string;
   categories: Array<{
     [key: string]: string;
   }>;
@@ -76,6 +77,7 @@ export type GetVideoWithCategories = {
   title: string;
   duration: string;
   description: string;
+  url?: string | null;
   readonly categories: string;
 };
 
@@ -204,6 +206,7 @@ export type VideoResponse = {
   title: string;
   duration: string;
   description: string;
+  url: string | null;
   count: number;
 };
 

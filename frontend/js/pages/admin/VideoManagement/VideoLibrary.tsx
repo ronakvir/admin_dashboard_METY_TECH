@@ -1,14 +1,31 @@
 import React, { useEffect, useState } from "react";
 import ComponentVideoSearch from "./ComponentVideoSearch"
 import ComponentWorkshop from "./ComponentWorkshop";
-import { Category, VideoData, VideoSearchFields } from "../../../api/types.gen";
+import { VideoSearch } from "../../../api/types.gen";
 import { LogicbuilderService } from "../../../api/services.gen";
+
+// Define local types based on the API structure
+type Category = {
+    id: number;
+    text: string;
+};
+
+type VideoData = {
+    id: number;
+    title: string;
+    description: string;
+    duration: string;
+    url?: string | null;
+    categories: Category[];
+};
+
+type VideoSearchFields = VideoSearch;
 
 
 const VideoLibrary: React.FC = () => {
   const [ searchFields, setSearchfields ] = useState<VideoSearchFields>({title: "", duration: "", category: ""});
   const [ videoList, setVideoList ] = useState<VideoData[]>([]);
-  const [ selectedVideo, setSelectedVideo ] = useState({id: 0, title: "", description: "", duration: "", categories: [{ id: 0, text: "" }]});
+  const [ selectedVideo, setSelectedVideo ] = useState({id: 0, title: "", description: "", duration: "", url: "", categories: [{ id: 0, text: "" }]});
   const [ videoWorkshop, setVideoWorkshop ] = useState<string>("");
   const [ categoryList, setCategoryList ] = useState<Category[]>([]);
 

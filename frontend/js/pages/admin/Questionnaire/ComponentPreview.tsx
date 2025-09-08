@@ -89,7 +89,7 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                 <h4>{currentQuestionnaire.title}</h4>
                 <div style={{display: "grid", gridTemplateColumns: "repeat(4, minmax(160px, 1fr))", gap: "10px", width: "830px"}}>
                     { (() => {
-                    return currentQuestionnaire.questions.map((question, index) => {
+                    return currentQuestionnaire.questions.map((question: any, index: number) => {
                         return (
                             
                         <div key={index} style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
@@ -103,7 +103,7 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                                     return <input style={{height: "auto", width: "100%", padding: "5px 10px", }}></input>;
                                 }
                                 else {
-                                    return question?.answers.map((answer) => {
+                                    return question?.answers.map((answer: any) => {
                                         if (type === "multichoice") {
                                             return (
                                                 <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
@@ -134,15 +134,24 @@ const ComponentPreview: FC<QuestionnaireStates> = ({
                 </div>
                 <div style={{display: "flex", flexDirection: "column"}}>
                     <button onClick={submitAnswers}>Submit</button>
-                    {matchedVideos.map((video, index) => {
-                        return (
-                        <>
-                            <p>
-                                {index+1} ({video.count}): {video.title}
-                            </p>
-                        </> 
-                        )
-                    })}
+                    {matchedVideos.length > 0 ? (
+                        matchedVideos.map((video, index) => {
+                            return (
+                            <div key={video.id} style={{border: "1px solid #ccc", padding: "10px", margin: "5px 0", borderRadius: "5px"}}>
+                                <p><strong>{index+1}: {video.title}</strong></p>
+                                <p><strong>Duration:</strong> {video.duration}</p>
+                                <p><strong>Description:</strong> {video.description}</p>
+                                {video.url && (
+                                    <p><strong>URL:</strong> <a href={video.url} target="_blank" rel="noopener noreferrer" style={{color: "blue", textDecoration: "underline"}}>{video.url}</a></p>
+                                )}
+                            </div>
+                            )
+                        })
+                    ) : (
+                        <div style={{border: "1px solid #ccc", padding: "20px", margin: "5px 0", borderRadius: "5px", textAlign: "center", backgroundColor: "#f5f5f5"}}>
+                            <p style={{fontSize: "16px", color: "#666", margin: 0}}>No videos found matching your responses.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </>
