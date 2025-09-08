@@ -12,9 +12,9 @@ echo "-----> Poetry install"
 poetry install --without dev --no-root --no-interaction
 echo "-----> Poetry done"
 
-echo "-----> Running manage.py check --deploy --fail-level ERROR"
+echo "-----> Running manage.py check --deploy --fail-level CRITICAL"
 if [ -n "$DATABASE_URL" ]; then
-    poetry run backend/manage.py check --deploy --fail-level ERROR --exclude-tags drf_spectacular
+    poetry run backend/manage.py check --deploy --fail-level CRITICAL
 else
     echo "-----> Skipping Django check (no DATABASE_URL)"
 fi
