@@ -17,12 +17,6 @@ const SidePanel: React.FC = () => {
     const LogicBuilder = () => {
         navigate("/dashboard/logicbuilder")
     }
-    const AnalyticsDashboard = () => {
-        navigate("/dashboard/analyticsdashboard")
-    }
-    const AdminProfile = () => {
-        navigate("/dashboard/adminprofile")
-    }
     const ApiKeyManagement = () => {
         navigate("/dashboard/apikeys")
     }
@@ -76,9 +70,7 @@ const SidePanel: React.FC = () => {
                     <li><button className="nav-item" onClick={QuestionnaireBuilder}>Questionnaire Builder</button></li>
                     <li><button className="nav-item" onClick={VideoLibrary}>Fitness Video Library</button></li>
                     <li><button className="nav-item" onClick={LogicBuilder}>Logic Builder</button></li>
-                    <li><button className="nav-item" onClick={AnalyticsDashboard}>Analytics Dashboard</button></li>
                     <li><button className="nav-item" onClick={ApiKeyManagement}>API Key Management</button></li>
-                    <li><button className="nav-item" onClick={AdminProfile}>Admin Profile</button></li>
                 </ul>
             </div>
             
