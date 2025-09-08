@@ -1,7 +1,24 @@
 import { Dispatch, SetStateAction } from "react";
 import { categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
-import { Category, VideoData, VideoSearchFields } from "../../../api/types.gen";
+import { GetVideoWithCategories, VideoSearch } from "../../../api/types.gen";
 import { VideomanagementService } from "../../../api/services.gen";
+
+// Define local types based on the API structure
+type Category = {
+    id: number;
+    text: string;
+};
+
+type VideoData = {
+    id: number;
+    title: string;
+    description: string;
+    duration: string;
+    url?: string | null;
+    categories: Category[];
+};
+
+type VideoSearchFields = VideoSearch;
 
 interface VideoManagementStates {
     searchFields:               VideoSearchFields;       setSearchFields:            Dispatch<SetStateAction<VideoSearchFields>>;
@@ -18,15 +35,6 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
     videoWorkshop, setVideoWorkshop,
     categoryList, setCategoryList,}) => {
     
-    const cycleDurationField = (direction: number) => {
-        const dropdownBox = document.getElementById("durations") as HTMLSelectElement;
-        let index = (dropdownBox.selectedIndex + direction + dropdownBox.options.length) % dropdownBox.options.length;
-        dropdownBox.selectedIndex = index;
-        
-        const tempSearchFields = {...searchFields};
-        tempSearchFields.duration = dropdownBox.value;
-        setSearchFields(tempSearchFields);
-    }
 
     const updateTitleState = (newText: React.ChangeEvent<HTMLInputElement>) => {
         const tempSearchFields = {...searchFields};
@@ -34,7 +42,7 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
         setSearchFields(tempSearchFields);
     }
 
-    const updateDurationState = (selectedOption: React.ChangeEvent<HTMLSelectElement>) => {
+    const updateDurationState = (selectedOption: React.ChangeEvent<HTMLInputElement>) => {
         const tempSearchFields = {...searchFields};
         tempSearchFields.duration = selectedOption.target.value;
         setSearchFields(tempSearchFields);
@@ -56,7 +64,7 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
 
     const addVideoButton = () => {
         setVideoList([]);
-        setSelectedVideo({id: 0, title: "", description: "", duration: "", categories: [{id: 0, text: ""}]});
+        setSelectedVideo({id: 0, title: "", description: "", duration: "", url: "", categories: [{id: 0, text: ""}]});
         setVideoWorkshop("new");
         setSearchFields({title: "", duration: "", category: ""});
     }
@@ -72,7 +80,16 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
 
         VideomanagementService.videomanagementGetvideosCreate({ requestBody: requestData })
             .then( response => {
-                setVideoList(response);
+                // Convert GetVideoWithCategories[] to VideoData[]
+                const videoDataList: VideoData[] = response.map(video => ({
+                    id: video.id,
+                    title: video.title,
+                    duration: video.duration,
+                    description: video.description,
+                    url: video.url || "",
+                    categories: Array.isArray(video.categories) ? video.categories : []
+                }));
+                setVideoList(videoDataList);
             })
             .catch( error => console.log(error) )
     }
@@ -102,23 +119,11 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
             <div style={{display: "flex", flexDirection: "column", width: "250px"}}>
                 
                 <input  type="text" placeholder="Title" onChange={updateTitleState} style={{flex: "1"}}></input>
-                <div style={{flex: "1"}}>
-                    <label>Duration:</label>
-                    <button onClick={() => {cycleDurationField(-1)}}>&lt;</button>
-                    <select id="durations" onChange={updateDurationState}>
-                        <option value=""></option>
-                        <option value="<15min">&lt; 15 minutes</option>
-                        <option value="15-30min">15-30 minutes</option>
-                        <option value="30-45min">30-45 minutes</option>
-                        <option value="45-60min">45-60 minutes</option>
-                        <option value=">60min">60+ minutes</option>
-                    </select>
-                    <button onClick={() => {cycleDurationField(1)}}>&gt;</button>
-                </div>
+                <input type="text" placeholder="Duration (e.g., 3:20, 45:30)" onChange={updateDurationState} style={{flex: "1"}}></input>
                 {/* I want to implement this category text field so that it shows a preview of the available options as you start typeing */}
                 <input list="categoryList" style={{flex: "1"}} type="text" placeholder="Category" onChange={updateCategoryState}></input>
                 <datalist id="categoryList">
-                    {categoryList.map(category => {
+                    {categoryList.map((category: Category) => {
                         return (
                             <option value={category.text} />
                         )
@@ -132,29 +137,29 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
 
             {videoList.length > 0 ?
             <div style={{display: "flex", flexDirection: "row", justifyContent: "flex-start", border: "1px solid black", backgroundColor: "lightgrey"}}>
-                <label style={{width: "350px"}}>Title</label>
+                <label style={{width: "300px"}}>Title</label>
                 <label style={{width: "100px"}}>Duration</label>
-                <label style={{width: "250px"}}>Categories</label>
+                <label style={{width: "300px"}}>URL</label>
+                <label style={{width: "200px"}}>Categories</label>
             </div> :
             <></>
             }
-            {videoList.map ((video, index) => {
+            {videoList.map ((video: VideoData, index: number) => {
                 return(
-                    <>
-                        <div style={{display: "flex", flexDirection: "row", justifyContent: "flex-start", border: "1px solid black"}}>
-                            <label style={{width: "350px"}}>{video.title}</label>
+                    <div key={video.id} style={{display: "flex", flexDirection: "row", justifyContent: "flex-start", border: "1px solid black"}}>
+                            <label style={{width: "300px"}}>{video.title}</label>
                             <label style={{width: "100px"}}>{video.duration}</label>
+                            <label style={{width: "300px", wordBreak: "break-all"}}>{video.url || "No URL"}</label>
                             <div style={{display: "flex", flexDirection: "column", justifyContent: "flex-start"}}>
-                                {video.categories.map((category, index) => {
+                                {video.categories.map((category: Category, index: number) => {
                                     return (
-                                        <label style={{width: "250px"}}>{category.text}</label>
+                                        <label key={index} style={{width: "200px"}}>{category.text}</label>
                                     )
                                 })}
                             </div>
                             <button style={{height: "auto"}} onClick={() => modifyVideoButton(video)}>Modify</button>
                             <button style={{height: "auto"}} onClick={() => deleteVideoButton(video.id)}>Delete</button>
                         </div>
-                    </>
                 )
             })}
         </>

@@ -1,7 +1,24 @@
 import { Dispatch, SetStateAction } from "react";
-import { Category, VideoData, VideoSearchFields } from "../../../api/types.gen";
+import { GetVideoWithCategories, VideoSearch } from "../../../api/types.gen";
 import { categoryTable, videoCategoriesMappingTable, videoTable } from "../../database";
 import { VideomanagementService } from "../../../api/services.gen";
+
+// Define local types based on the API structure
+type Category = {
+    id: number;
+    text: string;
+};
+
+type VideoData = {
+    id: number;
+    title: string;
+    description: string;
+    duration: string;
+    url?: string | null;
+    categories: Category[];
+};
+
+type VideoSearchFields = VideoSearch;
 
 interface VideoManagementStates {
     searchFields:               VideoSearchFields;       setSearchFields:            Dispatch<SetStateAction<VideoSearchFields>>;
@@ -19,15 +36,6 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
     categoryList, setCategoryList,}) => {
 
 
-        const cycleDurationField = (direction: number) => {
-            const dropdownBox = document.getElementById("durations") as HTMLSelectElement;
-            let index = (dropdownBox.selectedIndex + direction + dropdownBox.options.length) % dropdownBox.options.length;
-            dropdownBox.selectedIndex = index;
-            
-            const tempSearchFields = {...selectedVideo};
-            tempSearchFields.duration = dropdownBox.value;
-            setSelectedVideo(tempSearchFields);
-        }
 
         const updateTitleState = (newText: React.ChangeEvent<HTMLInputElement>) => {
             const tempSearchFields = {...selectedVideo};
@@ -35,7 +43,7 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
             setSelectedVideo(tempSearchFields);
         }
     
-        const updateDurationState = (selectedOption: React.ChangeEvent<HTMLSelectElement>) => {
+        const updateDurationState = (selectedOption: React.ChangeEvent<HTMLInputElement>) => {
             const tempSearchFields = {...selectedVideo};
             tempSearchFields.duration = selectedOption.target.value;
             setSelectedVideo(tempSearchFields);
@@ -55,6 +63,12 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
             setSelectedVideo(tempSearchFields);
         }
 
+        const updateUrlState = (newText: React.ChangeEvent<HTMLInputElement>) => {
+            const tempSearchFields = {...selectedVideo};
+            tempSearchFields.url = newText.target.value;
+            setSelectedVideo(tempSearchFields);
+        }
+
         const removeCategoryField = (index: number) => {
             if (selectedVideo.categories.length < 2) return;
 
@@ -65,31 +79,41 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
 
         const cancelButton = () => {
             setVideoWorkshop("");
-            setSelectedVideo({id: 0, title: "", description: "", duration: "", categories: [{id: 0, text: ""}]});
+            setSelectedVideo({id: 0, title: "", description: "", duration: "", url: "", categories: [{id: 0, text: ""}]});
         }
 
         // Calls the modify video function - they invoke the same API
         const addVideoButton = () => {
             // do input validation
-            const file = document.getElementById("fileInput");
-            if (file?.isDefaultNamespace.length === 0) {alert("You must choose a file to upload!"); return;}
+            if (selectedVideo.url === "") {alert("You must enter a video URL!"); return;}
             modifyVideoButton();
         }
 
         const modifyVideoButton = () => {
             if (selectedVideo.duration === "") {alert("You must enter a duration!"); return; }
             if (selectedVideo.title === "") {alert("You must enter a title!");return;}
+            if (selectedVideo.url === "") {alert("You must enter a video URL!"); return;}
             for (let i = 0; i < selectedVideo.categories.length; i++) {if (selectedVideo.categories[i].text === "") {alert("You must remove empty category fields!"); return;}}
 
-            const areAllUnique = new Set(selectedVideo.categories.map(c => c.text.trim().toLowerCase())).size === selectedVideo.categories.length;
+            const areAllUnique = new Set(selectedVideo.categories.map((c: Category) => c.text.trim().toLowerCase())).size === selectedVideo.categories.length;
             if (!areAllUnique) {alert("Category fields must be unique"); return;}
 
-            console.log(selectedVideo);
-            VideomanagementService.videomanagementCreatevideoCreate({ requestBody: selectedVideo })
+            // Convert VideoData to CreateVideo format
+            const createVideoData = {
+                id: selectedVideo.id,
+                title: selectedVideo.title,
+                duration: selectedVideo.duration,
+                description: selectedVideo.description,
+                url: selectedVideo.url || "",
+                categories: selectedVideo.categories.map(cat => ({ text: cat.text }))
+            };
+            
+            console.log(createVideoData);
+            VideomanagementService.videomanagementCreatevideoCreate({ requestBody: createVideoData })
                 .then( response => {
                     console.log(response.id);
                     setVideoWorkshop("");
-                    setSelectedVideo({id: 0, title: "", description: "", duration: "", categories: [{id: 0, text: ""}]});
+                    setSelectedVideo({id: 0, title: "", description: "", duration: "", url: "", categories: [{id: 0, text: ""}]});
                 })
                 .catch( error => console.log(error) )
         }
@@ -108,23 +132,21 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
                     <div style={{display: "flex", flexDirection: "column", width: "350px", margin: "10px"}}>
                         
                         <input type="text" value={selectedVideo.title} placeholder="Title" onChange={updateTitleState} style={{flex: "1"}}></input>
+                        <input type="text" value={selectedVideo.url || ""} placeholder="Video URL (e.g., https://youtube.com/watch?v=...)" onChange={updateUrlState} style={{flex: "1"}}></input>
                         <div style={{flex: "1"}}>
-                            <label>Duration:</label>
-                            <button onClick={() => {cycleDurationField(-1)}}>&lt;</button>
-                            <select value={selectedVideo.duration} id="durations" onChange={updateDurationState}>
-                                <option value=""></option>
-                                <option value="<15min">&lt; 15 minutes</option>
-                                <option value="15-30min">15-30 minutes</option>
-                                <option value="30-45min">30-45 minutes</option>
-                                <option value="45-60min">45-60 minutes</option>
-                                <option value=">60min">60+ minutes</option>
-                            </select>
-                            <button onClick={() => {cycleDurationField(1)}}>&gt;</button>
+                            <label>Duration (HH:MM:SS):</label>
+                            <input 
+                                type="text" 
+                                value={selectedVideo.duration} 
+                                placeholder="e.g., 3:20, 45:30, 1:15:30" 
+                                onChange={updateDurationState}
+                                style={{flex: "1"}}
+                            />
                         </div>
 
                         
                         { /* I want to implement this category text field so that it shows a preview of the available options as you start typeing */
-                        selectedVideo.categories.map((category, index) => (
+                        selectedVideo.categories.map((category: Category, index: number) => (
                             <div key={index} style={{flex: "1"}}>
                                 <input list="categoryList" onChange={(value) => updateCategoryState(value, index)} value={selectedVideo.categories[index].text} name="category" type="text" placeholder="Category"/>
                                 <button onClick={ async () => removeCategoryField(index) }>X</button>
@@ -133,8 +155,8 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
                         }
                         <button onClick={() => setSelectedVideo({ ...selectedVideo, categories: [ ...selectedVideo.categories, {id: 0, text: "" }]})} style={{flex: "1"}}>Add Category</button>
                         <datalist id="categoryList">
-                            {categoryList.map(category => {
-                                if(selectedVideo.categories.some( categoryCheck => category.text === categoryCheck.text)) return null;
+                            {categoryList.map((category: Category) => {
+                                if(selectedVideo.categories.some((categoryCheck: Category) => category.text === categoryCheck.text)) return null;
                                 return (
                                     <option value={category.text} />
                                 )
@@ -144,8 +166,6 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
                         
                         {videoWorkshop === "new" ?
                             <>
-                                <input name="fileInput" id="fileInput" type="file"></input>
-                                <br/>
                                 <button onClick={ () => addVideoButton() } style={{flex: "1"}} >Add Video</button>
                             </> :
                             <>

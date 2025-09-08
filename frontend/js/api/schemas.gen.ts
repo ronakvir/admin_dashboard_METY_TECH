@@ -220,6 +220,10 @@ export const $CreateVideo = {
     description: {
       type: "string",
     },
+    url: {
+      type: "string",
+      format: "uri",
+    },
     categories: {
       type: "array",
       items: {
@@ -251,6 +255,12 @@ export const $GetVideoWithCategories = {
     description: {
       type: "string",
       maxLength: 255,
+    },
+    url: {
+      type: "string",
+      format: "uri",
+      nullable: true,
+      maxLength: 500,
     },
     categories: {
       type: "string",
@@ -633,11 +643,15 @@ export const $VideoResponse = {
     description: {
       type: "string",
     },
+    url: {
+      type: "string",
+      nullable: true,
+    },
     count: {
       type: "integer",
     },
   },
-  required: ["count", "description", "duration", "id", "title"],
+  required: ["count", "description", "duration", "id", "title", "url"],
 } as const;
 
 export const $VideoSearch = {

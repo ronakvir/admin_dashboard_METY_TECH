@@ -6,6 +6,7 @@ class Video(models.Model):
     title = models.CharField(max_length=255, null=False)
     duration = models.CharField(max_length=255, null=False)
     description = models.CharField(max_length=255, null=False)
+    url = models.URLField(max_length=500, null=True, blank=True)
 
 class Category(models.Model):
     text = models.CharField(max_length=255, null=False)

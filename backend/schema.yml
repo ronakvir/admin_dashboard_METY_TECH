@@ -1231,6 +1231,9 @@ components:
           type: string
         description:
           type: string
+        url:
+          type: string
+          format: uri
         categories:
           type: array
           items:
@@ -1257,6 +1260,11 @@ components:
         description:
           type: string
           maxLength: 255
+        url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 500
         categories:
           type: string
           readOnly: true
@@ -1556,6 +1564,9 @@ components:
           type: string
         description:
           type: string
+        url:
+          type: string
+          nullable: true
         count:
           type: integer
       required:
@@ -1564,6 +1575,7 @@ components:
       - duration
       - id
       - title
+      - url
     VideoSearch:
       type: object
       properties:

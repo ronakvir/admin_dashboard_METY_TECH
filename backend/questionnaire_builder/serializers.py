@@ -156,7 +156,7 @@ class GetVideoWithCategoriesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Video
-        fields = ('id', 'title', 'duration', 'description', 'categories')
+        fields = ('id', 'title', 'duration', 'description', 'url', 'categories')
 
     def get_categories(self, video):
         videoCategories = video.videocategory_set.select_related("category").all()
@@ -167,7 +167,7 @@ class VideoSerializer(serializers.ModelSerializer):
     categories = CategorySerializer(many=True)
     class Meta:
         model = Video
-        fields = ('id', 'title', 'duration', 'description', 'categories')
+        fields = ('id', 'title', 'duration', 'description', 'url', 'categories')
 
 # API Key Management Serializers
 class APIKeySerializer(serializers.ModelSerializer):
@@ -230,6 +230,7 @@ class VideoResponseSerializer(serializers.Serializer):
     title = serializers.CharField()
     duration = serializers.CharField()
     description = serializers.CharField()
+    url = serializers.CharField(allow_null=True)
     count = serializers.IntegerField()
 
 # Create Video Request Serializer
@@ -238,6 +239,7 @@ class CreateVideoSerializer(serializers.Serializer):
     title = serializers.CharField()
     duration = serializers.CharField()
     description = serializers.CharField()
+    url = serializers.URLField(required=False, allow_blank=True)
     categories = serializers.ListField(
         child=serializers.DictField(child=serializers.CharField()),
         allow_empty=False
