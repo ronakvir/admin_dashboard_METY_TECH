@@ -2,8 +2,8 @@ ROOT
 └── ...
     └── LogicBuilder
         └── CQuestionnaireSelection
-            ├── CLogicWorkshop
-            └── CQuestionnaireTable
+            └── CLogicWorkshop
+           
 
 
 Logic Builder:
