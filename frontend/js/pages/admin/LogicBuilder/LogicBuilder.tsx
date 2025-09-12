@@ -21,7 +21,7 @@ export interface LogicBuilderStates {
     questionnaireList:      QuestionnaireLogicPage[]; setQuestionnaireList:      Dispatch<SetStateAction<QuestionnaireLogicPage[]>>;
     categoryList:           Category[];               setCategoryList:           Dispatch<SetStateAction<Category[]>>;
     questionList:           QuestionLogicPage[];      setQuestionList:           Dispatch<SetStateAction<QuestionLogicPage[]>>;
-    selectedLink:           SelectedQuestion;         setSelectedLink:           Dispatch<SetStateAction<SelectedQuestion>>;
+    selectedLink:           SelectedQuestion | null;  setSelectedLink:           Dispatch<SetStateAction<SelectedQuestion | null>>;
     linkWorkshop:           boolean;                  setLinkWorkshop:           Dispatch<SetStateAction<boolean>>; 
     selectedQuestionnaire:  QuestionnaireLogicPage;   setSelectedQuestionnaire:  Dispatch<SetStateAction<QuestionnaireLogicPage>>;
     expandedQuestions:      boolean[];                setExpandedQuestions:      Dispatch<SetStateAction<boolean[]>>;
@@ -31,9 +31,9 @@ const LogicBuilder: React.FC = () => {
     const [ questionnaireList, setQuestionnaireList ]         = useState<QuestionnaireLogicPage[]>([]);
     const [ categoryList, setCategoryList ]                   = useState<Category[]>([]);
     const [ questionList, setQuestionList ]                   = useState<QuestionLogicPage[]>([]);
-    const [ selectedLink, setSelectedLink ]                   = useState<SelectedQuestion>({} as SelectedQuestion);
+    const [selectedLink, setSelectedLink] = useState<SelectedQuestion | null>(null);
     const [ linkWorkshop, setLinkWorkshop ]                   = useState(false);
-    const [ selectedQuestionnaire, setSelectedQuestionnaire ] = useState<QuestionnaireLogicPage>({} as QuestionnaireLogicPage);
+    const [ selectedQuestionnaire, setSelectedQuestionnaire ] = useState<QuestionnaireLogicPage>({ id: 0, title: "" });
     const [ expandedQuestions, setExpandedQuestions ]         = useState<boolean[]>([])
 
 
