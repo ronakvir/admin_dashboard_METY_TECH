@@ -36,8 +36,8 @@ const VideoLibrary: React.FC = () => {
   }, [])
 
   return (
-    <>
-      <h3>Video Library Management</h3>
+    <div className="video-management">
+      <h2>Video Library Management</h2>
       <hr/>
       {videoWorkshop === "" ?
           <ComponentVideoSearch 
@@ -58,7 +58,7 @@ const VideoLibrary: React.FC = () => {
 
       <hr/>
       <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-    </>
+    </div>
   );
 };
 

@@ -110,60 +110,134 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
     }
 
     return (
-        <>
-            <div style={{display: "flex", flexDirection: "row"}}>
-                <h4>Search Videos</h4>
-                <button onClick={() => addVideoButton()}>Add New Video</button>
-            </div>
-            <hr/>
-            <div style={{display: "flex", flexDirection: "column", width: "250px"}}>
-                
-                <input  type="text" placeholder="Title" onChange={updateTitleState} style={{flex: "1"}}></input>
-                <input type="text" placeholder="Duration (e.g., 3:20, 45:30)" onChange={updateDurationState} style={{flex: "1"}}></input>
-                {/* I want to implement this category text field so that it shows a preview of the available options as you start typeing */}
-                <input list="categoryList" style={{flex: "1"}} type="text" placeholder="Category" onChange={updateCategoryState}></input>
-                <datalist id="categoryList">
-                    {categoryList.map((category: Category) => {
-                        return (
-                            <option value={category.text} />
-                        )
-                    })}
-                </datalist>
-                <br/>
-                <button style={{flex: "1"}} onClick={() => searchButton()}>Search</button>
-            </div>
+  <div className="video-management">
+    {/* Header */}
+    <div className="header-row" style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+        <h4 style={{ margin: 0 }}>Search Videos</h4>
+        <button className="btn-back" onClick={addVideoButton}>Add New Video</button>
+    </div>
 
-            <hr/>
+    {/* Search Panel */}
+    <div className="search-panel">
+      <input type="text" placeholder="Title" onChange={updateTitleState} />
+      <input type="text" placeholder="Duration (e.g., 3:20, 45:30)" onChange={updateDurationState} />
+      <input list="categoryList" type="text" placeholder="Category" onChange={updateCategoryState} />
+      <datalist id="categoryList">
+        {categoryList.map((category) => (
+          <option key={category.id} value={category.text} />
+        ))}
+      </datalist>
+      <button className="btn-search" onClick={searchButton}>Search</button>
+    </div>
 
-            {videoList.length > 0 ?
-            <div style={{display: "flex", flexDirection: "row", justifyContent: "flex-start", border: "1px solid black", backgroundColor: "lightgrey"}}>
-                <label style={{width: "300px"}}>Title</label>
-                <label style={{width: "100px"}}>Duration</label>
-                <label style={{width: "300px"}}>URL</label>
-                <label style={{width: "200px"}}>Categories</label>
-            </div> :
-            <></>
-            }
-            {videoList.map ((video: VideoData, index: number) => {
-                return(
-                    <div key={video.id} style={{display: "flex", flexDirection: "row", justifyContent: "flex-start", border: "1px solid black"}}>
-                            <label style={{width: "300px"}}>{video.title}</label>
-                            <label style={{width: "100px"}}>{video.duration}</label>
-                            <label style={{width: "300px", wordBreak: "break-all"}}>{video.url || "No URL"}</label>
-                            <div style={{display: "flex", flexDirection: "column", justifyContent: "flex-start"}}>
-                                {video.categories.map((category: Category, index: number) => {
-                                    return (
-                                        <label key={index} style={{width: "200px"}}>{category.text}</label>
-                                    )
-                                })}
-                            </div>
-                            <button style={{height: "auto"}} onClick={() => modifyVideoButton(video)}>Modify</button>
-                            <button style={{height: "auto"}} onClick={() => deleteVideoButton(video.id)}>Delete</button>
-                        </div>
-                )
-            })}
-        </>
-    );
+    {/* Video Table Header */}
+    {videoList.length > 0 && (
+      <div className="video-table-header">
+        <span style={{ width: "300px" }}>Title</span>
+        <span style={{ width: "100px" }}>Duration</span>
+        <span style={{ width: "300px" }}>URL</span>
+        <span style={{ width: "200px" }}>Categories</span>
+        <span style={{ width: "150px" }}>Actions</span>
+      </div>
+    )}
+
+    {/* Video List */}
+    {videoList.map((video) => (
+      <div key={video.id} className="video-row">
+        <span style={{ width: "300px" }}>{video.title}</span>
+        <span style={{ width: "100px" }}>{video.duration}</span>
+        <span style={{ width: "300px", wordBreak: "break-all" }}>{video.url || "No URL"}</span>
+        <div style={{ display: "flex", flexDirection: "column", width: "200px" }}>
+          {video.categories.map((cat, idx) => (
+            <span key={idx}>{cat.text}</span>
+          ))}
+        </div>
+        <div className="action-buttons">
+          <button className="btn-edit-small" onClick={() => modifyVideoButton(video)}>Modify</button>
+          <button className="btn-delete-small" onClick={() => deleteVideoButton(video.id)}>Delete</button>
+        </div>
+      </div>
+    ))}
+
+    {/* Styles */}
+    <style>{`
+      .video-management {
+        padding: 20px;
+        font-family: Arial, sans-serif;
+      }
+      .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .search-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 250px;
+        margin-bottom: 20px;
+      }
+      .search-panel input {
+        padding: 6px;
+        font-size: 14px;
+      }
+      .btn-back, .btn-search, .btn-edit-small, .btn-delete-small {
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 6px 12px;
+      }
+      .btn-back {
+        background-color: #6c757d;
+        color: white;
+      }
+      .btn-search {
+        background-color: #007bff;
+        color: white;
+      }
+      .btn-edit-small {
+        background-color: #007bff;
+        color: white;
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+      .btn-delete-small {
+        background-color: #dc3545;
+        color: white;
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+      .btn-back:hover, .btn-search:hover, .btn-edit-small:hover, .btn-delete-small:hover {
+        opacity: 0.85;
+      }
+      .video-table-header, .video-row {
+        display: flex;
+        flex-direction: row;
+        padding: 8px;
+        border: 1px solid #ddd;
+        align-items: center;
+      }
+      .video-table-header {
+        background-color: #f8f9fa;
+        font-weight: bold;
+      }
+      .video-row:nth-child(odd) {
+        background-color: #fafafa;
+      }
+      .video-row:hover {
+        background-color: #f1f1f1;
+      }
+      .action-buttons {
+        display: flex;
+        gap: 6px;
+        width: 150px;
+      }
+    `}</style>
+  </div>
+);
+
 };
 
 export default ComponentVideoSearch

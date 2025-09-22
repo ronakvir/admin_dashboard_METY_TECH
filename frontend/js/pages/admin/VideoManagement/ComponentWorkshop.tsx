@@ -119,70 +119,121 @@ const ComponentWorkshop: React.FC<VideoManagementStates> = ({
         }
 
         return(
-            <div style={{display: "flex", flexDirection: "row"}}>       
-                <div style={{display: "flex", flexDirection: "column", margin: "10px"}}>
-                    <div style={{display: "flex", flexDirection: "row"}}>
-                        {videoWorkshop === "new" ?
-                            <h4>Add New Video</h4> :
-                            <h4>Modify Video</h4>
-                        }
-                        <button onClick={() => cancelButton()}>Cancel</button>
-                    </div>
-                    <hr/>
-                    <div style={{display: "flex", flexDirection: "column", width: "350px", margin: "10px"}}>
-                        
-                        <input type="text" value={selectedVideo.title} placeholder="Title" onChange={updateTitleState} style={{flex: "1"}}></input>
-                        <input type="text" value={selectedVideo.url || ""} placeholder="Video URL (e.g., https://youtube.com/watch?v=...)" onChange={updateUrlState} style={{flex: "1"}}></input>
-                        <div style={{flex: "1"}}>
-                            <label>Duration (HH:MM:SS):</label>
-                            <input 
-                                type="text" 
-                                value={selectedVideo.duration} 
-                                placeholder="e.g., 3:20, 45:30, 1:15:30" 
-                                onChange={updateDurationState}
-                                style={{flex: "1"}}
-                            />
-                        </div>
+            <div className="video-management">
+  {/* Header */}
+  <div className="header-row" style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+    <h4 style={{ margin: 0 }}>
+      {videoWorkshop === "new" ? "Add New Video" : "Modify Video"}
+    </h4>
+    <button className="btn-back" onClick={cancelButton}>Cancel</button>
+  </div>
 
-                        
-                        { /* I want to implement this category text field so that it shows a preview of the available options as you start typeing */
-                        selectedVideo.categories.map((category: Category, index: number) => (
-                            <div key={index} style={{flex: "1"}}>
-                                <input list="categoryList" onChange={(value) => updateCategoryState(value, index)} value={selectedVideo.categories[index].text} name="category" type="text" placeholder="Category"/>
-                                <button onClick={ async () => removeCategoryField(index) }>X</button>
-                            </div>
-                        ))
-                        }
-                        <button onClick={() => setSelectedVideo({ ...selectedVideo, categories: [ ...selectedVideo.categories, {id: 0, text: "" }]})} style={{flex: "1"}}>Add Category</button>
-                        <datalist id="categoryList">
-                            {categoryList.map((category: Category) => {
-                                if(selectedVideo.categories.some((categoryCheck: Category) => category.text === categoryCheck.text)) return null;
-                                return (
-                                    <option value={category.text} />
-                                )
-                            })}
-                        </datalist>
+  {/* Form Panel */}
+  <div className="form-panel" style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+    
+    {/* Left Column */}
+    <div className="form-column" style={{ display: "flex", flexDirection: "column", gap: "12px", minWidth: "300px" }}>
+      <input
+        type="text"
+        value={selectedVideo.title}
+        placeholder="Title"
+        onChange={updateTitleState}
+        className="form-input"
+      />
+      <input
+        type="text"
+        value={selectedVideo.url || ""}
+        placeholder="Video URL (e.g., https://youtube.com/watch?v=...)"
+        onChange={updateUrlState}
+        className="form-input"
+      />
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <label>Duration (HH:MM:SS):</label>
+        <input
+          type="text"
+          value={selectedVideo.duration}
+          placeholder="e.g., 3:20, 45:30, 1:15:30"
+          onChange={updateDurationState}
+          className="form-input"
+        />
+      </div>
 
-                        
-                        {videoWorkshop === "new" ?
-                            <>
-                                <button onClick={ () => addVideoButton() } style={{flex: "1"}} >Add Video</button>
-                            </> :
-                            <>
-                                <br/>
-                                <button onClick={ () => modifyVideoButton() } style={{flex: "1"}} >Confirm Changes</button>
-                            </>
-                            
-                        }
-                    </div>
-                </div>
-                <div style={{display: "flex", flexDirection: "column", margin: "10px" }}>
-                    <h5>Description</h5>
-                    <textarea style={{width: "350px", height: "150px"}}onChange = {(e) => updateDescriptionState(e)} value={selectedVideo.description} />
-                </div>
-                
+      {/* Categories */}
+      {selectedVideo.categories.map((category: Category, index: number) => (
+        <div key={index} style={{ display: "flex", gap: "8px" }}>
+          <input
+            list="categoryList"
+            onChange={(value) => updateCategoryState(value, index)}
+            value={selectedVideo.categories[index].text}
+            name="category"
+            type="text"
+            placeholder="Category"
+            className="form-input"
+          />
+          <button className="btn-delete-small" onClick={() => removeCategoryField(index)}>X</button>
+        </div>
+      ))}
+      <button
+        className="btn-edit-small"
+        onClick={() =>
+          setSelectedVideo({
+            ...selectedVideo,
+            categories: [...selectedVideo.categories, { id: 0, text: "" }],
+          })
+        }
+      >
+        Add Category
+      </button>
+      <datalist id="categoryList">
+        {categoryList.map((category: Category) => {
+          if (selectedVideo.categories.some((c) => c.text === category.text)) return null;
+          return <option key={category.id} value={category.text} />;
+        })}
+      </datalist>
 
-            </div>
+      {/* Submit Button */}
+      <button
+        className={videoWorkshop === "new" ? "btn-search" : "btn-edit-small"}
+        onClick={videoWorkshop === "new" ? addVideoButton : modifyVideoButton}
+      >
+        {videoWorkshop === "new" ? "Add Video" : "Confirm Changes"}
+      </button>
+    </div>
+
+    {/* Right Column */}
+    <div className="form-column" style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "300px" }}>
+      <h5>Description</h5>
+      <textarea
+        style={{ width: "350px", height: "150px", padding: "6px", fontSize: "14px" }}
+        onChange={(e) => updateDescriptionState(e)}
+        value={selectedVideo.description}
+      />
+    </div>
+  </div>
+
+  {/* Styles */}
+  <style>{`
+    .form-input {
+      padding: 6px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .btn-back, .btn-search, .btn-edit-small, .btn-delete-small {
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 6px 12px;
+    }
+    .btn-back { background-color: #6c757d; color: white; }
+    .btn-search { background-color: #007bff; color: white; }
+    .btn-edit-small { background-color: #007bff; color: white; font-size: 12px; padding: 4px 8px; }
+    .btn-delete-small { background-color: #dc3545; color: white; font-size: 12px; padding: 4px 8px; }
+    .btn-back:hover, .btn-search:hover, .btn-edit-small:hover, .btn-delete-small:hover { opacity: 0.85; }
+  `}</style>
+</div>
+
         )
 }
 
