@@ -1,58 +1,26 @@
-import { Dispatch, FC, SetStateAction, useEffect} from "react";
-import { QuestionnaireStates } from "./QuestionnaireBuilder"
+import { Dispatch, FC, SetStateAction, useEffect } from "react";
+import { QuestionnaireStates } from "./QuestionnaireBuilder";
 import { QuestionnaireFull } from "../../../api/types.gen";
 import { QuestionnairebuilderService } from "../../../api/services.gen";
 
+const ComponentRecents: FC<QuestionnaireStates> = ({
+    questionnaires, setQuestionnaires,
+    recentQuestionnaires, setRecentQuestionnaires,
+    setCurrentQuestionnaire, setPreviewQuestionnaire,
+    setQuestionnaireWorkshop
+}) => {
 
-
-
-const ComponentRecents: FC<QuestionnaireStates> = ({ 
-    questionnaires,             setQuestionnaires,
-    questions,                  setQuestions,
-    questionnaireVisibility,    setQuestionnaireVisibility, 
-    questionnaireList,          setQuestionnaireList,
-    questionType,               setQuestionType,
-    questionForms,              setQuestionForms,
-    questionnaireWorkshop,      setQuestionnaireWorkshop,
-    currentQuestionnaire,       setCurrentQuestionnaire, 
-    questionIsSelected,         setQuestionIsSelected,
-    recentQuestionnaires,       setRecentQuestionnaires,
-    previewQuestionnaire,       setPreviewQuestionnaire}) => {
-
-    
-    
     useEffect(() => {
         updateRecentsList();
-        console.log("recents");
-    }, [questionnaires])
-
+    }, [questionnaires]);
 
     const updateRecentsList = () => {
-        let count = 0;
-        const tempRecentQuestionnaires: QuestionnaireFull[] = [];
-        while (count < 4) {
-            let topQuestionnaire: QuestionnaireFull = { id: 0, title: "", status: "", started: 0, completed: 0, last_modified: "", questions: []};
-            let mostRecentDate: Date = new Date("1900-01-01T00:00:00.000");
-            questionnaires.forEach( (questionnaire, index) => {
-                let date = new Date(questionnaire.last_modified);
-                if (date > mostRecentDate) {
-                    if (!tempRecentQuestionnaires.includes(questionnaire)){
-
-                        mostRecentDate = date;
-                        topQuestionnaire = questionnaire;
-                        
-                    }
-                }
-    
-            })
-            console.log("TEST " + topQuestionnaire.title);
-            console.log("TEST " + topQuestionnaire.id);
-            count++;
-            if (topQuestionnaire.id != 0) tempRecentQuestionnaires.push(topQuestionnaire);
-            
-            
-        }
-        setRecentQuestionnaires(tempRecentQuestionnaires);
+        let tempRecent: QuestionnaireFull[] = [];
+        const sorted = [...questionnaires].sort((a, b) => 
+            new Date(b.last_modified).getTime() - new Date(a.last_modified).getTime()
+        );
+        tempRecent = sorted.slice(0, 4);
+        setRecentQuestionnaires(tempRecent);
     }
 
     const editQuestionnaireButton = (questionnaire: QuestionnaireFull) => {
@@ -62,54 +30,109 @@ const ComponentRecents: FC<QuestionnaireStates> = ({
 
     const previewQuestionnaireButton = (questionnaire: QuestionnaireFull) => {
         setCurrentQuestionnaire(questionnaire);
-        setPreviewQuestionnaire(true)
+        setPreviewQuestionnaire(true);
     }
 
     const deleteQuestionnaireButton = (questionnaire_id: number) => {
-        if(!confirm("Are you sure you would like to delete this questionnaire? This action cannot be reversed.")) return;
-        QuestionnairebuilderService.questionnairebuilderDeletequestionnaireDestroy({ id: questionnaire_id })
-            .then( response => {
-               
+        if (!confirm("Are you sure you want to delete this questionnaire?")) return;
 
-                let index = questionnaires.findIndex( questionnaire => questionnaire_id === questionnaire.id );
-                
-                console.log("Index: " + index);
-                console.log("Length: " + questionnaires.length);
-                const tempQuestionnaires = [ ...questionnaires ];
-                tempQuestionnaires.splice(index, 1);
-                setQuestionnaires(tempQuestionnaires);
+        QuestionnairebuilderService.questionnairebuilderDeletequestionnaireDestroy({ id: questionnaire_id })
+            .then(() => {
+                setQuestionnaires(prev => prev.filter(q => q.id !== questionnaire_id));
             })
-            .catch( error => console.log(error) )
+            .catch(error => console.log(error));
     }
 
-    // The Questionnaire Cards
     return (
-        <div style={{display: "flex", flexDirection: "column"}}>
-            <h4 style={{display: "flex", justifyContent: "left"}}>Recent Questionnaires</h4>
-            <div style={{display: "flex", flexDirection: "row"}}>
-                { (() => {
-                    return recentQuestionnaires.map((questionnaire, index) => {
-                        return  (
-                            <div style={{width: "200px", height: "225px", backgroundColor: "lightgrey", borderRadius: "15px", overflow: "hidden", margin: "5px", padding: "10px"}}>
-                                <h3>{questionnaire.title}</h3>
-                                <p>{questionnaire.questions.length} questions - {questionnaire.status} - {questionnaire.completed} responses</p>
-                                <button style={{borderRadius: "10px", justifyContent: "left"}} onClick={ () => editQuestionnaireButton(questionnaire) }>
-                                    Edit
-                                </button>
-                                <button style={{borderRadius: "10px", justifyContent: "left"}} onClick={ () => previewQuestionnaireButton(questionnaire)} >
-                                    Preview
-                                </button>
-                                <button style={{borderRadius: "10px", justifyContent: "left", backgroundColor: "lightcoral", color: "black"}} onClick={ () => deleteQuestionnaireButton(questionnaire.id)} >
-                                    Delete
-                                </button>
-                            </div>
-                        );
-                    })
-                })()}
-
+        <div className="recents-container">
+            <h4>Recent Questionnaires</h4>
+            <div className="recents-grid">
+                {recentQuestionnaires.map(q => (
+                    <div key={q.id} className="recent-card">
+                        <h5>{q.title}</h5>
+                        <p>{q.questions.length} questions • {q.status} • {q.completed} responses</p>
+                        <div className="card-buttons">
+                            <button className="btn-edit-small" onClick={() => editQuestionnaireButton(q)}>Edit</button>
+                            <button className="btn-edit-small" onClick={() => previewQuestionnaireButton(q)}>Preview</button>
+                            <button className="btn-delete-small" onClick={() => deleteQuestionnaireButton(q.id)}>Delete</button>
+                        </div>
+                    </div>
+                ))}
             </div>
+
+            <style>{`
+                .recents-container {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    margin-bottom: 20px;
+                }
+                .recents-container h4 {
+                    margin: 0;
+                }
+                .recents-grid {
+                    display: flex;
+                    gap: 16px;
+                    flex-wrap: wrap;
+                }
+                .recent-card {
+                    background-color: #f8f9fa;
+                    border: 1px solid #ccc;
+                    border-radius: 10px;
+                    padding: 16px;
+                    width: 200px;
+                    min-height: 200px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+                .recent-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                .recent-card h5 {
+                    margin: 0 0 8px 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                    white-space: normal;
+                    overflow: visible;
+                    text-overflow: clip;
+                }
+                .recent-card p {
+                    font-size: 14px;
+                    color: #555;
+                    margin: 0 0 12px 0;
+                }
+                .card-buttons {
+                    display: flex;
+                    gap: 6px;
+                    flex-wrap: nowrap;
+                    justify-content: flex-start;
+                }
+                .btn-edit-small, .btn-delete-small {
+                    border: none;
+                    box-sizing: border-box;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 11px;
+                    padding: 4px 8px;
+                }
+                .btn-edit-small {
+                    background-color: #007bff;
+                    color: white;
+                }
+                .btn-delete-small {
+                    background-color: #dc3545;
+                    color: white;
+                }
+                .btn-edit-small:hover, .btn-delete-small:hover {
+                    opacity: 0.85;
+                }
+            `}</style>
         </div>
-    )
-    
+    );
 }
+
 export default ComponentRecents;
