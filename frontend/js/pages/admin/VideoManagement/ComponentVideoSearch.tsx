@@ -167,7 +167,7 @@ const ComponentVideoSearch: React.FC<VideoManagementStates> = ({
       }
       .header-row {
         display: flex;
-        justify-content: space-between;
+        justify-content: left;
         align-items: center;
         margin-bottom: 12px;
       }
