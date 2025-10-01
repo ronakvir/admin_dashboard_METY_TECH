@@ -1,158 +1,184 @@
-import { useEffect, FC, Dispatch, SetStateAction } from "react";
-import { QuestionnaireStates } from "./QuestionnaireBuilder"
+import { useEffect, FC } from "react";
+import { QuestionnaireStates } from "./QuestionnaireBuilder";
 import { QuestionnairebuilderService } from "../../../api/services.gen";
-import { question_questionnaireTable, question_questionnaireTableIndex, questionnaireTable, questionnaireTableIndex } from "../../database";
 
+const ComponentWorkshop: FC<QuestionnaireStates> = ({
+    questionnaires, setQuestionnaires,
+    questionnaireWorkshop, setQuestionnaireWorkshop,
+    currentQuestionnaire, setCurrentQuestionnaire,
+    setQuestionForms, setQuestionIsSelected
+}) => {
 
-const ComponentWorkshop: FC<QuestionnaireStates> = ({ 
-    questionnaires,             setQuestionnaires,
-    questions,                  setQuestions,
-    questionnaireVisibility,    setQuestionnaireVisibility, 
-    questionnaireList,          setQuestionnaireList,
-    questionType,               setQuestionType,
-    questionForms,              setQuestionForms,
-    questionnaireWorkshop,      setQuestionnaireWorkshop,
-    currentQuestionnaire,       setCurrentQuestionnaire, 
-    questionIsSelected,         setQuestionIsSelected,
-    previewQuestionnaire,       setPreviewQuestionnaire}) => {
-  
-    let questionnaireTableIndexLocal = questionnaireTableIndex;
-    let question_questionnaireTableIndexLocal = question_questionnaireTableIndex;
-    // Remove a question from the current Questionnaire
     const removeFromQuestionnaire = (index: number) => {
-        const updatedQuestions = [ ...currentQuestionnaire.questions ];
+        const updatedQuestions = [...currentQuestionnaire.questions];
         updatedQuestions.splice(index, 1);
-        setCurrentQuestionnaire({ ...currentQuestionnaire, questions: updatedQuestions })
-    }
+        setCurrentQuestionnaire({ ...currentQuestionnaire, questions: updatedQuestions });
+    };
 
-    // Finalize and create the questionnaire
     const createQuestionnaireButton = () => {
-        //if (currentQuestionnaire.questions.length < 8) {alert("Must attach at least 8 questions!"); return;}
-        
-        const questionnaireRequestData = {
+        const requestData = {
             id: 0,
             title: currentQuestionnaire.title,
             status: currentQuestionnaire.status,
-            questions: currentQuestionnaire.questions.map( question => question.id )
-        }
-
-        QuestionnairebuilderService.questionnairebuilderCreatequestionnaireCreate({ requestBody: questionnaireRequestData })
-            .then( response => {
-                currentQuestionnaire.id = response.id;
-                setQuestionnaires([ ...questionnaires, currentQuestionnaire ]);
+            questions: currentQuestionnaire.questions.map(q => q.id)
+        };
+        QuestionnairebuilderService.questionnairebuilderCreatequestionnaireCreate({ requestBody: requestData })
+            .then(response => {
+                setQuestionnaires([...questionnaires, { ...currentQuestionnaire, id: response.id }]);
                 setQuestionnaireWorkshop("");
                 clearForms();
             })
-            .catch( error => {
-                console.error("Error creating questionnaire:", error);
-                alert("failure");
+            .catch(error => {
+                console.error(error);
+                alert("Failed to create questionnaire");
             });
     };
 
-    // Finalize and create the questionnaire
     const modifyQuestionnaireButton = () => {
-        //if (currentQuestionnaire.questions.length < 8) {alert("Must attach at least 8 questions!"); return;}
-        
-        // Make a new object to fit the API request params
-        const questionnaireRequestData = {
+        const requestData = {
             id: currentQuestionnaire.id,
             title: currentQuestionnaire.title,
             status: currentQuestionnaire.status,
-            questions: currentQuestionnaire.questions.map( question => question.id )
-        }
-
-        QuestionnairebuilderService.questionnairebuilderCreatequestionnaireCreate({ requestBody: questionnaireRequestData })
-            .then( (response) => {
-                let index = questionnaires.findIndex( questionnaire => currentQuestionnaire.id === questionnaire.id );
-                
-                const tempQuestionnaires = [ ...questionnaires ];
-                tempQuestionnaires[index] = { ...currentQuestionnaire, id: response.id };
-                setQuestionnaires(tempQuestionnaires);
-                
+            questions: currentQuestionnaire.questions.map(q => q.id)
+        };
+        QuestionnairebuilderService.questionnairebuilderCreatequestionnaireCreate({ requestBody: requestData })
+            .then(response => {
+                const temp = [...questionnaires];
+                const idx = temp.findIndex(q => q.id === currentQuestionnaire.id);
+                temp[idx] = { ...currentQuestionnaire, id: response.id };
+                setQuestionnaires(temp);
                 setQuestionnaireWorkshop("");
                 clearForms();
             })
-            .catch( error => {
-                console.error("Error creating questionnaire:", error);
-                alert("failure");
+            .catch(error => {
+                console.error(error);
+                alert("Failed to update questionnaire");
             });
-    }
-    
-    // CAncel Questionnaire creation
+    };
+
     const cancelQuestionnaireButton = () => {
         setQuestionnaireWorkshop("");
         clearForms();
-    }
-
-    function clearForms() {
-        setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
-        setQuestionIsSelected(false);
-        setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
-    }
+    };
 
     const deleteQuestionnaireButton = (questionnaire_id: number) => {
-        if(!confirm("Are you sure you would like to delete this questionnaire? This action cannot be reversed.")) return;
+        if (!confirm("Are you sure you want to delete this questionnaire?")) return;
         QuestionnairebuilderService.questionnairebuilderDeletequestionnaireDestroy({ id: questionnaire_id })
-            .then( response => {
-                let index = questionnaires.findIndex( questionnaire => questionnaire_id === questionnaire.id );
-                
-                const tempQuestionnaires = [ ...questionnaires ];
-                tempQuestionnaires.splice(index, 1);
-                setQuestionnaires(tempQuestionnaires);
-            })
-            .catch( error => console.log(error) )
+            .then(() => setQuestionnaires(questionnaires.filter(q => q.id !== questionnaire_id)))
+            .catch(error => console.log(error));
+    };
+
+    function clearForms() {
+        setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: [] });
+        setQuestionIsSelected(false);
+        setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{ id: 0, text: "" }, { id: 0, text: "" }] });
     }
 
-    
-    // This is the view that lets you create a new questionnaire or modify a current one
     return (
-        <div style={{display: "flex", flexDirection: "column", gap: "10px"}}>
-            {questionnaireWorkshop === "new" ?
-                <h3>Create New Questionnaire:</h3> :
-                <h3>Modify Existing Questionnaire:</h3>
-            }
-            <h6>Questionnaire Name:</h6>
-            <input style={{width: "830px"}} value={currentQuestionnaire.title} onChange={(value) => setCurrentQuestionnaire({...currentQuestionnaire, title: value.target.value})} />
-            <h6>Questionnaire Status:</h6>
-            <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
-                <button style={{backgroundColor: currentQuestionnaire.status === "Published" ? "darkgrey" : "", flex: 1}} onClick={() => setCurrentQuestionnaire({...currentQuestionnaire, status: "Published"})}>Publish</button>
-                <button style={{backgroundColor: currentQuestionnaire.status === "Draft" ? "darkgrey" : "", flex: 1}} onClick={() => setCurrentQuestionnaire({...currentQuestionnaire, status: "Draft"})}>Draft</button>
-                <button style={{backgroundColor: currentQuestionnaire.status === "Template" ? "darkgrey" : "", flex: 1}} onClick={() => setCurrentQuestionnaire({...currentQuestionnaire, status: "Template"})}>Template</button>
+        <div className="workshop-container">
+            <div className="header-row">
+                <h3>{questionnaireWorkshop === "new" ? "Create New Questionnaire" : "Modify Questionnaire"}</h3>
             </div>
-            <h6>Questionnaire Questions:</h6>
-            {/* Updates the Questionnaire Title and input field*/}
-            <div style={{display: "grid", gridTemplateColumns: "repeat(4, minmax(160px, 1fr))", gap: "10px", width: "830px"}}>
-                { (() => {
-                //const tempQuestions = Array.from(currentQuestionnaire.questions);
-                return currentQuestionnaire.questions.map((question, index) => (
 
-                    <div style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
-                        <p>Question: {question.text}</p>
-                        <p>Type: {question.type}</p>
-                        <button onClick={() => removeFromQuestionnaire(index)}>Remove</button>
+            {/* Questionnaire Title */}
+            <div className="form-row">
+                <label>Questionnaire Name:</label>
+                <input
+                    type="text"
+                    value={currentQuestionnaire.title}
+                    onChange={e => setCurrentQuestionnaire({ ...currentQuestionnaire, title: e.target.value })}
+                    className="form-input"
+                />
+            </div>
+
+            {/* Status Selection */}
+            <div className="form-row">
+                <label>Status:</label>
+                <div className="status-buttons">
+                    {["Publish", "Create New Draft", "Create Template"].map(status => (
+                        <button
+                            key={status}
+                            className={`btn-status ${currentQuestionnaire.status === status ? "selected" : ""}`}
+                            onClick={() => setCurrentQuestionnaire({ ...currentQuestionnaire, status })}
+                        >
+                            {status}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Questions Grid */}
+            <div className="questions-grid">
+                {currentQuestionnaire.questions.map((q, idx) => (
+                    <div key={idx} className="question-card">
+                        <p><strong>Question:</strong> {q.text}</p>
+                        <p><strong>Type:</strong> {q.type}</p>
+                        <button className="btn-remove" onClick={() => removeFromQuestionnaire(idx)}>Remove</button>
                     </div>
-
-                ))
-                })()}
+                ))}
             </div>
-            <div style={{display: "flex", flexDirection: "row"}}>
-                    {questionnaireWorkshop === "new" ?
-                        <>                        
-                            <button style={{flex: 1, margin: "5px"}} onClick={() => createQuestionnaireButton()}> Create Questionnaire</button>
-                            <button style={{flex: 1, margin: "5px"}} onClick={() => cancelQuestionnaireButton()}> Cancel</button>
-                            
-                        </>:
-                        <>
-                            <button style={{flex: 1, margin: "5px"}} onClick={() => modifyQuestionnaireButton()}> Update Questionnaire</button>
-                            <button style={{flex: 1, margin: "5px"}} onClick={() => cancelQuestionnaireButton()}> Cancel</button>
-                            <button style={{flex: 1, margin: "5px", backgroundColor: "lightcoral"}} onClick={() => deleteQuestionnaireButton(currentQuestionnaire.id)}> Delete</button>
-                        </>
-                    }
 
-
+            {/* Action Buttons */}
+            <div className="action-row">
+                {questionnaireWorkshop === "new" ? (
+                    <>
+                        <button className="btn-primary" onClick={createQuestionnaireButton}>Create Questionnaire</button>
+                        <button className="btn-cancel" onClick={cancelQuestionnaireButton}>Cancel</button>
+                    </>
+                ) : (
+                    <>
+                        <button className="btn-primary" onClick={modifyQuestionnaireButton}>Update Questionnaire</button>
+                        <button className="btn-cancel" onClick={cancelQuestionnaireButton}>Cancel</button>
+                        <button className="btn-delete" onClick={() => deleteQuestionnaireButton(currentQuestionnaire.id)}>Delete</button>
+                    </>
+                )}
             </div>
+
+            <style>{`
+                .workshop-container {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    max-width: 850px;
+                    padding: 12px;
+                }
+                .header-row { display: flex; justify-content: space-between; align-items: center; }
+                .form-row { display: flex; align-items: center; gap: 12px; }
+                .form-input { flex: 1; padding: 6px 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+                .status-buttons { display: flex; gap: 8px; white-space: nowrap; }
+                .btn-status { flex: 1; padding: 6px 12px; border-radius: 4px; border: 1px solid #ccc; background-color: #f1f1f1; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; font-size: 12px; }
+                .btn-status.selected { background-color: #007bff; color: white; border-color: #007bff; }
+                .questions-grid { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px; }
+                .question-card { background-color: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #ccc; display: flex; flex-direction: column; gap: 8px; }
+                
+                .btn-primary, .btn-cancel, .btn-delete {
+                    cursor: pointer;
+                    border-radius: 4px;
+                    border: none;
+                    padding: 8px 16px;
+                    font-size: 16px;
+                    transition: all 0.2s ease;
+                }
+                .btn-primary { background-color: #007bff; color: white; }
+                .btn-cancel { background-color: #6c757d; color: white; }
+                .btn-delete { background-color: #dc3545; color: white; }
+
+                .btn-remove {
+                    cursor: pointer;
+                    border-radius: 4px;
+                    border: none;
+                    padding: 4px 8px;
+                    font-size: 12px;
+                    background-color: #dc3545;
+                    color: white;
+                    transition: all 0.2s ease;
+                }
+
+                .btn-primary:hover, .btn-cancel:hover, .btn-delete:hover, .btn-remove:hover { opacity: 0.85; }
+                .action-row { display: flex; gap: 12px; }
+            `}</style>
         </div>
-
-    )
+    );
 }
+
 export default ComponentWorkshop;
