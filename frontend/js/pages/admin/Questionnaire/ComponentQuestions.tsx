@@ -19,7 +19,6 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
   currentQuestionnaire,
   setCurrentQuestionnaire,
 }) => {
-  // Adds/Updates/Removes answer fields
   const addAnswerField = (index: number, value: string) => {
     const newAnswers = [...questionForms.answers];
     newAnswers[index].text = value;
@@ -37,6 +36,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
   const selectQuestion = (question: any) => {
     if (questionForms.id === question.id) setQuestionIsSelected(false);
     else setQuestionIsSelected(true);
+
     setQuestionForms(
       questionForms.id === question.id
         ? { id: 0, type: questionType, text: "", answers: [{ id: 0, text: "" }, { id: 0, text: "" }] }
@@ -63,6 +63,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
       alert("You must enter a question first!");
       return;
     }
+
     QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
       .then((response) => {
         setQuestions([...questions, response]);
@@ -76,6 +77,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
       alert("You must enter a question first!");
       return;
     }
+
     QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
       .then((response) => {
         const updatedQuestions = [...questions];
@@ -94,6 +96,13 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
         clearForms();
       })
       .catch((error) => console.log(error));
+  };
+
+  const addToQuestionnaire = () => {
+    if (!questionIsSelected) return;
+    setCurrentQuestionnaire({ ...currentQuestionnaire, questions: [...currentQuestionnaire.questions, questionForms] });
+    setQuestionIsSelected(false);
+    setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{ id: 0, text: "" }, { id: 0, text: "" }] });
   };
 
   useEffect(() => {
@@ -120,6 +129,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
 
   const addQuestionForms = () => {
     if (!questionType) return null;
+
     return (
       <div className="question-form-grid">
         {/* Left: Question Form */}
@@ -131,6 +141,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
             onChange={(e) => setQuestionForms({ ...questionForms, text: e.target.value })}
             className="form-input"
           />
+
           {(questionType === "checkbox" || questionType === "multichoice") &&
             questionForms.answers.map((answer, index) => (
               <div className="answer-row" key={index}>
@@ -146,14 +157,21 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                 </button>
               </div>
             ))}
+
           {(questionType === "checkbox" || questionType === "multichoice") && (
             <button
               className="btn-add-category"
-              onClick={() => setQuestionForms({ ...questionForms, answers: [...questionForms.answers, { id: 0, text: "" }] })}
+              onClick={() =>
+                setQuestionForms({
+                  ...questionForms,
+                  answers: [...questionForms.answers, { id: 0, text: "" }],
+                })
+              }
             >
               Add Answer
             </button>
           )}
+
           <div className="form-buttons">
             {!questionIsSelected ? (
               <button className="btn-search" onClick={addQuestion}>
@@ -207,6 +225,13 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
                   {answer.text}
                 </label>
               ))}
+
+            {/* Add to Questionnaire Button */}
+            {questionIsSelected && questionnaireWorkshop !== "" && (
+              <button className="btn-search" onClick={addToQuestionnaire}>
+                Add to Questionnaire
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -236,101 +261,26 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
 
       {/* Styles */}
       <style>{`
-        .question-management {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          max-width: 1000px;
-        }
-        .question-type-cards {
-          display: flex;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-        .type-card {
-          width: 200px;
-          background-color: white;
-          border: 2px solid #007bff;
-          color: black;
-          border-radius: 12px;
-          padding: 16px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .type-card.selected {
-          background-color: #007bff;
-          color: white;
-        }
-        .form-column {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          flex: 1;
-        }
-        .question-form-grid {
-          display: flex;
-          gap: 20px;
-        }
-        .form-input {
-          padding: 6px;
-          font-size: 14px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          width: 100%;
-        }
-        .answer-row {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-        .form-buttons {
-          display: flex;
-          gap: 8px;
-        }
-        .btn-back, .btn-search, .btn-delete-small, .btn-add-category {
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-          padding: 6px 12px;
-          transition: opacity 0.2s ease;
-        }
+        .question-management { display: flex; flex-direction: column; gap: 16px; max-width: 1000px; }
+        .question-type-cards { display: flex; gap: 12px; flex-wrap: wrap; }
+        .type-card { width: 200px; background-color: white; border: 2px solid #007bff; color: black; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s ease; }
+        .type-card.selected { background-color: #007bff; color: white; }
+        .form-column { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+        .question-form-grid { display: flex; gap: 20px; }
+        .form-input { padding: 6px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 100%; }
+        .answer-row { display: flex; gap: 8px; align-items: center; }
+        .form-buttons { display: flex; gap: 8px; }
+        .btn-back, .btn-search, .btn-delete-small, .btn-add-category { border: none; border-radius: 4px; cursor: pointer; font-size: 14px; padding: 6px 12px; transition: opacity 0.2s ease; }
         .btn-back { background-color: #6c757d; color: white; }
         .btn-search { background-color: #007bff; color: white; }
         .btn-delete-small { background-color: #dc3545; color: white; }
         .btn-add-category { background-color: white; border: 2px solid #007bff; color: #007bff; }
         .btn-back:hover, .btn-search:hover, .btn-delete-small:hover, .btn-add-category:hover { opacity: 0.85; }
-        .question-list {
-          border: 1px solid #ccc;
-          border-radius: 8px;
-          padding: 8px;
-          max-height: 300px;
-          overflow-y: auto;
-        }
-        .question-row {
-          padding: 6px;
-          border-radius: 4px;
-          cursor: pointer;
-          margin-bottom: 4px;
-          background-color: white;
-        }
-        .question-row.selected {
-          background-color: #dee2e6;
-        }
-        .question-preview {
-          border: 1px solid #ccc;
-          border-radius: 8px;
-          padding: 12px;
-          background-color: #f8f9fa;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        .option-row {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
+        .question-list { border: 1px solid #ccc; border-radius: 8px; padding: 8px; max-height: 300px; overflow-y: auto; }
+        .question-row { padding: 6px; border-radius: 4px; cursor: pointer; margin-bottom: 4px; background-color: white; }
+        .question-row.selected { background-color: #dee2e6; }
+        .question-preview { border: 1px solid #ccc; border-radius: 8px; padding: 12px; background-color: #f8f9fa; display: flex; flex-direction: column; gap: 8px; }
+        .option-row { display: flex; gap: 8px; align-items: center; }
       `}</style>
     </div>
   );
