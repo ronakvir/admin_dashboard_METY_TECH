@@ -1,339 +1,291 @@
-import { useEffect, FC } from "react";
-import { QuestionnaireStates } from "./QuestionnaireBuilder";
+import { useEffect, FC, Dispatch, SetStateAction } from "react";
+import { QuestionnaireStates } from "./QuestionnaireBuilder"
 import { QuestionnairebuilderService } from "../../../api/services.gen";
 
+
+// Global variable to declare only on load. this keeps track of each types question count
 let questionCount = [0, 0, 0, 0];
 
-const ComponentQuestions: FC<QuestionnaireStates> = ({
-  questionnaires,
-  setQuestionnaires,
-  questions,
-  setQuestions,
-  questionnaireWorkshop,
-  setQuestionType,
-  questionType,
-  questionForms,
-  setQuestionForms,
-  questionIsSelected,
-  setQuestionIsSelected,
-  currentQuestionnaire,
-  setCurrentQuestionnaire,
-}) => {
-  // Adds/Updates/Removes answer fields
-  const addAnswerField = (index: number, value: string) => {
-    const newAnswers = [...questionForms.answers];
-    newAnswers[index].text = value;
-    newAnswers[index].id = 0;
-    setQuestionForms({ ...questionForms, answers: newAnswers });
-  };
 
-  const removeAnswerField = (index: number) => {
-    if (questionForms.answers.length < 3) return;
-    const updatedAnswers = [...questionForms.answers];
-    updatedAnswers.splice(index, 1);
-    setQuestionForms({ ...questionForms, answers: updatedAnswers });
-  };
 
-  const selectQuestion = (question: any) => {
-    if (questionForms.id === question.id) setQuestionIsSelected(false);
-    else setQuestionIsSelected(true);
-    setQuestionForms(
-      questionForms.id === question.id
-        ? { id: 0, type: questionType, text: "", answers: [{ id: 0, text: "" }, { id: 0, text: "" }] }
-        : question
-    );
-  };
+const ComponentQuestions: FC<QuestionnaireStates> = ({ 
+    questionnaires,             setQuestionnaires,
+    questions,                  setQuestions,
+    questionnaireVisibility,    setQuestionnaireVisibility, 
+    questionnaireList,          setQuestionnaireList,
+    questionType,               setQuestionType,
+    questionForms,              setQuestionForms,
+    questionnaireWorkshop,      setQuestionnaireWorkshop,
+    currentQuestionnaire,       setCurrentQuestionnaire, 
+    questionIsSelected,         setQuestionIsSelected,
+    previewQuestionnaire,       setPreviewQuestionnaire}) => {
 
-  const clearForms = () => {
-    setCurrentQuestionnaire({
-      id: 0,
-      title: "",
-      status: "",
-      started: 0,
-      completed: 0,
-      last_modified: new Date().toISOString(),
-      questions: [],
-    });
-    setQuestionIsSelected(false);
-    setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{ id: 0, text: "" }, { id: 0, text: "" }] });
-  };
 
-  const addQuestion = () => {
-    if (questionForms.text.trim() === "") {
-      alert("You must enter a question first!");
-      return;
-    }
-    QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
-      .then((response) => {
-        setQuestions([...questions, response]);
-        clearForms();
-      })
-      .catch((error) => console.log(error));
-  };
+    let indexCounter = 100;
+    // which question types are we working with??
+    // creates those form fields and shows a list of them
+    const addQuestionForms = () => {
+        if (questionType === "") return <></>;
 
-  const modifyQuestion = () => {
-    if (questionForms.text.trim() === "") {
-      alert("You must enter a question first!");
-      return;
-    }
-    QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
-      .then((response) => {
-        const updatedQuestions = [...questions];
-        const index = updatedQuestions.findIndex((q) => q.id === response.id);
-        if (index !== -1) updatedQuestions[index] = response;
-        setQuestions(updatedQuestions);
-        clearForms();
-      })
-      .catch((error) => console.log(error));
-  };
+        return (
 
-  const deleteQuestion = () => {
-    QuestionnairebuilderService.questionnairebuilderDeletequestionDestroy({ id: questionForms.id })
-      .then(() => {
-        setQuestions(questions.filter((q) => q.id !== questionForms.id));
-        clearForms();
-      })
-      .catch((error) => console.log(error));
-  };
+        <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
 
-  useEffect(() => {
-    questionCount = [0, 0, 0, 0];
-    questionnaires.forEach((questionnaire) => {
-      questionnaire.questions.forEach((question) => {
-        switch (question.type) {
-          case "multichoice":
-            questionCount[0]++;
-            break;
-          case "checkbox":
-            questionCount[1]++;
-            break;
-          case "slider":
-            questionCount[2]++;
-            break;
-          case "text":
-            questionCount[3]++;
-            break;
-        }
-      });
-    });
-  });
-
-  const addQuestionForms = () => {
-    if (!questionType) return null;
-    return (
-      <div className="question-form-grid">
-        {/* Left: Question Form */}
-        <div className="form-column">
-          <input
-            type="text"
-            placeholder="Question"
-            value={questionForms.text}
-            onChange={(e) => setQuestionForms({ ...questionForms, text: e.target.value })}
-            className="form-input"
-          />
-          {(questionType === "checkbox" || questionType === "multichoice") &&
-            questionForms.answers.map((answer, index) => (
-              <div className="answer-row" key={index}>
-                <input
-                  type="text"
-                  value={answer.text}
-                  placeholder="Answer"
-                  className="form-input"
-                  onChange={(e) => addAnswerField(index, e.target.value)}
-                />
-                <button className="btn-delete-small" onClick={() => removeAnswerField(index)}>
-                  X
-                </button>
-              </div>
-            ))}
-          {(questionType === "checkbox" || questionType === "multichoice") && (
-            <button
-              className="btn-add-category"
-              onClick={() => setQuestionForms({ ...questionForms, answers: [...questionForms.answers, { id: 0, text: "" }] })}
-            >
-              Add Answer
-            </button>
-          )}
-          <div className="form-buttons">
-            {!questionIsSelected ? (
-              <button className="btn-search" onClick={addQuestion}>
-                Add Question
-              </button>
-            ) : (
-              <>
-                <button className="btn-search" onClick={modifyQuestion}>
-                  Modify
-                </button>
-                <button className="btn-delete-small" onClick={deleteQuestion}>
-                  Delete
-                </button>
-              </>
-            )}
-            <button className="btn-back" onClick={clearForms}>
-              Cancel
-            </button>
-          </div>
-        </div>
-
-        {/* Middle: Question List */}
-        <div className="form-column">
-          <h5>Questions</h5>
-          <div className="question-list">
-            {questions
-              .filter((q) => q.type === questionType)
-              .map((q) => (
-                <div
-                  key={q.id}
-                  className={`question-row ${questionForms.id === q.id ? "selected" : ""}`}
-                  onClick={() => selectQuestion(q)}
-                >
-                  {q.text}
+            <div style={{display: "flex", flexDirection: "column", gap: "5px", justifyContent: "left", flex: 1}}>
+                {/* This is the "Add Question" form field section */}
+                <div style={{display: "flex", flexDirection: "row", gap: "5px"}}>
+                    <h4 style={{display: "flex", justifyContent: "left", width: "300px"}}>{questionType} Question</h4>
+                    {/* This builds the question viewer with the items you can select */}
+                    {questionIsSelected ? 
+                        <>
+                            <button style={{display: "inline"}} onClick={async () => modifyQuestion()}>Modify</button>
+                            <button style={{display: "inline"}} onClick={async () => deleteQuestion()}>Delete</button>
+                        </> :
+                        <button style={{display: "inline", maxWidth: "300px"}} onClick={async () => addQuestion()}>Add</button>
+                    }
+                
+                    <button style={{display: "inline", flex: 1, height: "auto"}} onClick={() => setQuestionType("")}>Cancel</button>
                 </div>
-              ))}
-          </div>
-        </div>
+                <input onChange={(value) => setQuestionForms({ ...questionForms, text: value.target.value })} name="question" style={{display: "inline", width: "100%", height: "auto"}} type="text" placeholder="Question" value={questionForms.text} />
+                
+                { // This checks if the button clicked was a checkbox or multichoice type question card and displays the fields accordingly
+                    (questionType === "checkbox" || questionType === "multichoice") && (
+                    <>
+                        
+                        {questionForms.answers.map((answer, index) =>(
+                            <div style={{display: "flex", flexDirection:"row", width: "100%", height: "auto"}} key={index}>
+                                <input onChange={(e) => addAnswerField(index, e.target.value)} name="answer" type="text" placeholder="Answer" value={questionForms.answers[index].text} style={{flex: 1}}/>
+                                <button onClick={async () => removeAnswerField(index)}>X</button>
+                            </div>
+                        ))}
+                    </>
+                    )
+                }
+                <button style={{width: "100%", height: "auto"}} onClick={() => setQuestionForms({ ...questionForms, answers: [ ...questionForms.answers, {id: 0, text: ""}] })}>Add Answer</button>
 
-        {/* Right: Preview */}
-        <div className="form-column">
-          <h5>Preview</h5>
-          <div className="question-preview">
-            <h6>{questionForms.text}</h6>
-            {questionType === "slider" && <input type="range" className="form-input" />}
-            {questionType === "text" && <input type="text" className="form-input" />}
-            {(questionType === "multichoice" || questionType === "checkbox") &&
-              questionForms.answers.map((answer, i) => (
-                <label key={i} className="option-row">
-                  <input type={questionType === "multichoice" ? "radio" : "checkbox"} name="preview" />
-                  {answer.text}
-                </label>
-              ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="question-management">
-      <h4>Question Types</h4>
-      <div className="question-type-cards">
-        {["Multiple Choice", "Checkbox", "Slider Scale", "Text Input"].map((name, i) => {
-          const typeMap = ["multichoice", "checkbox", "slider", "text"];
-          return (
-            <div
-              key={i}
-              className={`type-card ${questionType === typeMap[i] ? "selected" : ""}`}
-              onClick={() => setQuestionType(typeMap[i])}
-            >
-              <h5>{name}</h5>
-              <p>Used in {questionCount[i]} questionnaires</p>
             </div>
-          );
-        })}
+
+            {/* This builds the question viewer with the items you can select */}
+            <div style={{display: "flex", flexDirection: "column", flex: 1}}>
+                <div style={{display: "flex", flexDirection: "row"}}>
+                    <h4>Questions</h4>
+                    {questionnaireWorkshop !== "" ? <button onClick={() => addToQuestionnaire()}style={{width: "100%", height: "auto"}}>Add to Questionnaire</button> : <></>}
+                </div>
+                <div style={{height: "300px", width: "100%", gap: "5px", justifyContent: "right", borderStyle: "solid", borderColor: "black", overflowY: "auto"}}>
+                    { (() => {
+                        return questions.map((question) => {
+                            if (question.type !== questionType) return;
+                            return (
+                            <div className="questionRow" onClick={() => selectQuestion(question)} style={{margin: "5px", height: "20px", backgroundColor: questionForms.id === question.id ? "grey" : "white", overflow: "hidden", textOverflow: "ellipses", whiteSpace: "nowrap"}}>
+                                {question.text}
+                            </div>
+                            );
+                        })
+                    })()}
+                </div>
+                
+            </div>
+
+            {/* This is the question preview box */}
+            <div style={{display: "flex", flexDirection: "column", flex: 1}}>
+                <h4>Preview</h4>
+                <div style={{display: "grid", flexWrap: "nowrap", gridTemplateColumns: "repeat(1, minmax(160px, 1fr))", gap: "10px", width: "100%", height: "300px"}}>
+                    <div style={{borderRadius: "10px", backgroundColor: "lightgrey", padding: "20px", aspectRatio: "1", justifyContent: "flex-start", alignItems: "flex-start", display: "flex", flexDirection: "column", border: "1px solid black"}}>
+                        <h5>{questionForms.text}</h5>
+                        { (() => {
+                            let type = questionForms.type;
+                            if (type === "slider") {
+                                return <input type="range" style={{width: "100%", padding: "20px", }} onChange={() => ""}/>;
+                            }
+                            else if (type === "text") {
+                                return <input style={{height: "auto", width: "100%", padding: "5px 10px", }}></input>;
+                            }
+                            else {
+                                return questionForms.answers.map((answer, index) => {
+                                    if (type === "multichoice") {
+                                        return (
+                                            <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
+                                                <input type="radio" name={questionForms.text} value={answer.text} />
+                                                <label htmlFor={questionForms.text}>{answer.text}</label>
+                                            </div>
+                                        )
+                                    
+                                    }
+                                    else if (type === "checkbox") {
+                                        return (
+                                            <div style={{display: "flex", flexDirection: "row", gap: "10px"}}>
+                                                <input type="checkbox" name={questionForms.text} value={answer.text} />
+                                                <label htmlFor={questionForms.text}>{answer.text}</label>
+                                            </div>
+                                        )
+                                    }
+                                })
+                            }
+                        })()}
+                    </div>
+                </div>
+            </div>
+        </div>
+        )
+    }
+
+    // Updates the formData answers every time a answer field is added or removed
+    const addAnswerField = (index: number, value: string) => {
+        const newAnswers = [...questionForms.answers];
+        newAnswers[index].text = value;
+        newAnswers[index].id = 0;
+        setQuestionForms({ ...questionForms, answers: newAnswers });
+    }
+    
+    // Removes an answer field from ther formData.answers array based on the given index
+    const removeAnswerField = async (index: number) => {
+        if (questionForms.answers.length < 3) return;
+        const updatedAnswers = [...questionForms.answers];
+        updatedAnswers.splice(index, 1);
+        setQuestionForms({ ...questionForms, answers: updatedAnswers })
+    }
+
+    // Helper Function to click on a question item from the list.
+    const selectQuestion = (question: {id: number; type: string; text: string; answers: {id: number, text: string}[]}) => {
+        if (questionForms.id === question.id) setQuestionIsSelected(false);
+        else setQuestionIsSelected(true);
+
+        setQuestionForms(current => current.id === question.id  ?  {id: 0, type: questionType, text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}]} : question);
+    }
+    
+    // Adds the completed question to the Database.
+    const addQuestion = () => {
+        if (questionForms.text.trim() == "") {alert("You must enter a question first!"); return;}
+
+        QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
+            .then( response => {
+                const tempQuestions = [ ...questions ]
+                tempQuestions.push(response);
+                setQuestions(tempQuestions);
+
+                if (questionnaireWorkshop === "") {
+                    clearForms();
+                } else {
+                    setQuestionIsSelected(false);
+                    setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
+                }
+            })
+            .catch( error => console.log(error))
+
+    }
+
+    // modify Question Button Action
+    const modifyQuestion = () => {
+        if (questionForms.text.trim() == "") {alert("You must enter a question first!"); return;}
+
+        QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
+            .then( response => {
+                // Get the index of the question  in the question list
+                let index = 0;
+                questions.some( (question, i) => {
+                    if (question.id === response.id) {
+                        index = i;
+                        return true;
+                    } 
+                })
+
+                // Replace the modified Question locally
+                const tempQuestions = [ ...questions ]
+                tempQuestions[index] = response;
+                setQuestions(tempQuestions);
+
+                // Reset components
+                if (questionnaireWorkshop === "") {
+                    clearForms();
+                } else {
+                    setQuestionIsSelected(false);
+                    setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
+                }
+            })
+            .catch( error => console.log(error))
+        }
+
+    // Delete Question Button Action
+    const deleteQuestion = () => {
+        QuestionnairebuilderService.questionnairebuilderDeletequestionDestroy({ id: questionForms.id })
+            .then( () => {
+                let index = 0;
+                questions.some( (question, i) => {
+                    if (question.id === questionForms.id) {
+                        index = i;
+                        return true;
+                    } 
+                })
+                const tempQuestions = [ ...questions ]
+                
+                tempQuestions.splice(index, 1);
+                setQuestions(tempQuestions);
+
+                if (questionnaireWorkshop === "") {
+                    clearForms();
+                } else {
+                    setQuestionIsSelected(false);
+                    setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
+                }
+            })
+            .catch( error => console.log(error))
+    }
+
+    // Add the selected question to the current Questionnaire
+    const addToQuestionnaire = () => {
+        if (!questionIsSelected) return;
+    
+        setCurrentQuestionnaire({ ...currentQuestionnaire, questions: [ ...currentQuestionnaire.questions, questionForms ] });
+        setQuestionIsSelected(false);
+        setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
+    }
+    
+    function clearForms() {
+        setCurrentQuestionnaire({ id: 0, title: "", status: "", started: 0, completed: 0, last_modified: new Date().toISOString(), questions: []});
+        setQuestionIsSelected(false);
+        setQuestionForms({ id: 0, type: "multichoice", text: "", answers: [{id: 0, text: ""}, {id: 0, text: ""}] });
+    }
+
+    // Checks how many questionnaires each question type has been used in
+    useEffect(() => {
+        questionCount = [0, 0, 0, 0];
+        questionnaires.forEach( (questionnaire) => {
+            questionnaire.questions.forEach((question)=> {
+                if (question.type === "multichoice") questionCount[0]++;
+                else if (question.type === "checkbox") questionCount[1]++;
+                else if (question.type === "slider") questionCount[2]++;
+                else if (question.type === "text") questionCount[3]++;
+            })
+        })
+    });
+
+    // Question Section - These are the Question Type Cards
+    return (
+      <div style={{display: "flex", flexDirection: "column"}}>
+        <h4 style={{display: "flex", justifyContent: "left"}}>Question Types</h4>
+        <div style={{display: "flex", flexDirection: "row"}}>
+          {questionCount.map((amount, index) => 
+            {   
+                let name = "";
+                let type = "";
+                switch (index) {
+                    case 0: name = "Multiple Choice"; type = "multichoice"; break;
+                    case 1: name = "Checkbox"; type = "checkbox"; break;
+                    case 2: name = "Slider Scale"; type = "slider"; break;
+                    case 3: name = "Text Input"; type = "text"; break;
+                }
+              // Create the Cards
+              return  (
+                <div onClick={() => setQuestionType(type)} style={{width: "200px", height: "225px", backgroundColor: (questionType === type ? "darkgrey" : "lightgrey"), borderRadius: "15px", overflow: "hidden", margin: "5px", padding: "10px"}}>
+                  <h3>{name}</h3>
+                  <p>Used in {questionCount[index]} questionnaires</p>
+                </div>
+              )
+            }
+          )}
+        </div>
+        {addQuestionForms()}
       </div>
-
-      {addQuestionForms()}
-
-      {/* Styles */}
-      <style>{`
-        .question-management {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          max-width: 1000px;
-        }
-        .question-type-cards {
-          display: flex;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-        .type-card {
-          width: 200px;
-          background-color: white;
-          border: 2px solid #007bff;
-          color: black;
-          border-radius: 12px;
-          padding: 16px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        .type-card.selected {
-          background-color: #007bff;
-          color: white;
-        }
-        .form-column {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          flex: 1;
-        }
-        .question-form-grid {
-          display: flex;
-          gap: 20px;
-        }
-        .form-input {
-          padding: 6px;
-          font-size: 14px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          width: 100%;
-        }
-        .answer-row {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-        .form-buttons {
-          display: flex;
-          gap: 8px;
-        }
-        .btn-back, .btn-search, .btn-delete-small, .btn-add-category {
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-          padding: 6px 12px;
-          transition: opacity 0.2s ease;
-        }
-        .btn-back { background-color: #6c757d; color: white; }
-        .btn-search { background-color: #007bff; color: white; }
-        .btn-delete-small { background-color: #dc3545; color: white; }
-        .btn-add-category { background-color: white; border: 2px solid #007bff; color: #007bff; }
-        .btn-back:hover, .btn-search:hover, .btn-delete-small:hover, .btn-add-category:hover { opacity: 0.85; }
-        .question-list {
-          border: 1px solid #ccc;
-          border-radius: 8px;
-          padding: 8px;
-          max-height: 300px;
-          overflow-y: auto;
-        }
-        .question-row {
-          padding: 6px;
-          border-radius: 4px;
-          cursor: pointer;
-          margin-bottom: 4px;
-          background-color: white;
-        }
-        .question-row.selected {
-          background-color: #dee2e6;
-        }
-        .question-preview {
-          border: 1px solid #ccc;
-          border-radius: 8px;
-          padding: 12px;
-          background-color: #f8f9fa;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        .option-row {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-      `}</style>
-    </div>
-  );
-};
-
+    )
+}
 export default ComponentQuestions;
