@@ -49,13 +49,18 @@ const QuestionnaireBuilder: React.FC = () => {
   useEffect(() => {
     const getData = () => {
       QuestionnairebuilderService.questionnairebuilderGetquestionnairesRetrieve()
-        .then(setQuestionnaires)
-        .catch(console.log);
+        .then( response => {
+          setQuestionnaires(response);
+        })
+        .catch( error => console.log(error) )
 
       QuestionnairebuilderService.questionnairebuilderGetquestionsRetrieve()
-        .then(setQuestions)
-        .catch(console.log);
-    };
+        .then( response => {
+          setQuestions(response);
+        })
+        .catch( error => console.log(error) )
+    }
+
     getData();
   }, []);
 
