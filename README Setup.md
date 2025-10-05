@@ -87,7 +87,7 @@ DATABASE_URL=mysql-connector://admin_dashboard:password@db:3306/admin_dashboard
 SKIP_PREFLIGHT_CHECK=true
 FAST_REFRESH=false
 
-GEMINI_API_KEY=AIzaSyDSxjolBQ8xwIQ0BVuQ5en1jDx9NXztnzQ
+GEMINI_API_KEY="<ENTER API KEY HERE>"
 ```
 
 ## 🧩 6. Setup and Run Docker
