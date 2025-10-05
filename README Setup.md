@@ -82,7 +82,7 @@ REDIS_URL=redis://result:6379
 #DATABASE_URL=postgres://admin_dashboard:password@db:5432/admin_dashboard
 #DATABASE_URL=sqlite:///db.sqlite3
 
-DATABASE_URL=mysql-connector://admin_dashboard:password@db:3307/admin_dashboard
+DATABASE_URL=mysql-connector://admin_dashboard:password@db:3306/admin_dashboard
 
 SKIP_PREFLIGHT_CHECK=true
 FAST_REFRESH=false
