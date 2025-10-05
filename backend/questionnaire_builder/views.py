@@ -412,13 +412,14 @@ class QueryAI(APIView):
         catResponse = GetCategories()
         catResponse = catResponse.get(request).data
         categories = ""
-        for category in categories:
-            categories += category.text + ", "
-        print(categories)
+        for category in catResponse:
+            categories += category["text"] + ", "
+        
+        #print(categories)
 
-        prompt = request.data.get("prompt") if isinstance(request.data, dict) else request.data
+        userContext = request.data.get("prompt") if isinstance(request.data, dict) else request.data
 
-        if not prompt:
+        if not userContext:
             return Response({"error": "Prompt is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         # === Gemini Generation Context ===
@@ -457,6 +458,8 @@ class QueryAI(APIView):
         - Output valid JSON only (no Markdown or text).
         - Each exercise should be 10 second divisiable (10, 20, 30...)
         - Each activity must include a warmup, primary, and cooldown.
+        - for every Primary activity, limit the number of exercises to between 2 and 5, but use a normal distributionwith a mean of 3.5 with a std dev of 0.75.
+        - Make warmups and cooldowns be 2-3 exercises
         - Warmup total duration must be between 60 and 150 seconds (inclusive).
         - Cooldown total duration must be between 60 and 150 seconds (inclusive).
         - Warmup and cooldown together may not exceed 300 seconds combined.
@@ -467,79 +470,17 @@ class QueryAI(APIView):
         - total time per activity = duration_minutes * 60.
         - warmup and cooldowns should only include low intensity exercises, and no rest
         - Do not include any exercises that require equipment not included in the context.
+        - Include rest periods in between longer periods of exercise (>60 seconds)
         - Use only these exercises:
-
-
-        Context:
-        {
-            "user_profile": {
-                "age": 30,
-                "sex": "male",
-                "fitness_level": "intermediate",
-                "experience_strength": "moderate",
-                "endurance_level": "moderate",
-                "body_weight_kg": 80,
-                "height_cm": 180
-            },
-            "preferences": {
-                "fitness_goal": "strength", 
-                "body_goals": ["muscle_gain", "fat_loss"],
-                "workout_duration_minutes": 45,
-                "days_per_week": 1,
-                "preferred_workout_types": ["bodyweight", "weights", "cardio"],
-                "preferred_intensity": "moderate",
-                "include_warmup_cooldown": true
-            },
-            "limitations": {
-                "injuries": ["right shoulder strain"],
-                "movement_restrictions": ["overhead_press", "pushups"],
-                "pain_triggers": ["heavy_pressing"]
-            },
-            "environment": {
-                "equipment_available": [
-                "dumbbells",
-                "barbell",
-                "bench",
-                "resistance_bands",
-                "pullup_bar"
-                ],
-                "space": "garage_gym",
-                "temperature": "indoor",
-                "floor_type": "rubber"
-            },
-            "schedule": {
-                "preferred_days": ["monday", "tuesday", "thursday", "saturday"],
-                "time_of_day": "morning"
-            },
-            "metrics": {
-                "heart_rate_resting": 68,
-                "max_heart_rate_est": 190,
-                "avg_sleep_hours": 7.5
-            },
-            "preferences_advanced": {
-                "warmup_duration_range_minutes": [3, 5],
-                "cooldown_duration_range_minutes": [2, 4],
-                "rest_between_sets_seconds": 60,
-                "max_exercises_per_day": 8,
-                "target_intensity_percent": 70
-            }
-        }
-
-
-        At the end, include:
-        {
-          "input_tokens": X,
-          "output_tokens": Y
-        }
         """
 
-        updated_prompt = f"{prompt}\n\n{context}"
+        updated_prompt = f"{context}\n\n{categories}\n\nUse This User Input:\n\n{userContext}"
 
         def timeout_handler(signum, frame):
             raise TimeoutError("Gemini request timed out")
 
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(45)  # 30-second safeguard
+        signal.alarm(45)  # 45-second safeguard
 
         try:
             # === Step 1: Generate plan ===

@@ -11,11 +11,13 @@ const AITest: React.FC = () => {
   const [showWorkout, setShowWorkout] = useState(false);
 
   useEffect(() => {
-    // This runs only once, when the component first loads
     getData();
   }, []);
 
   const resetAll = () => {
+    qResponses.forEach((r) => (
+      r = null
+    ))
     setQResponses([])
     setShowWorkout(false)
     setResponse(null)
