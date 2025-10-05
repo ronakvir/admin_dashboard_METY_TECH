@@ -13,6 +13,7 @@ from rest_framework import serializers
 from django.db.models import Subquery, Count, Q
 from drf_spectacular.utils import extend_schema
 
+
 # QUESTIONNAIRE PAGE
 # class AddQuestionnaire(generics.CreateAPIView):
 #     queryset = Questionnaire.objects.all()
@@ -290,6 +291,288 @@ class AddAnswerCategoryMapping(APIView):
             "detail": "Invalid Data", 
             "errors": serializedData.errors 
         }, status=status.HTTP_400_BAD_REQUEST)
+
+import os
+from dotenv import load_dotenv
+import re
+import json
+import signal
+import traceback
+import google.generativeai as genai
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+load_dotenv()
+genai.configure(api_key = os.getenv("GEMINI_API_KEY"))
+
+def correct_workout_durations(week):
+    """
+    Back-propagates total durations:
+    - Each activity's duration_seconds = sum(exercises) * sets.
+    - Each day's total_duration_seconds = sum(activity durations).
+    - Ensures total duration within ±10% of declared total.
+    - Scales non-warmup/cooldown exercises if needed.
+    - Rounds durations to nearest 10 seconds.
+    """
+    if not week.get("days"):
+        return week
+
+    corrected = False
+
+    for day in week["days"]:
+        activities = day.get("segments", [])
+        if not activities:
+            continue
+
+        declared_total = day.get("total_duration_seconds", 0)
+
+        # --- Step 1: recompute each activity duration from its exercises ---
+        for activity in activities:
+            exercises = activity.get("segments", [])
+            sets = activity.get("sets", 1)
+            activity_total = sum(ex.get("duration_seconds", 0) for ex in exercises) * sets
+            activity["duration_seconds"] = round(activity_total)
+
+        # --- Step 2: recompute day's total duration from activities ---
+        actual_total = sum(a.get("duration_seconds", 0) for a in activities)
+        day["total_duration_seconds"] = round(actual_total)
+
+        # --- Step 3: calculate mismatch vs declared total (±10%) ---
+        if declared_total <= 0:
+            declared_total = actual_total  # adopt recomputed value if missing
+
+        error_ratio = abs(declared_total - actual_total) / declared_total
+
+        if error_ratio <= 0.1:
+            continue  # within ±10%, fine as-is
+
+        corrected = True
+        scale_factor = declared_total / actual_total
+
+        print(
+            f"⚙️ Adjusting '{day.get('title', 'Untitled')}' — "
+            f"off by {error_ratio*100:.1f}%, scaling exercises by {scale_factor:.2f}"
+        )
+
+        # --- Step 4: rescale all non-warmup/cooldown exercises proportionally ---
+        for activity in activities:
+            name = str(activity.get("activity", "")).lower()
+            if "warmup" in name or "cooldown" in name:
+                continue  # skip these activities
+
+            exercises = activity.get("segments", [])
+            if not exercises:
+                continue
+
+            sets = activity.get("sets", 1)
+            for ex in exercises:
+                old_dur = ex.get("duration_seconds", 0)
+                new_dur = max(10, round((old_dur * scale_factor) / 10) * 10)
+                ex["duration_seconds"] = new_dur
+
+            # recompute activity total
+            new_activity_total = sum(ex["duration_seconds"] for ex in exercises) * sets
+            activity["duration_seconds"] = round(new_activity_total)
+
+        # --- Step 5: recompute total again after scaling ---
+        new_total = sum(a["duration_seconds"] for a in activities)
+        day["total_duration_seconds"] = round(new_total)
+
+        diff = declared_total - new_total
+        new_error = abs(diff) / declared_total
+
+        print(
+            f"✅ Corrected '{day.get('title', 'Untitled')}' — "
+            f"new total {new_total}s, error now {new_error*100:.1f}%"
+        )
+
+    if corrected:
+        week["was_corrected"] = True
+
+    return week
+
+
+
+
+
+
+
+
+
+class QueryAI(APIView):
+    """
+    One-stop endpoint:
+    - Generates weekly workout plan using Gemini
+    - Validates + auto-corrects mismatched durations
+    - Returns clean JSON ready for frontend
+    """
+
+    def post(self, request):
+        catResponse = GetCategories()
+        catResponse = catResponse.get(request).data
+        categories = ""
+        for category in categories:
+            categories += category.text + ", "
+        print(categories)
+
+        prompt = request.data.get("prompt") if isinstance(request.data, dict) else request.data
+
+        if not prompt:
+            return Response({"error": "Prompt is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # === Gemini Generation Context ===
+        context = """
+        Generate a JSON response in the following format only (no extra text):
+
+            {
+                "week_number": 0,
+                "days": [
+                    {
+                    "day_number": 0,
+                    "duration_seconds": 0,
+                    "title": "",
+                    "segments": [
+                        {
+                        "activity": "",
+                        "duration_seconds": 0,
+                        "sets": 0,
+                        "segments": [
+                            {
+                            "exercise": "",
+                            "duration_seconds": 0,
+                            "notes": ""
+                            }
+                        ]
+                        }
+                    ],
+                    "total_duration_seconds": 0,
+                    "difficulty": "",
+                    "goal": ""
+                    }
+                ]
+            }
+
+        Rules:
+        - Output valid JSON only (no Markdown or text).
+        - Each exercise should be 10 second divisiable (10, 20, 30...)
+        - Each activity must include a warmup, primary, and cooldown.
+        - Warmup total duration must be between 60 and 150 seconds (inclusive).
+        - Cooldown total duration must be between 60 and 150 seconds (inclusive).
+        - Warmup and cooldown together may not exceed 300 seconds combined.
+        - Notes describe form or modifications.
+        - Rest periods must be logically placed.
+        - Create workouts for all selected days.
+        - Avoid repeating the same body part two days in a row.
+        - total time per activity = duration_minutes * 60.
+        - warmup and cooldowns should only include low intensity exercises, and no rest
+        - Do not include any exercises that require equipment not included in the context.
+        - Use only these exercises:
+
+
+        Context:
+        {
+            "user_profile": {
+                "age": 30,
+                "sex": "male",
+                "fitness_level": "intermediate",
+                "experience_strength": "moderate",
+                "endurance_level": "moderate",
+                "body_weight_kg": 80,
+                "height_cm": 180
+            },
+            "preferences": {
+                "fitness_goal": "strength", 
+                "body_goals": ["muscle_gain", "fat_loss"],
+                "workout_duration_minutes": 45,
+                "days_per_week": 1,
+                "preferred_workout_types": ["bodyweight", "weights", "cardio"],
+                "preferred_intensity": "moderate",
+                "include_warmup_cooldown": true
+            },
+            "limitations": {
+                "injuries": ["right shoulder strain"],
+                "movement_restrictions": ["overhead_press", "pushups"],
+                "pain_triggers": ["heavy_pressing"]
+            },
+            "environment": {
+                "equipment_available": [
+                "dumbbells",
+                "barbell",
+                "bench",
+                "resistance_bands",
+                "pullup_bar"
+                ],
+                "space": "garage_gym",
+                "temperature": "indoor",
+                "floor_type": "rubber"
+            },
+            "schedule": {
+                "preferred_days": ["monday", "tuesday", "thursday", "saturday"],
+                "time_of_day": "morning"
+            },
+            "metrics": {
+                "heart_rate_resting": 68,
+                "max_heart_rate_est": 190,
+                "avg_sleep_hours": 7.5
+            },
+            "preferences_advanced": {
+                "warmup_duration_range_minutes": [3, 5],
+                "cooldown_duration_range_minutes": [2, 4],
+                "rest_between_sets_seconds": 60,
+                "max_exercises_per_day": 8,
+                "target_intensity_percent": 70
+            }
+        }
+
+
+        At the end, include:
+        {
+          "input_tokens": X,
+          "output_tokens": Y
+        }
+        """
+
+        updated_prompt = f"{prompt}\n\n{context}"
+
+        def timeout_handler(signum, frame):
+            raise TimeoutError("Gemini request timed out")
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(45)  # 30-second safeguard
+
+        try:
+            # === Step 1: Generate plan ===
+            model = genai.GenerativeModel("gemini-2.0-flash-lite")
+            result = model.generate_content(updated_prompt)
+            signal.alarm(0)
+
+            raw = result.text.strip() if result.text else ""
+            cleaned = re.sub(r"```json|```", "", raw).strip()
+
+            try:
+                parsed = json.loads(cleaned)
+            except json.JSONDecodeError:
+                return Response({"error": "Invalid JSON from Gemini", "raw": cleaned}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # === Step 2: Validate + correct ===
+            corrected = correct_workout_durations(parsed)
+
+            # === Step 3: Return final result ===
+            return Response(corrected, status=status.HTTP_200_OK)
+
+        except TimeoutError:
+            signal.alarm(0)
+            traceback.print_exc()
+            return Response({"error": "Gemini request timed out"}, status=status.HTTP_504_GATEWAY_TIMEOUT)
+        except Exception as e:
+            signal.alarm(0)
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+    
 # LOGIC BUILDER PAGE
 
 
@@ -445,117 +728,47 @@ class DataStorage:
         {
             "text": "What is your primary fitness goal?",
             "type": "multichoice",
-            "answers": ["Lose weight", "Build muscle", "Increase endurance", "Improve flexibility", "General health"]
+            "answers": ["Lose weight", "Build muscle", "Increase endurance", "Improve flexibility", "General health", "Recover From an Injury"]
         },
         {
-            "text": "How many days per week do you currently work out?",
+            "text": "How many days per week do you wish to workout?",
             "type": "multichoice",
-            "answers": ["0-1 days", "2-3 days", "4-5 days", "6-7 days"]
+            "answers": ["1 day", "2 days", "3 days", "4 days", "5 days", "6 days", "7 days"]
         },
         {
-            "text": "Do you have any injuries or physical limitations?",
-            "type": "multichoice",
-            "answers": ["None", "Back issues", "Knee pain", "Shoulder problems", "Other"]
-        },
-        {
-            "text": "What types of workouts do you enjoy?",
+            "text": "Do you have any physical limitations?",
             "type": "checkbox",
-            "answers": ["Cardio", "Strength training", "Yoga", "Pilates", "HIIT", "Stretching"]
-        },
-        {
-            "text": "How would you rate your current endurance level?",
-            "type": "multichoice",
-            "answers": ["Very low", "Low", "Moderate", "High", "Very high"]
-        },
-        {
-            "text": "Do you prefer working out at home or in a gym?",
-            "type": "multichoice",
-            "answers": ["At home", "In a gym", "No preference"]
-        },
-        {
-            "text": "What time of day do you usually exercise?",
-            "type": "checkbox",
-            "answers": ["Early morning", "Late morning", "Afternoon", "Evening", "Night"]
-        },
-        {
-            "text": "Do you have experience with strength training?",
-            "type": "multichoice",
-            "answers": ["No experience", "Some experience", "Regularly strength train"]
+            "answers": ["Right Leg/Hip", "Left Leg/Hip", "Back Limitations", "Right Arm/Shoulder", "Left Arm/Shoulder", "None"]
         },
         {
             "text": "What equipment do you have access to?",
             "type": "checkbox",
-            "answers": ["Dumbbells", "Resistance bands", "Treadmill", "Stationary bike", "Barbells", "None"]
+            "answers": ["None","Dumbbells","Barbells", "Weight plates","Resistance bands","Pull-up bar","Kettlebell","Medicine ball","Stability ball (exercise ball)","Bench (flat or adjustable)","Squat rack / Power rack","Smith machine","Cable machine","Treadmill","Stationary bike","Elliptical","Rowing machine","Jump rope","Yoga mat","Foam roller","Step platform / Aerobic step","TRX suspension straps","Dip bars / Parallel bars","Ab wheel","Battle ropes","Plyometric box (jump box)","Punching bag","Resistance sled","Leg press machine","Lat pulldown machine","Chest press machine","Shoulder press machine","Stair climber / Stepper","Cable crossover machine","Pull-down attachment","Weighted vest","Gym rings","Glute band / Hip circle","Balance board / Bosu ball"]
         },
         {
-            "text": "How much time can you dedicate to each workout session?",
-            "type": "multichoice",
-            "answers": ["Less than 15 minutes", "15–30 minutes", "30–45 minutes", "45–60 minutes", "More than 1 hour"]
-        },
-        {
-            "text": "What is your current flexibility level?",
-            "type": "multichoice",
-            "answers": ["Very stiff", "Somewhat stiff", "Moderately flexible", "Very flexible"]
-        },
-        {
-            "text": "Are you interested in improving your posture?",
-            "type": "multichoice",
-            "answers": ["Yes", "No", "Maybe"]
-        },
-        {
-            "text": "Do you follow any specific diet or nutrition plan?",
-            "type": "multichoice",
-            "answers": ["No plan", "Keto", "Vegan", "Paleo", "Intermittent fasting", "Other"]
-        },
-        {
-            "text": "How would you describe your recovery habits?",
-            "type": "multichoice",
-            "answers": ["I stretch and rest properly", "I sometimes skip recovery", "I rarely recover intentionally"]
-        },
-        {
-            "text": "Have you done high-intensity interval training (HIIT) before?",
-            "type": "multichoice",
-            "answers": ["Yes", "No", "Tried once or twice"]
-        },
-        {
-            "text": "What motivates you to stick to a workout routine?",
+            "text": "What types of workouts do you enjoy?",
             "type": "checkbox",
-            "answers": ["Progress tracking", "Support from others", "Seeing physical results", "Mental health", "Routine/habit"]
+            "answers": ["Cardio", "Strength training", "Yoga", "Pilates", "HIIT", "Stretching", "Circuit"]
         },
         {
-            "text": "Do you track your workouts or progress?",
+            "text": "How would you rate your current fitness level?",
             "type": "multichoice",
-            "answers": ["Yes, with an app", "Yes, manually", "No, I don't track"]
+            "answers": ["Very low", "Low", "Moderate", "High", "Very high"]
         },
         {
-            "text": "What’s your preferred workout duration?",
+            "text": "How much time would you like to spend per workout?",
             "type": "multichoice",
-            "answers": ["15 minutes", "30 minutes", "45 minutes", "1 hour", "More than 1 hour"]
+            "answers": ["15 minutes", "30 minutes", "45 minutes", "60 minutes"]
         },
-        {
-            "text": "Are you training for a specific event or sport?",
-            "type": "multichoice",
-            "answers": ["Yes", "No", "Considering it"]
-        },
-        {
-            "text": "How do you usually feel after a workout?",
-            "type": "checkbox",
-            "answers": ["Energized", "Tired", "Sore", "Relaxed", "Accomplished"]
-        },
+
     ]
 
 
     questionnaireData = [
-        {"title": "Beginner Full-Body Assessment", "status": "Published", "started": 120, "completed": 95, "last_modified": timezone.now()},
-        {"title": "Cardio Readiness Survey", "status": "Published", "started": 80, "completed": 60, "last_modified": timezone.now()},
+        {"title": "Initial Questionnaire", "status": "Published", "started": 120, "completed": 95, "last_modified": timezone.now()},
+        {"title": "Cardio Readiness Survey", "status": "Draft", "started": 80, "completed": 60, "last_modified": timezone.now()},
         {"title": "Strength Training Preferences", "status": "Draft", "started": 45, "completed": 30, "last_modified": timezone.now()},
-        {"title": "Flexibility & Mobility Check", "status": "Published", "started": 70, "completed": 55, "last_modified": timezone.now()},
-        {"title": "Upper Body Focus Questionnaire", "status": "Draft", "started": 35, "completed": 25, "last_modified": timezone.now()},
-        {"title": "Lower Body Focus Questionnaire", "status": "Published", "started": 60, "completed": 50, "last_modified": timezone.now()},
-        {"title": "Posture & Core Stability Assessment", "status": "Published", "started": 90, "completed": 75, "last_modified": timezone.now()},
-        {"title": "HIIT Program Fit Survey", "status": "Draft", "started": 40, "completed": 28, "last_modified": timezone.now()},
-        {"title": "Recovery & Rest Habits", "status": "Published", "started": 65, "completed": 58, "last_modified": timezone.now()},
-        {"title": "Pre-Workout Nutrition Check", "status": "Template", "started": 50, "completed": 40, "last_modified": timezone.now()},
+        {"title": "Flexibility & Mobility Check", "status": "Draft", "started": 70, "completed": 55, "last_modified": timezone.now()},
     ]
 
     questionQuestionnaireMappings = [
@@ -566,110 +779,187 @@ class DataStorage:
         {"questionnaire_id": 1, "question_id": 5},
         {"questionnaire_id": 1, "question_id": 6},
         {"questionnaire_id": 1, "question_id": 7},
-        {"questionnaire_id": 1, "question_id": 8},
-        {"questionnaire_id": 2, "question_id": 9},
-        {"questionnaire_id": 2, "question_id": 10},
-        {"questionnaire_id": 2, "question_id": 11},
-        {"questionnaire_id": 2, "question_id": 12},
-        {"questionnaire_id": 2, "question_id": 13},
-        {"questionnaire_id": 2, "question_id": 14},
-        {"questionnaire_id": 2, "question_id": 15},
-        {"questionnaire_id": 2, "question_id": 16},
-        {"questionnaire_id": 3, "question_id": 17},
-        {"questionnaire_id": 3, "question_id": 18},
-        {"questionnaire_id": 3, "question_id": 19},
-        {"questionnaire_id": 3, "question_id": 20},
+        {"questionnaire_id": 2, "question_id": 1},
+        {"questionnaire_id": 2, "question_id": 2},
+        {"questionnaire_id": 2, "question_id": 3},
+        {"questionnaire_id": 2, "question_id": 4},
+        {"questionnaire_id": 2, "question_id": 5},
+        {"questionnaire_id": 2, "question_id": 6},
+        {"questionnaire_id": 2, "question_id": 7},
         {"questionnaire_id": 3, "question_id": 1},
         {"questionnaire_id": 3, "question_id": 2},
         {"questionnaire_id": 3, "question_id": 3},
         {"questionnaire_id": 3, "question_id": 4},
+        {"questionnaire_id": 3, "question_id": 5},
+        {"questionnaire_id": 3, "question_id": 6},
+        {"questionnaire_id": 3, "question_id": 7},
+        {"questionnaire_id": 4, "question_id": 1},
+        {"questionnaire_id": 4, "question_id": 2},
+        {"questionnaire_id": 4, "question_id": 3},
+        {"questionnaire_id": 4, "question_id": 4},
+        {"questionnaire_id": 4, "question_id": 5},
+        {"questionnaire_id": 4, "question_id": 6},
+        {"questionnaire_id": 4, "question_id": 7},
     ]
 
     videoData = [
-        {"title": "Full Body Stretch", "duration": "12:30", "description": "A gentle full-body stretching routine.", "url": "https://youtube.com/watch?v=example1"},
-        {"title": "HIIT Cardio Blast", "duration": "22:15", "description": "High-intensity interval training for fat burn.", "url": "https://youtube.com/watch?v=example2"},
-        {"title": "Beginner Yoga Flow", "duration": "18:45", "description": "Relaxing yoga for beginners.", "url": "https://youtube.com/watch?v=example3"},
-        {"title": "Upper Body Strength", "duration": "25:30", "description": "Strength training focusing on upper body.", "url": "https://youtube.com/watch?v=example4"},
-        {"title": "Core Crusher", "duration": "8:20", "description": "A focused ab and core workout.", "url": "https://youtube.com/watch?v=example5"},
-        {"title": "Lower Body Burner", "duration": "20:15", "description": "Leg and glute-focused exercise routine.", "url": "https://youtube.com/watch?v=example6"},
-        {"title": "Morning Energy Boost", "duration": "10:45", "description": "Short workout to start your day energized.", "url": "https://youtube.com/watch?v=example7"},
-        {"title": "Boxing Cardio Workout", "duration": "35:20", "description": "Boxing-style cardio for endurance.", "url": "https://youtube.com/watch?v=example8"},
-        {"title": "Quick Office Stretch", "duration": "7:30", "description": "Stretches you can do at your desk.", "url": "https://youtube.com/watch?v=example9"},
-        {"title": "Low Impact Cardio", "duration": "24:45", "description": "Heart-pumping cardio with minimal joint impact.", "url": "https://youtube.com/watch?v=example10"},
-        {"title": "Power Pilates", "duration": "38:15", "description": "Pilates workout for strength and balance.", "url": "https://youtube.com/watch?v=example11"},
-        {"title": "Glute Activation", "duration": "6:45", "description": "Warm-up focused on activating glute muscles.", "url": "https://youtube.com/watch?v=example12"},
-        {"title": "Full Body Dumbbell Workout", "duration": "42:30", "description": "Strength training using dumbbells.", "url": "https://youtube.com/watch?v=example13"},
-        {"title": "Bodyweight Burn", "duration": "28:20", "description": "No equipment needed, full body workout.", "url": "https://youtube.com/watch?v=example14"},
-        {"title": "Mobility and Flexibility", "duration": "26:15", "description": "Improve range of motion and flexibility.", "url": "https://youtube.com/watch?v=example15"},
-        {"title": "Evening Cool Down", "duration": "9:30", "description": "Relaxing exercises to wind down your day.", "url": "https://youtube.com/watch?v=example16"},
-        {"title": "Tabata Cardio", "duration": "14:45", "description": "Tabata-style intervals for max effort.", "url": "https://youtube.com/watch?v=example17"},
-        {"title": "Balance and Stability", "duration": "19:30", "description": "Exercises to improve balance and posture.", "url": "https://youtube.com/watch?v=example18"},
-        {"title": "Chair Workout", "duration": "23:45", "description": "Full-body workout using just a chair.", "url": "https://youtube.com/watch?v=example19"},
-        {"title": "Resistance Band Training", "duration": "52:15", "description": "Strength training using resistance bands.", "url": "https://youtube.com/watch?v=example20"},
+        {"title": "Push-Ups", "duration": "0:10", "description": "Quick demo of standard push-ups for upper body strength.", "url": "https://youtube.com/watch?v=example_pushups"},
+        {"title": "Sit-Ups", "duration": "0:10", "description": "Basic sit-up form to strengthen your core.", "url": "https://youtube.com/watch?v=example_situps"},
+        {"title": "Squats", "duration": "0:10", "description": "Bodyweight squats for legs and glutes.", "url": "https://youtube.com/watch?v=example_squats"},
+        {"title": "Lunges", "duration": "0:10", "description": "Forward lunges to target quads and glutes.", "url": "https://youtube.com/watch?v=example_lunges"},
+        {"title": "Jumping Jacks", "duration": "0:10", "description": "Cardio warm-up using full-body movement.", "url": "https://youtube.com/watch?v=example_jumpingjacks"},
+        {"title": "Plank Hold", "duration": "0:10", "description": "Static plank to engage your core.", "url": "https://youtube.com/watch?v=example_plank"},
+        {"title": "High Knees", "duration": "0:10", "description": "Cardio drill focusing on speed and coordination.", "url": "https://youtube.com/watch?v=example_highknees"},
+        {"title": "Burpees", "duration": "0:10", "description": "Full-body explosive burpee for endurance.", "url": "https://youtube.com/watch?v=example_burpees"},
+        {"title": "Mountain Climbers", "duration": "0:10", "description": "Dynamic core and cardio exercise.", "url": "https://youtube.com/watch?v=example_mountainclimbers"},
+        {"title": "Bicycle Crunches", "duration": "0:10", "description": "Rotational ab exercise for obliques.", "url": "https://youtube.com/watch?v=example_bicyclecrunch"},
+        {"title": "Tricep Dips", "duration": "0:10", "description": "Chair dips to target triceps.", "url": "https://youtube.com/watch?v=example_tricepdips"},
+        {"title": "Jump Squats", "duration": "0:10", "description": "Explosive squat variation for power.", "url": "https://youtube.com/watch?v=example_jumpsquats"},
+        {"title": "Glute Bridge", "duration": "0:10", "description": "Glute activation exercise for posterior chain.", "url": "https://youtube.com/watch?v=example_glutebridge"},
+        {"title": "Side Plank", "duration": "0:10", "description": "Stabilize and strengthen obliques.", "url": "https://youtube.com/watch?v=example_sideplank"},
+        {"title": "Calf Raises", "duration": "0:10", "description": "Strengthen calves through controlled lifts.", "url": "https://youtube.com/watch?v=example_calfraises"},
+        {"title": "Superman Hold", "duration": "0:10", "description": "Lower back strengthening isometric move.", "url": "https://youtube.com/watch?v=example_superman"},
+        {"title": "Leg Raises", "duration": "0:10", "description": "Ab exercise targeting lower core.", "url": "https://youtube.com/watch?v=example_legraises"},
+        {"title": "Side Lunges", "duration": "0:10", "description": "Targets adductors and glutes with lateral movement.", "url": "https://youtube.com/watch?v=example_sidelunge"},
+        {"title": "Flutter Kicks", "duration": "0:10", "description": "Alternating leg movement for abs and hip flexors.", "url": "https://youtube.com/watch?v=example_flutterkicks"},
+        {"title": "Jump Rope", "duration": "0:10", "description": "Classic cardio movement for rhythm and stamina.", "url": "https://youtube.com/watch?v=example_jumprope"},
+        {"title": "Shadow Boxing", "duration": "0:10", "description": "Cardio and coordination drill using punches.", "url": "https://youtube.com/watch?v=example_shadowboxing"},
+        {"title": "Bear Crawl", "duration": "0:10", "description": "Full-body crawl for strength and mobility.", "url": "https://youtube.com/watch?v=example_bearcrawl"},
+        {"title": "Inchworm Stretch", "duration": "0:10", "description": "Dynamic warm-up stretching posterior chain.", "url": "https://youtube.com/watch?v=example_inchworm"},
+        {"title": "Arm Circles", "duration": "0:10", "description": "Shoulder mobility exercise.", "url": "https://youtube.com/watch?v=example_armcircles"},
+        {"title": "Hip Flexor Stretch", "duration": "0:10", "description": "Mobility exercise for tight hip flexors.", "url": "https://youtube.com/watch?v=example_hipflexor"},
+        {"title": "Cat-Cow Stretch", "duration": "0:10", "description": "Spinal mobility stretch sequence.", "url": "https://youtube.com/watch?v=example_catcow"},
+        {"title": "Downward Dog", "duration": "0:10", "description": "Yoga pose for hamstrings and shoulders.", "url": "https://youtube.com/watch?v=example_downwarddog"},
+        {"title": "Cobra Stretch", "duration": "0:10", "description": "Lower back extension yoga posture.", "url": "https://youtube.com/watch?v=example_cobrastretch"},
+        {"title": "Shoulder Tap Plank", "duration": "0:10", "description": "Core and stability move with shoulder taps.", "url": "https://youtube.com/watch?v=example_shouldertap"},
+        {"title": "Skater Jumps", "duration": "0:10", "description": "Plyometric side-to-side jumps for balance.", "url": "https://youtube.com/watch?v=example_skaterjumps"},
+        {"title": "Reverse Lunges", "duration": "0:10", "description": "Lunge variation to reduce knee strain.", "url": "https://youtube.com/watch?v=example_reverselunge"},
+        {"title": "Punch Combo Drill", "duration": "0:10", "description": "Cardio boxing combo for speed.", "url": "https://youtube.com/watch?v=example_punchcombo"},
+        {"title": "Wall Sit", "duration": "0:10", "description": "Static lower body hold for endurance.", "url": "https://youtube.com/watch?v=example_wallsit"},
+        {"title": "Heel Taps", "duration": "0:10", "description": "Core exercise focusing on obliques.", "url": "https://youtube.com/watch?v=example_heeltaps"},
+        {"title": "Step-Ups", "duration": "0:10", "description": "Leg strengthening exercise using a platform.", "url": "https://youtube.com/watch?v=example_stepups"},
+        {"title": "Jump Lunges", "duration": "0:10", "description": "Explosive plyometric lunge movement.", "url": "https://youtube.com/watch?v=example_jumplunges"},
+        {"title": "Arm Raises", "duration": "0:10", "description": "Front and lateral arm raises for shoulders.", "url": "https://youtube.com/watch?v=example_armraises"},
+        {"title": "Bicep Curls", "duration": "0:10", "description": "Classic upper-arm dumbbell curl.", "url": "https://youtube.com/watch?v=example_bicepcurl"},
+        {"title": "Tricep Kickbacks", "duration": "0:10", "description": "Isolation exercise for triceps.", "url": "https://youtube.com/watch?v=example_tricepkickback"},
+        {"title": "Bent-Over Rows", "duration": "0:10", "description": "Back-focused pull exercise.", "url": "https://youtube.com/watch?v=example_bentoverrow"},
+        {"title": "Shoulder Press", "duration": "0:10", "description": "Overhead press for deltoids.", "url": "https://youtube.com/watch?v=example_shoulderpress"},
+        {"title": "Chest Press", "duration": "0:10", "description": "Chest strengthening movement.", "url": "https://youtube.com/watch?v=example_chestpress"},
+        {"title": "Deadlifts", "duration": "0:10", "description": "Full-body lift focusing on posterior chain.", "url": "https://youtube.com/watch?v=example_deadlift"},
+        {"title": "Side Kicks", "duration": "0:10", "description": "Martial arts-inspired lower body move.", "url": "https://youtube.com/watch?v=example_sidekick"},
+        {"title": "Front Kicks", "duration": "0:10", "description": "Kick forward for balance and flexibility.", "url": "https://youtube.com/watch?v=example_frontkick"},
+        {"title": "Jump Twists", "duration": "0:10", "description": "Core and cardio exercise with rotational jump.", "url": "https://youtube.com/watch?v=example_jumptwist"},
+        {"title": "Torso Rotations", "duration": "0:10", "description": "Core twisting movement for flexibility.", "url": "https://youtube.com/watch?v=example_torsorotation"},
+        {"title": "Bridge March", "duration": "0:10", "description": "Glute bridge with alternating leg lifts.", "url": "https://youtube.com/watch?v=example_bridgemarch"},
+        {"title": "Lateral Bounds", "duration": "0:10", "description": "Side-to-side bounding for agility.", "url": "https://youtube.com/watch?v=example_lateralbounds"},
+        {"title": "Side Leg Raises", "duration": "0:10", "description": "Hip abductor isolation exercise.", "url": "https://youtube.com/watch?v=example_sidelegraise"}
     ]
 
     categoryData = [
-        {"text": "Strength Training"},
-        {"text": "Cardiovascular Fitness"},
-        {"text": "Flexibility & Mobility"},
-        {"text": "Weight Loss"},
-        {"text": "Muscle Building"},
-        {"text": "HIIT (High-Intensity Interval Training)"},
-        {"text": "Yoga"},
-        {"text": "Pilates"},
-        {"text": "Injury Recovery"},
-        {"text": "Core Strength"},
-        {"text": "Endurance Training"},
-        {"text": "Balance & Stability"},
-        {"text": "Senior Fitness"},
-        {"text": "Prenatal/Postnatal Fitness"},
-        {"text": "Mental Wellness"},
-        {"text": "Functional Fitness"},
-        {"text": "Sports Conditioning"},
-        {"text": "Low Impact Workouts"},
-        {"text": "Nutrition & Diet"},
-        {"text": "Meditation & Breathwork"},
+        { "text": "Push-Ups" },
+        { "text": "Sit-Ups" },
+        { "text": "Squats" },
+        { "text": "Lunges" },
+        { "text": "Jumping Jacks" },
+        { "text": "Plank" },
+        { "text": "High Knees" },
+        { "text": "Burpees" },
+        { "text": "Mountain Climbers" },
+        { "text": "Bicycle Crunches" },
+        { "text": "Tricep Dips" },
+        { "text": "Jump Squats" },
+        { "text": "Glute Bridge" },
+        { "text": "Side Plank" },
+        { "text": "Calf Raises" },
+        { "text": "Superman Hold" },
+        { "text": "Leg Raises" },
+        { "text": "Side Lunges" },
+        { "text": "Flutter Kicks" },
+        { "text": "Jump Rope" },
+        { "text": "Shadow Boxing" },
+        { "text": "Bear Crawl" },
+        { "text": "Inchworm Stretch" },
+        { "text": "Arm Circles" },
+        { "text": "Hip Flexor Stretch" },
+        { "text": "Cat-Cow Stretch" },
+        { "text": "Downward Dog" },
+        { "text": "Cobra Stretch" },
+        { "text": "Shoulder Tap Plank" },
+        { "text": "Skater Jumps" },
+        { "text": "Reverse Lunges" },
+        { "text": "Wall Sit" },
+        { "text": "Step-Ups" },
+        { "text": "Jump Lunges" },
+        { "text": "Bicep Curls" },
+        { "text": "Tricep Kickbacks" },
+        { "text": "Bent-Over Rows" },
+        { "text": "Shoulder Press" },
+        { "text": "Deadlifts" },
+        { "text": "Side Kicks" },
+        { "text": "Front Kicks" },
+        { "text": "Butt Kicks" },
+        { "text": "Arm Raises" },
+        { "text": "Neck Stretch" },
+        { "text": "Hamstring Stretch" },
+        { "text": "Seated Twist" },
+        { "text": "Bridge Hold" },
+        { "text": "Heel Touches" },
+        { "text": "Standing Crunches" },
+        { "text": "Lateral Bounds" },
+        { "text": "Single-Leg Deadlift" }
     ]
 
     videoCategoryMapping = [
-        {"video_id": 1, "category_id": 3},
-        {"video_id": 1, "category_id": 8},
-        {"video_id": 2, "category_id": 2},
-        {"video_id": 2, "category_id": 4},
-        {"video_id": 3, "category_id": 7},
-        {"video_id": 3, "category_id": 15},
-        {"video_id": 4, "category_id": 1},
-        {"video_id": 4, "category_id": 5},
-        {"video_id": 5, "category_id": 10},
-        {"video_id": 6, "category_id": 1},
-        {"video_id": 6, "category_id": 5},
-        {"video_id": 7, "category_id": 2},
-        {"video_id": 7, "category_id": 14},
-        {"video_id": 8, "category_id": 2},
-        {"video_id": 8, "category_id": 17},
-        {"video_id": 9, "category_id": 3},
-        {"video_id": 9, "category_id": 13},
-        {"video_id": 10, "category_id": 2},
-        {"video_id": 10, "category_id": 17},
-        {"video_id": 11, "category_id": 8},
-        {"video_id": 11, "category_id": 16},
-        {"video_id": 12, "category_id": 5},
-        {"video_id": 12, "category_id": 10},
-        {"video_id": 13, "category_id": 1},
-        {"video_id": 13, "category_id": 5},
-        {"video_id": 14, "category_id": 1},
-        {"video_id": 14, "category_id": 16},
-        {"video_id": 15, "category_id": 3},
-        {"video_id": 15, "category_id": 12},
-        {"video_id": 16, "category_id": 3},
-        {"video_id": 16, "category_id": 20},
-        {"video_id": 17, "category_id": 2},
-        {"video_id": 17, "category_id": 4},
-        {"video_id": 18, "category_id": 12},
-        {"video_id": 18, "category_id": 16},
-        {"video_id": 19, "category_id": 13},
-        {"video_id": 20, "category_id": 1},
-        {"video_id": 20, "category_id": 18},
+        { "video_id": 1,  "category_id": 1 },
+        { "video_id": 2,  "category_id": 2 },
+        { "video_id": 3,  "category_id": 3 },
+        { "video_id": 4,  "category_id": 4 },
+        { "video_id": 5,  "category_id": 5 },
+        { "video_id": 6,  "category_id": 6 },
+        { "video_id": 7,  "category_id": 7 },
+        { "video_id": 8,  "category_id": 8 },
+        { "video_id": 9,  "category_id": 9 },
+        { "video_id": 10, "category_id": 10 },
+        { "video_id": 11, "category_id": 11 },
+        { "video_id": 12, "category_id": 12 },
+        { "video_id": 13, "category_id": 13 },
+        { "video_id": 14, "category_id": 14 },
+        { "video_id": 15, "category_id": 15 },
+        { "video_id": 16, "category_id": 16 },
+        { "video_id": 17, "category_id": 17 },
+        { "video_id": 18, "category_id": 18 },
+        { "video_id": 19, "category_id": 19 },
+        { "video_id": 20, "category_id": 20 },
+        { "video_id": 21, "category_id": 21 },
+        { "video_id": 22, "category_id": 22 },
+        { "video_id": 23, "category_id": 23 },
+        { "video_id": 24, "category_id": 24 },
+        { "video_id": 25, "category_id": 25 },
+        { "video_id": 26, "category_id": 26 },
+        { "video_id": 27, "category_id": 27 },
+        { "video_id": 28, "category_id": 28 },
+        { "video_id": 29, "category_id": 29 },
+        { "video_id": 30, "category_id": 30 },
+        { "video_id": 31, "category_id": 31 },
+        { "video_id": 32, "category_id": 32 },
+        { "video_id": 33, "category_id": 33 },
+        { "video_id": 34, "category_id": 34 },
+        { "video_id": 35, "category_id": 35 },
+        { "video_id": 36, "category_id": 36 },
+        { "video_id": 37, "category_id": 37 },
+        { "video_id": 38, "category_id": 38 },
+        { "video_id": 39, "category_id": 39 },
+        { "video_id": 40, "category_id": 40 },
+        { "video_id": 41, "category_id": 41 },
+        { "video_id": 42, "category_id": 42 },
+        { "video_id": 43, "category_id": 43 },
+        { "video_id": 44, "category_id": 44 },
+        { "video_id": 45, "category_id": 45 },
+        { "video_id": 46, "category_id": 46 },
+        { "video_id": 47, "category_id": 47 },
+        { "video_id": 48, "category_id": 48 },
+        { "video_id": 49, "category_id": 49 },
+        { "video_id": 50, "category_id": 50 }
     ]
     answercategoryMapping = [
         {"questionnaire_id": 1, "answer_id": 1, "category_id": 4, "inclusive": True},

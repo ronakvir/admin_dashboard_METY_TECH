@@ -20,6 +20,9 @@ const SidePanel: React.FC = () => {
     const ApiKeyManagement = () => {
         navigate("/dashboard/apikeys")
     }
+    const AITestButton = () => {
+        navigate("/dashboard/aitest")
+    }
 
     const handleLogout = async () => {
         try {
@@ -71,6 +74,7 @@ const SidePanel: React.FC = () => {
                     <li><button className="nav-item" onClick={VideoLibrary}>Fitness Video Library</button></li>
                     <li><button className="nav-item" onClick={LogicBuilder}>Logic Builder</button></li>
                     <li><button className="nav-item" onClick={ApiKeyManagement}>API Key Management</button></li>
+                    <li><button className="nav-item" onClick={AITestButton}>AI Test</button></li>
                 </ul>
             </div>
             

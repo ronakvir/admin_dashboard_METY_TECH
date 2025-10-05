@@ -54,15 +54,12 @@ const QuestionnaireBuilder: React.FC = () => {
     const getData = () => {
       QuestionnairebuilderService.questionnairebuilderGetquestionnairesRetrieve()
         .then( response => {
-          console.log(response)
           setQuestionnaires(response);
         })
         .catch( error => console.log(error) )
 
       QuestionnairebuilderService.questionnairebuilderGetquestionsRetrieve()
         .then( response => {
-          console.log("SUP")
-          console.log(response)
           setQuestions(response);
         })
         .catch( error => console.log(error) )
