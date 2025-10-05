@@ -32,4 +32,8 @@ urlpatterns = [
     
     # Public API for published questionnaires
     path('public/questionnaire/', views.GetPublishedQuestionnaire.as_view(), name='GetPublishedQuestionnaire'),
+    
+    
+    path('aiquery/', views.QueryAI.as_view(), name='AIQuery'),
+    path('fixaiquery/', views.QueryAI.as_view(), name='FixAIQuery'),
 ]

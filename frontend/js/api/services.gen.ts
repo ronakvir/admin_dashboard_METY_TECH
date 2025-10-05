@@ -86,7 +86,35 @@ import type {
   VideomanagementDeletevideoDestroyResponse,
   VideomanagementGetvideosCreateData,
   VideomanagementGetvideosCreateResponse,
+  Workout,
 } from "./types.gen";
+
+export class AIQuery {
+  public static QueryGemini(
+    data: String,
+  ): CancelablePromise<{answer: string}> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/aiquery/",
+      body: data,
+      mediaType: "application/json",
+    });
+  }
+
+  public static FixQueryGemini(
+    data: String,
+  ): CancelablePromise<{
+    [x: string]: any;answer: string
+}> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/fixaiquery/",
+      body: data,
+      mediaType: "application/json",
+    });
+  }
+}
+
 
 export class AdminInvitesService {
   /**

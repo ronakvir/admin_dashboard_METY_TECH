@@ -15,6 +15,7 @@ import ApiKeyManagement from "./pages/admin/ApiKeyManagement";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "../sass/_global.scss";
+import AITest from "./pages/admin/AITest";
 
 
 OpenAPI.interceptors.request.use((request) => {
@@ -61,6 +62,7 @@ const App = () => {
             <Route path="/dashboard/videolibrary" element={<VideoLibrary />} />
             <Route path="/dashboard/logicbuilder" element={<LogicBuilder />} />
             <Route path="/dashboard/apikeys" element={<ApiKeyManagement />} />
+            <Route path="/dashboard/aitest" element={<AITest />} />
           </Route>
         </Routes>
       </Router>
