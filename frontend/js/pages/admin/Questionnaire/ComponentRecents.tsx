@@ -7,7 +7,8 @@ const ComponentRecents: FC<QuestionnaireStates> = ({
     questionnaires, setQuestionnaires,
     recentQuestionnaires, setRecentQuestionnaires,
     setCurrentQuestionnaire, setPreviewQuestionnaire,
-    setQuestionnaireWorkshop
+    setQuestionnaireWorkshop,
+    currentPreviewIndex, setCurrentPreviewIndex
 }) => {
 
     useEffect(() => {

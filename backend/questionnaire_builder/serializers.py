@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Answer, AnswerCategoryMapping, Category, Question, Questionnaire, QuestionnaireQuestion, Video, APIKey
+from .models import AIEngineConfiguration, Answer, AnswerCategoryMapping, Category, Question, Questionnaire, QuestionnaireQuestion, Video, APIKey
 
 # QUESTIONNAIRE BUILDER PAGE
 # class CreateQuestionAnswerSerializer(serializers.ModelSerializer):
@@ -283,3 +283,39 @@ class CreateAnswerCategoryMappingRequestSerializer(serializers.Serializer):
     answer_id = serializers.IntegerField()
     category_id = serializers.IntegerField()
     inclusive = serializers.BooleanField(default=True)
+
+
+# Public/admin-facing serializer (never exposes the key)
+class AIEngineConfigurationSerializer(serializers.ModelSerializer):
+    api_key = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    class Meta:
+        model = AIEngineConfiguration
+        fields = [
+            "uid",
+            "name",
+            "model_name",
+            "api_key",  # can be written, not read
+            "system_prompt",
+            "order",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["uid", "created_at", "updated_at"]
+    
+
+
+# Backend-only serializer (can access plaintext key)
+class InternalAIEngineConfigSerializer(serializers.ModelSerializer):
+    api_key = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = AIEngineConfiguration
+        fields = [
+            "uid",
+            "name",
+            "model_name",
+            "api_key",  # decrypted version
+            "system_prompt",
+            "order",
+        ]

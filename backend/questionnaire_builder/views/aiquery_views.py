@@ -1,7 +1,12 @@
 import traceback
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from ..serializers import AIEngineConfigurationSerializer, InternalAIEngineConfigSerializer
+
+from ..models import AIEngineConfiguration
 from .logicbuilder_views import GetCategories
 import os
 from dotenv import load_dotenv
@@ -13,11 +18,24 @@ import google.generativeai as genai
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+# utils/encryption.py
+
+from rest_framework.permissions import IsAuthenticated
+
+import base64
+from django.core import signing
+from django.conf import settings
+from litellm import completion
+from .default_aimodel_config import *
 
 
-load_dotenv()
 
-genai.configure(api_key = os.getenv("GEMINI_API_KEY"))
+
+
+
+
+
+
 
 def correct_workout_durations(week):
     """
@@ -106,11 +124,47 @@ def correct_workout_durations(week):
     return week
 
 
+class AIEngineManagement(APIView):
 
+    def get(self, request):
+        matchingRows = AIEngineConfiguration.objects.all()
+        data = AIEngineConfigurationSerializer(matchingRows, many=True).data
+        return Response(data, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        """Create a new AI engine configuration."""
+        serializer = AIEngineConfigurationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print("❌ Serializer errors:", serializer.errors)  # 👈 ADD THIS
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def put(self, request, uid):
+        """Update an existing AI engine configuration."""
+        config = get_object_or_404(AIEngineConfiguration, uid=uid)
 
+        # Convert request.data to a mutable dict
+        data = request.data.copy()
 
+        # If api_key is blank or missing, keep the existing one
+        if not data.get("api_key"):
+            data["api_key"] = config.api_key
 
+        serializer = AIEngineConfigurationSerializer(config, data=data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, uid):
+        """Delete a configuration by UID."""
+        config = get_object_or_404(AIEngineConfiguration, uid=uid)
+        config.delete()
+        return Response({"detail": "Deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 
 class QueryAI(APIView):
@@ -125,104 +179,92 @@ class QueryAI(APIView):
         catResponse = GetCategories()
         catResponse = catResponse.get(request).data
         categories = ""
+
         for category in catResponse:
             categories += category["text"] + ", "
         
-        #print(categories)
+        # Get the models list from the DB
+        matchingRows = AIEngineConfiguration.objects.filter(order__gt=0)
+
+        # This is the internal serializer that allows api_key to be readable
+        models = InternalAIEngineConfigSerializer(matchingRows, many=True).data
+        sorted_models = sorted(models, key=lambda x: x["order"])
+        # Create the failover pipeline for the query
+        pipeline = []
+
+        # Add each model in the D
+        for model in sorted_models:
+            modelToBeAppended = {
+                "config_name": model["name"],
+                "model_name": model["model_name"],
+                "model_key": model["api_key"],
+                "model_prompt": model["system_prompt"],
+            }
+            pipeline.append(modelToBeAppended)
+
+        # Add the default model to the end of the pipeline
+        defaultModel = {
+            "config_name": config_name,
+            "model_name": model_name,
+            "model_key": model_key,
+            "model_prompt": model_prompt,
+        }
+        pipeline.append(defaultModel)
+
 
         userContext = request.data.get("prompt") if isinstance(request.data, dict) else request.data
 
         if not userContext:
             return Response({"error": "Prompt is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # === Gemini Generation Context ===
-        context = """
-        Generate a JSON response in the following format only (no extra text):
-
-            {
-                "week_number": 0,
-                "days": [
-                    {
-                    "day_number": 0,
-                    "duration_seconds": 0,
-                    "title": "",
-                    "segments": [
-                        {
-                        "activity": "",
-                        "duration_seconds": 0,
-                        "sets": 0,
-                        "segments": [
-                            {
-                            "exercise": "",
-                            "duration_seconds": 0,
-                            "notes": ""
-                            }
-                        ]
-                        }
-                    ],
-                    "total_duration_seconds": 0,
-                    "difficulty": "",
-                    "goal": ""
-                    }
-                ]
-            }
-
-        Rules:
-        - Output valid JSON only (no Markdown or text).
-        - Each exercise should be 10 second divisiable (10, 20, 30...)
-        - Each activity must include a warmup, primary, and cooldown.
-        - for every Primary activity, limit the number of exercises to between 2 and 5, but use a normal distributionwith a mean of 3.5 with a std dev of 0.75.
-        - Make warmups and cooldowns be 2-3 exercises
-        - Warmup total duration must be between 60 and 150 seconds (inclusive).
-        - Cooldown total duration must be between 60 and 150 seconds (inclusive).
-        - Warmup and cooldown together may not exceed 300 seconds combined.
-        - Notes describe form or modifications.
-        - Rest periods must be logically placed.
-        - Create workouts for all selected days.
-        - Avoid repeating the same body part two days in a row.
-        - total time per activity = duration_minutes * 60.
-        - warmup and cooldowns should only include low intensity exercises, and no rest
-        - Do not include any exercises that require equipment not included in the context.
-        - Include rest periods in between longer periods of exercise (>60 seconds)
-        - Use only these exercises:
-        """
-
-        updated_prompt = f"{context}\n\n{categories}\n\nUse This User Input:\n\n{userContext}"
-
         def timeout_handler(signum, frame):
-            raise TimeoutError("Gemini request timed out")
+            raise TimeoutError("Request timed out")
 
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(45)  # 45-second safeguard
+        
 
-        try:
-            # === Step 1: Generate plan ===
-            model = genai.GenerativeModel("gemini-2.5-flash-lite")
-            result = model.generate_content(updated_prompt)
-            signal.alarm(0)
-
-            raw = result.text.strip() if result.text else ""
-            cleaned = re.sub(r"```json|```", "", raw).strip()
+        for model in pipeline:
+            # Make the prompt according to the currently defined model
+            updated_prompt = f"{model["model_prompt"]}\n\n{categories}\n\nUse This User Input:\n\n{userContext}"
+            
+            print(f"Attempting {model["config_name"]}")
 
             try:
-                parsed = json.loads(cleaned)
-            except json.JSONDecodeError:
-                return Response({"error": "Invalid JSON from Gemini", "raw": cleaned}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # === Step 1: Generate plan ===
+                signal.alarm(10)  # 10-second safeguard per model
+                llmResponse = completion(
+                    model = model["model_name"],
+                    messages = [{"role": "user", "content": updated_prompt}],
+                    api_key = model["model_key"]
+                )
+                signal.alarm(0)
 
-            # === Step 2: Validate + correct ===
-            corrected = correct_workout_durations(parsed)
+                raw = llmResponse["choices"][0]["message"]["content"].strip() if llmResponse["choices"] else ""
+                cleaned = re.sub(r"```json|```", "", raw).strip()
 
-            # === Step 3: Return final result ===
-            return Response(corrected, status=status.HTTP_200_OK)
+                try:
+                    parsed = json.loads(cleaned)
+                except json.JSONDecodeError:
+                    return Response({"error": "Invalid JSON from Gemini", "raw": cleaned}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        except TimeoutError:
-            signal.alarm(0)
-            traceback.print_exc()
-            return Response({"error": "Gemini request timed out"}, status=status.HTTP_504_GATEWAY_TIMEOUT)
-        except Exception as e:
-            signal.alarm(0)
-            traceback.print_exc()
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # === Step 2: Validate + correct ===
+                corrected = correct_workout_durations(parsed)
+
+                # === Step 3: Return final result ===
+                return Response(corrected, status=status.HTTP_200_OK)
+
+            except TimeoutError:
+                signal.alarm(0)
+                traceback.print_exc()
+                print(f"{model['config_name']} Timed Out")
+                continue
+
+            except Exception as e:
+                signal.alarm(0)
+                traceback.print_exc()
+                print(f"{model['config_name']} Failed: {str(e)}")
+        
+        return Response({"error": "AI prompting failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 

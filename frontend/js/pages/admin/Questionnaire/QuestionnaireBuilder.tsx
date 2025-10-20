@@ -19,6 +19,7 @@ export interface QuestionnaireStates {
   questionIsSelected: boolean; setQuestionIsSelected: Dispatch<SetStateAction<boolean>>;
   previewQuestionnaire: boolean; setPreviewQuestionnaire: Dispatch<SetStateAction<boolean>>;
   recentQuestionnaires: QuestionnaireFull[]; setRecentQuestionnaires: Dispatch<SetStateAction<QuestionnaireFull[]>>;
+  currentPreviewIndex: number; setCurrentPreviewIndex:Dispatch<SetStateAction<number>>;
 }
 
 const QuestionnaireBuilder: React.FC = () => {
@@ -81,6 +82,7 @@ const QuestionnaireBuilder: React.FC = () => {
             questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
             previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
             recentQuestionnaires={recentQuestionnaires} setRecentQuestionnaires={setRecentQuestionnaires}
+            currentPreviewIndex={currentPreviewIndex} setCurrentPreviewIndex={setCurrentPreviewIndex}
           />
           <hr />
           <ComponentList
@@ -95,6 +97,7 @@ const QuestionnaireBuilder: React.FC = () => {
             questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
             previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
             recentQuestionnaires={recentQuestionnaires} setRecentQuestionnaires={setRecentQuestionnaires}
+            currentPreviewIndex={currentPreviewIndex} setCurrentPreviewIndex={setCurrentPreviewIndex}
           />
         </>
       );
@@ -112,6 +115,7 @@ const QuestionnaireBuilder: React.FC = () => {
           questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
           previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
           recentQuestionnaires={recentQuestionnaires} setRecentQuestionnaires={setRecentQuestionnaires}
+          currentPreviewIndex={currentPreviewIndex} setCurrentPreviewIndex={setCurrentPreviewIndex}
         />
       );
     }
@@ -140,6 +144,7 @@ const QuestionnaireBuilder: React.FC = () => {
           questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
           previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
           recentQuestionnaires={recentQuestionnaires} setRecentQuestionnaires={setRecentQuestionnaires}
+          currentPreviewIndex={currentPreviewIndex} setCurrentPreviewIndex={setCurrentPreviewIndex}
         />
         <hr />
       </>
@@ -178,56 +183,54 @@ const QuestionnaireBuilder: React.FC = () => {
             questionType={questionType} setQuestionType={setQuestionType}
             questionForms={questionForms} setQuestionForms={setQuestionForms}
             questionnaireWorkshop={questionnaireWorkshop} setQuestionnaireWorkshop={setQuestionnaireWorkshop}
-            currentQuestionnaire={{
-              ...currentQuestionnaire,
-              questions: [currentQuestionnaire.questions[currentPreviewIndex]]
-            }}
+            currentQuestionnaire={currentQuestionnaire}
             setCurrentQuestionnaire={setCurrentQuestionnaire}
             questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
             previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
             recentQuestionnaires={recentQuestionnaires} setRecentQuestionnaires={setRecentQuestionnaires}
+            currentPreviewIndex={currentPreviewIndex} setCurrentPreviewIndex={setCurrentPreviewIndex}
           />
         )}
 
-{/* Navigation buttons */}
-<div style={{ marginTop: "1rem", display: "flex", gap: "12px", justifyContent: "flex-start" }}>
-  <button
-    onClick={() => setCurrentPreviewIndex(i => Math.max(i - 1, 0))}
-    disabled={currentPreviewIndex === 0}
-    style={{
-      backgroundColor: "white",
-      color: "black",
-      border: "2px solid #007bff",
-      borderRadius: "4px",
-      padding: "6px 16px",
-      cursor: currentPreviewIndex === 0 ? "not-allowed" : "pointer",
-      fontSize: "14px",
-      transition: "all 0.2s ease"
-    }}
-    onMouseEnter={e => { if(currentPreviewIndex > 0) (e.target as HTMLButtonElement).style.opacity = "0.85"; }}
-    onMouseLeave={e => { (e.target as HTMLButtonElement).style.opacity = "1"; }}
-  >
-    Previous
-  </button>
-  <button
-    onClick={() => setCurrentPreviewIndex(i => Math.min(i + 1, currentQuestionnaire.questions.length - 1))}
-    disabled={currentPreviewIndex === currentQuestionnaire.questions.length - 1}
-    style={{
-      backgroundColor: "white",
-      color: "black",
-      border: "2px solid #007bff",
-      borderRadius: "4px",
-      padding: "6px 16px",
-      cursor: currentPreviewIndex === currentQuestionnaire.questions.length - 1 ? "not-allowed" : "pointer",
-      fontSize: "14px",
-      transition: "all 0.2s ease"
-    }}
-    onMouseEnter={e => { if(currentPreviewIndex < currentQuestionnaire.questions.length - 1) (e.target as HTMLButtonElement).style.opacity = "0.85"; }}
-    onMouseLeave={e => { (e.target as HTMLButtonElement).style.opacity = "1"; }}
-  >
-    Next
-  </button>
-</div>
+        {/* Navigation buttons */}
+        <div style={{ marginTop: "1rem", display: "flex", gap: "12px", justifyContent: "flex-start" }}>
+          <button
+            onClick={() => setCurrentPreviewIndex(i => Math.max(i - 1, 0))}
+            disabled={currentPreviewIndex === 0}
+            style={{
+              backgroundColor: "white",
+              color: "black",
+              border: "2px solid #007bff",
+              borderRadius: "4px",
+              padding: "6px 16px",
+              cursor: currentPreviewIndex === 0 ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={e => { if(currentPreviewIndex > 0) (e.target as HTMLButtonElement).style.opacity = "0.85"; }}
+            onMouseLeave={e => { (e.target as HTMLButtonElement).style.opacity = "1"; }}
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => setCurrentPreviewIndex(i => Math.min(i + 1, currentQuestionnaire.questions.length - 1))}
+            disabled={currentPreviewIndex === currentQuestionnaire.questions.length - 1}
+            style={{
+              backgroundColor: "white",
+              color: "black",
+              border: "2px solid #007bff",
+              borderRadius: "4px",
+              padding: "6px 16px",
+              cursor: currentPreviewIndex === currentQuestionnaire.questions.length - 1 ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={e => { if(currentPreviewIndex < currentQuestionnaire.questions.length - 1) (e.target as HTMLButtonElement).style.opacity = "0.85"; }}
+            onMouseLeave={e => { (e.target as HTMLButtonElement).style.opacity = "1"; }}
+          >
+            Next
+          </button>
+        </div>
 
 
         <hr />

@@ -3,6 +3,7 @@
 import type { CancelablePromise } from "./core/CancelablePromise";
 import { OpenAPI } from "./core/OpenAPI";
 import { request as __request } from "./core/request";
+
 import type {
   AdminInvitesListData,
   AdminInvitesListResponse,
@@ -101,18 +102,36 @@ export class AIQuery {
     });
   }
 
-  public static FixQueryGemini(
-    data: String,
-  ): CancelablePromise<{
-    [x: string]: any;answer: string
-}> {
+  public static getAIConfigurations(): CancelablePromise<{answer: string}> {
     return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/fixaiquery/",
-      body: data,
-      mediaType: "application/json",
+      method: "GET",
+      url: "/api/aimanagement/"
     });
   }
+
+  public static async createAIConfiguration(data: any) {
+    return await __request(OpenAPI, {
+      method: "POST",
+      url: "/api/aimanagement/",
+      body: data,
+    });
+  }
+
+  public static async updateAIConfiguration(uid: string, data: any) {
+    return await __request(OpenAPI, {
+      method: "PUT",
+      url: `/api/aimanagement/${uid}/`,
+      body: data,
+    });
+  }
+
+  public static async deleteAIConfiguration(uid: string) {
+    return await __request(OpenAPI, {
+      method: "DELETE",
+      url: `/api/aimanagement/${uid}/`,
+    });
+  }
+
 }
 
 
