@@ -166,9 +166,20 @@ class getQuestions(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
+from itertools import chain
+from django.db.models import Q, Count
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from drf_spectacular.utils import extend_schema
+
+from ..models import Video, AnswerCategoryMapping
+from ..serializers import GetVideosForPreviewSerializer, VideoResponseSerializer
+
+
 class getVideosForPreview(APIView):
     serializer_class = GetVideosForPreviewSerializer
-    
+
     @extend_schema(
         request=GetVideosForPreviewSerializer,
         responses={200: VideoResponseSerializer(many=True)},
@@ -177,33 +188,61 @@ class getVideosForPreview(APIView):
     )
     def post(self, request):
 
-        answerCategoryRows = AnswerCategoryMapping.objects.filter(
-            questionnaire_id = request.data.get("questionnaire_id"), 
-            answer_id__in = request.data.get("answer_ids")
+        questionnaire_id = request.data.get("questionnaire_id")
+        raw_answer_ids = request.data.get("answer_ids", [])
+
+        if not raw_answer_ids:
+            return Response({"error": "No answer IDs provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Flatten nested lists safely (handles [[1,2],[3,4]] and [1,2,3])
+        answer_ids = list(
+            set(
+                chain.from_iterable(
+                    a if isinstance(a, (list, tuple)) else [a]
+                    for a in raw_answer_ids
+                )
+            )
         )
 
-        includedCategoryIDs = list(answerCategoryRows.filter(inclusive=True).values_list("category_id", flat=True))
-        
+        if not answer_ids:
+            return Response({"error": "No valid answer IDs found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Query all matching AnswerCategoryMappings
+        answerCategoryRows = AnswerCategoryMapping.objects.filter(
+            questionnaire_id=questionnaire_id,
+            answer_id__in=answer_ids
+        )
+
+        includedCategoryIDs = list(
+            answerCategoryRows.filter(inclusive=True).values_list("category_id", flat=True)
+        )
+
+        # Get ranked videos
         rankedVideos = (
             Video.objects
-            .filter(videocategory__category_id__in = includedCategoryIDs)
-            .annotate(count = Count(
-                "videocategory__category_id",
-                filter=Q(videocategory__category_id__in = includedCategoryIDs),
-                distinct=True
-            ))
-            .order_by('-count')
+            .filter(videocategory__category_id__in=includedCategoryIDs)
+            .annotate(
+                count=Count(
+                    "videocategory__category_id",
+                    filter=Q(videocategory__category_id__in=includedCategoryIDs),
+                    distinct=True,
+                )
+            )
+            .order_by("-count")
         )
-        responseData = []
-        print(rankedVideos)
-        for video in rankedVideos:
-            responseData.append({
-                "id": video.id,
-                "title": video.title,
-                "duration": video.duration,
-                "description": video.description,
-                "url": video.url,
-                "count": video.count
-            }) 
+
+        # Build clean response
+        responseData = [
+            {
+                "id": v.id,
+                "title": v.title,
+                "duration": v.duration,
+                "description": v.description,
+                "url": v.url,
+                "count": getattr(v, "count", 0),
+            }
+            for v in rankedVideos
+        ]
 
         return Response(responseData, status=status.HTTP_200_OK)
+

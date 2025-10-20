@@ -1,6 +1,10 @@
+import os
 from django.db import models
 import uuid
 from django.utils import timezone
+
+from encryption import decrypt_value, encrypt_value
+
 
 class Video(models.Model):
     title = models.CharField(max_length=255, null=False)
@@ -63,3 +67,34 @@ class APIKey(models.Model):
         verbose_name_plural = "API Keys"
 
 
+class AIEngineConfiguration(models.Model):
+    """
+    Stores configuration and credentials for a specific AI model integration.
+    Allows admins to manage which model is active and how it behaves.
+    """
+
+    name = models.CharField(max_length=100)
+    model_name = models.CharField(max_length=100)
+    _api_key = models.TextField(db_column="api_key")
+    system_prompt = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    uid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    # property wrappers for transparent encryption/decryption
+    @property
+    def api_key(self):
+        return decrypt_value(self._api_key)
+
+    @api_key.setter
+    def api_key(self, value):
+        self._api_key = encrypt_value(value)
+
+
+    def __str__(self):
+        return f"{self.name} ({self.model_name})"
+
+    class Meta:
+        verbose_name = "AI Engine Configuration"
+        verbose_name_plural = "AI Engine Configurations"

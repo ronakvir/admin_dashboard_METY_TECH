@@ -6,7 +6,8 @@ const ComponentWorkshop: FC<QuestionnaireStates> = ({
     questionnaires, setQuestionnaires,
     questionnaireWorkshop, setQuestionnaireWorkshop,
     currentQuestionnaire, setCurrentQuestionnaire,
-    setQuestionForms, setQuestionIsSelected
+    setQuestionForms, setQuestionIsSelected,
+    currentPreviewIndex, setCurrentPreviewIndex
 }) => {
 
     const removeFromQuestionnaire = (index: number) => {

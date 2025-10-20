@@ -1,0 +1,373 @@
+/* One-at-a-time questionnaire layout */
+.ai-test-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 1rem;
+  gap: 1.5rem;
+}
+
+.header-row {
+  width: 100%;
+  max-width: 600px;
+  text-align: left;
+}
+
+.question-grid {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: center;
+}
+
+.question-card {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: 0.2s all ease;
+}
+
+.question-card h5 {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.95rem;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: #007bff;
+}
+
+input[type="text"] {
+  padding: 8px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+
+/* Navigation buttons */
+.nav-btn {
+  background-color: white;
+  color: #007bff;
+  border: 2px solid #007bff;
+  border-radius: 5px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background-color: #007bff;
+  color: white;
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Submit button centered */
+.submit-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 24px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: 0.2s all ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+/* Workout view section */
+.workout-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.return-header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-secondary:hover {
+  opacity: 0.85;
+}
+
+/* ───────────── WORKOUT DISPLAY FIX ───────────── */
+
+.workout-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  gap: 24px;
+  background-color: #f9fafb;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+}
+
+.week-title {
+  font-size: 1.6rem;
+  text-align: center;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+/* Day Card */
+.day-card {
+  width: 100%;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.day-card:hover {
+  transform: translateY(-2px);
+}
+
+.day-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #007bff;
+  margin-bottom: 0.25rem;
+}
+
+.day-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+/* Segment (e.g. "Warm-up", "Main workout") */
+.segment-card {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.segment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.segment-title {
+  font-size: 1.1rem;
+  color: #222;
+}
+
+.segment-info {
+  display: flex;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Exercises inside a segment */
+.segment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 12px;
+  border-left: 2px solid #007bff;
+  padding-left: 10px;
+}
+
+.exercise-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  background: #f8f9fa;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+
+.exercise-row strong {
+  color: #333;
+}
+
+.exercise-row span {
+  color: #555;
+}
+
+.notes {
+  font-size: 0.9rem;
+  color: #666;
+  margin-left: 5px;
+}
+
+/* Return button */
+.return-header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-secondary:hover {
+  opacity: 0.85;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .day-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .segment-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+
+/* Workout view */
+.ai-test-container .workout-container .day-card {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #fdfdfd;
+  border: 1px solid #e0e0e0;
+}
+
+.ai-test-container .workout-container .day-title {
+  margin-bottom: 0.3rem;
+  color: #1f2937;
+}
+
+.ai-test-container .day-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.ai-test-container .segment-card {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f7f9fc;
+  border-left: 4px solid #2563eb;
+  border-radius: 8px;
+}
+
+.ai-test-container .segment-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* --- Fix uneven duration alignment for exercises --- */
+.ai-test-container .exercise-row {
+  display: grid;
+  grid-template-columns: 1fr 60px; /* left text flexible, right column fixed */
+  align-items: center;
+  gap: 10px;
+  background: #f8f9fa;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.ai-test-container .exercise-row strong {
+  color: #111827;
+  word-break: break-word;
+}
+
+.ai-test-container .exercise-row span {
+  text-align: right;
+  font-weight: 500;
+  color: #374151;
+  min-width: 60px;
+}
+
+
+.ai-test-container .exercise-row p {
+  margin: 0.2rem 0 0 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+/* Stack radio and checkbox options vertically */
+.ai-test-container .question-card label {
+  display: block;
+  margin: 0.3rem 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+.ai-test-container .question-card label input[type="radio"],
+.ai-test-container .question-card label input[type="checkbox"] {
+  margin-right: 0.4rem;
+  transform: scale(1.1);
+  accent-color: #2563eb; /* optional: modern browsers only */
+}

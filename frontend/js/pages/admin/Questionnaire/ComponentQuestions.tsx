@@ -25,6 +25,7 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
   setQuestionnaireList,
   previewQuestionnaire,
   setPreviewQuestionnaire,
+    currentPreviewIndex, setCurrentPreviewIndex
 }) => {
 
   // Updates answers in form

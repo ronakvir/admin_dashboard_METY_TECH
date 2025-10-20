@@ -14,7 +14,8 @@ const ComponentList: FC<QuestionnaireStates> = ({
     questionnaireWorkshop,      setQuestionnaireWorkshop,
     currentQuestionnaire,       setCurrentQuestionnaire, 
     questionIsSelected,         setQuestionIsSelected,
-    previewQuestionnaire,       setPreviewQuestionnaire}) => {
+    previewQuestionnaire,       setPreviewQuestionnaire,
+    currentPreviewIndex, setCurrentPreviewIndex}) => {
 
     const [filter, setFilter] = useState(new RegExp(`.*`));
     

@@ -51,14 +51,6 @@ module.exports = (env, argv) => {
             isDev && "style-loader",
             !isDev && MiniCssExtractPlugin.loader,
             "css-loader",
-            {
-              loader: "postcss-loader",
-              options: {
-                postcssOptions: {
-                  plugins: [["postcss-preset-env"]],
-                },
-              },
-            },
           ].filter(Boolean),
         },
         {
