@@ -58,34 +58,50 @@ const ComponentQuestions: FC<QuestionnaireStates> = ({
 
   // Adds a new question
   const addQuestion = () => {
-    if (questionForms.text.trim() === "") {
-      alert("You must enter a question first!");
-      return;
-    }
-    QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
-      .then((response) => {
-        setQuestions([...questions, response]);
-        clearForms();
-      })
-      .catch((error) => console.log(error));
-  };
+  if (questionForms.text.trim() === "") {
+    alert("You must enter a question first!");
+    return;
+  }
+
+  const payload = { ...questionForms };
+
+  // Remove answers field for types that don't need it
+  if (payload.type === "slider" || payload.type === "text") {
+    delete payload.answers;
+  }
+
+  QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: payload })
+    .then((response) => {
+      setQuestions([...questions, { ...response, answers: response.answers || [] }]);
+      clearForms();
+    })
+    .catch((error) => console.log(error));
+};
+
 
   // Modify existing question
   const modifyQuestion = () => {
-    if (questionForms.text.trim() === "") {
-      alert("You must enter a question first!");
-      return;
-    }
-    QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: questionForms })
-      .then((response) => {
-        const updatedQuestions = [...questions];
-        const index = updatedQuestions.findIndex((q) => q.id === response.id);
-        if (index !== -1) updatedQuestions[index] = response;
-        setQuestions(updatedQuestions);
-        clearForms();
-      })
-      .catch((error) => console.log(error));
-  };
+  if (questionForms.text.trim() === "") {
+    alert("You must enter a question first!");
+    return;
+  }
+
+  const payload = { ...questionForms };
+  if (payload.type === "slider" || payload.type === "text") {
+    delete payload.answers;
+  }
+
+  QuestionnairebuilderService.questionnairebuilderAddquestionCreate({ requestBody: payload })
+    .then((response) => {
+      const updatedQuestions = [...questions];
+      const index = updatedQuestions.findIndex((q) => q.id === response.id);
+      if (index !== -1) updatedQuestions[index] = response;
+      setQuestions(updatedQuestions);
+      clearForms();
+    })
+    .catch((error) => console.log(error));
+};
+
 
   // Delete a question
   const deleteQuestion = () => {
