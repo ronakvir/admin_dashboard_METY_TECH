@@ -128,11 +128,13 @@ class CreateQuestion(APIView):
             type=data["type"]
         )
 
-        for answer_data in data["answers"]:
-            Answer.objects.create(
-                question=question,
-                text=answer_data["text"]
-            )
+        if data["type"] in ["checkbox", "multichoice"]:
+            for answer_data in data.get("answers", []):
+                Answer.objects.create(
+                    question=question,
+                    text=answer_data.get("text", "")
+                )
+
         return question
     
     def modifyQuestion(self, newData, oldQuestion):
@@ -141,13 +143,14 @@ class CreateQuestion(APIView):
         oldQuestion.type=newData["type"]
         oldQuestion.save()
 
-        oldQuestion.answer_set.all().delete()
-
-        for answerData in newData["answers"]:
-            Answer.objects.create(
-                question=oldQuestion,
-                text=answerData["text"]
-            )
+        # Delete old answers for checkbox/multichoice
+        if oldQuestion.type in ["checkbox", "multichoice"]:
+            oldQuestion.answer_set.all().delete()
+            for answerData in newData.get("answers", []):
+                Answer.objects.create(
+                    question=oldQuestion,
+                    text=answerData.get("text", "")
+                )
 
         return oldQuestion
 

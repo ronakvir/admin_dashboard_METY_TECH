@@ -257,15 +257,22 @@ class VideoSearchSerializer(serializers.Serializer):
             raise serializers.ValidationError("At least one search parameter (title, duration, or category) must be provided.")
         return data
 
-# Create Question Request Serializer
 class CreateQuestionRequestSerializer(serializers.Serializer):
     id = serializers.IntegerField(default=0)
     text = serializers.CharField()
     type = serializers.CharField()
     answers = serializers.ListField(
         child=serializers.DictField(child=serializers.CharField()),
-        allow_empty=False
+        required=False,
+        allow_empty=True
     )
+
+    def validate(self, data):
+        qtype = data.get('type')
+        answers = data.get('answers', [])
+        if qtype in ['multichoice', 'checkbox'] and len(answers) < 2:
+            raise serializers.ValidationError("Multichoice/checkbox questions must have at least 2 answers.")
+        return data
 
 # Create Questionnaire Request Serializer
 class CreateQuestionnaireRequestSerializer(serializers.Serializer):

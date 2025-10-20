@@ -173,24 +173,46 @@ const QuestionnaireBuilder: React.FC = () => {
           />
         </div>
 
-        {/* Show one question at a time */}
-        {currentQuestionnaire.questions.length > 0 && (
-          <ComponentPreview
-            questionnaires={questionnaires} setQuestionnaires={setQuestionnaires}
-            questions={questions} setQuestions={setQuestions}
-            questionnaireVisibility={questionnaireVisibility} setQuestionnaireVisibility={setQuestionnaireVisibility}
-            questionnaireList={questionnaireList} setQuestionnaireList={setQuestionnaireList}
-            questionType={questionType} setQuestionType={setQuestionType}
-            questionForms={questionForms} setQuestionForms={setQuestionForms}
-            questionnaireWorkshop={questionnaireWorkshop} setQuestionnaireWorkshop={setQuestionnaireWorkshop}
-            currentQuestionnaire={currentQuestionnaire}
-            setCurrentQuestionnaire={setCurrentQuestionnaire}
-            questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
-            previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
-            recentQuestionnaires={recentQuestionnaires} setRecentQuestionnaires={setRecentQuestionnaires}
-            currentPreviewIndex={currentPreviewIndex} setCurrentPreviewIndex={setCurrentPreviewIndex}
-          />
-        )}
+        {/* Show questions or Return button if empty */}
+{currentQuestionnaire.questions.length > 0 ? (
+  <ComponentPreview
+    questionnaires={questionnaires} setQuestionnaires={setQuestionnaires}
+    questions={questions} setQuestions={setQuestions}
+    questionnaireVisibility={questionnaireVisibility} setQuestionnaireVisibility={setQuestionnaireVisibility}
+    questionnaireList={questionnaireList} setQuestionnaireList={setQuestionnaireList}
+    questionType={questionType} setQuestionType={setQuestionType}
+    questionForms={questionForms} setQuestionForms={setQuestionForms}
+    questionnaireWorkshop={questionnaireWorkshop} setQuestionnaireWorkshop={setQuestionnaireWorkshop}
+    currentQuestionnaire={currentQuestionnaire}
+    setCurrentQuestionnaire={setCurrentQuestionnaire}
+    questionIsSelected={questionIsSelected} setQuestionIsSelected={setQuestionIsSelected}
+    previewQuestionnaire={previewQuestionnaire} setPreviewQuestionnaire={setPreviewQuestionnaire}
+    recentQuestionnaires={recentQuestionnaires} setRecentQuestionnaires={setRecentQuestionnaires}
+    currentPreviewIndex={currentPreviewIndex} setCurrentPreviewIndex={setCurrentPreviewIndex}
+  />
+) : (
+  <div style={{ textAlign: "center", marginTop: "2rem" }}>
+    <p>No questions in this questionnaire.</p>
+    <button
+      onClick={() => setPreviewQuestionnaire(false)}
+      style={{
+        backgroundColor: "#6c757d",
+        color: "white",
+        border: "none",
+        borderRadius: "4px",
+        padding: "8px 16px",
+        cursor: "pointer",
+        fontSize: "14px",
+        transition: "opacity 0.2s ease"
+      }}
+      onMouseEnter={e => ((e.target as HTMLButtonElement).style.opacity = "0.85")}
+      onMouseLeave={e => ((e.target as HTMLButtonElement).style.opacity = "1")}
+    >
+      Return
+    </button>
+  </div>
+)}
+
 
         {/* Navigation buttons */}
         <div style={{ marginTop: "1rem", display: "flex", gap: "12px", justifyContent: "flex-start" }}>
