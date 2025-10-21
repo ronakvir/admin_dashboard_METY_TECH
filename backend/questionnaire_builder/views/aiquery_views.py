@@ -176,12 +176,12 @@ class QueryAI(APIView):
     """
 
     def post(self, request):
-        catResponse = GetCategories()
-        catResponse = catResponse.get(request).data
-        categories = ""
-
-        for category in catResponse:
-            categories += category["text"] + ", "
+        from ..models import Video
+        videos = Video.objects.all()
+        
+        exercise_data = ""
+        for video in videos:
+            exercise_data += f"{video.title}|{video.duration}|{video.url or 'no-url'}\n"
         
         # Get the models list from the DB
         matchingRows = AIEngineConfiguration.objects.filter(order__gt=0)
@@ -225,13 +225,14 @@ class QueryAI(APIView):
 
         for model in pipeline:
             # Make the prompt according to the currently defined model
-            updated_prompt = f"{model["model_prompt"]}\n\n{categories}\n\nUse This User Input:\n\n{userContext}"
+            updated_prompt = f"{model["model_prompt"]}\n\nAvailable Exercises with URLs and Durations:\n{exercise_data}\n\nUse This User Input:\n\n{userContext}"
+
             
             print(f"Attempting {model["config_name"]}")
 
             try:
                 # === Step 1: Generate plan ===
-                signal.alarm(10)  # 10-second safeguard per model
+                signal.alarm(30)  # 30-second safeguard per model
                 llmResponse = completion(
                     model = model["model_name"],
                     messages = [{"role": "user", "content": updated_prompt}],
@@ -250,7 +251,13 @@ class QueryAI(APIView):
                 # === Step 2: Validate + correct ===
                 corrected = correct_workout_durations(parsed)
 
-                # === Step 3: Return final result ===
+                # === Step 3: Add AI engine information to response ===
+                corrected["ai_engine_used"] = {
+                    "config_name": model["config_name"],
+                    "model_name": model["model_name"]
+                }
+
+                # === Step 4: Return final result ===
                 return Response(corrected, status=status.HTTP_200_OK)
 
             except TimeoutError:

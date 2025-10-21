@@ -31,7 +31,8 @@ Generate a JSON response in the following format only (no extra text):
                     {
                     "exercise": "",
                     "duration_seconds": 0,
-                    "notes": ""
+                    "notes": "",
+                    "url": ""
                     }
                 ]
                 }
@@ -45,7 +46,7 @@ Generate a JSON response in the following format only (no extra text):
 
 Rules:
 - Output valid JSON only (no Markdown or text).
-- Each exercise should be 10 second divisiable (10, 20, 30...)
+- Each exercise should be based on the exercise data duration passed
 - Each activity must include a warmup, primary, and cooldown.
 - for every Primary activity, limit the number of exercises to between 2 and 5, but use a normal distributionwith a mean of 3.5 with a std dev of 0.75.
 - Make warmups and cooldowns be 2-3 exercises
@@ -63,5 +64,10 @@ Rules:
 - Include rest periods in between longer periods of exercise (>60 seconds)
 - do not include more than 5 unique exercises in a single activity (not including rest segments)
 - Must include at least 1 rest segment per activity
-- Use only these exercises:
+- DO NOT create, invent, or use any exercise names that are not in that exact list.
+- The format is: ExerciseName|Duration|URL (one per line)
+- For each exercise in your response, you MUST use the exact URL provided (or "no-url" if none).
+- Match the exercise name exactly to the title in the exercise list and use that specific URL.
+- For each exercise, you MUST use the exact duration provided (convert "0:10" to 10 seconds).
+- If an exercise shows "no-url", use an empty string "" for the url field.
 """
