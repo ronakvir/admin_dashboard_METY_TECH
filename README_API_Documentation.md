@@ -106,10 +106,85 @@
 
 ## 🧠 AI Management
 
-### Get AI Configurations
-**GET** `/api/aimanagement/`
+
+## 🧠 AI Query
+
+### GET AI Workout Recommendation
+
+**POST** `/api/aiquery/`
+Submits a list of questionnaire questions and answers, and returns a structured workout plan JSON.
+
+**Request**
+
+```json
+[
+  {
+    "question": "What is your primary fitness goal?",
+    "answers": ["Build muscle"]
+  },
+  {
+    "question": "How many days per week can you train?",
+    "answers": ["3"]
+  }
+]
+```
 
 **Response**
+
+```json
+{
+  "week_number": 1,
+  "days": [
+    {
+      "day_number": 1,
+      "duration_seconds": 3600,
+      "title": "Full Body Strength",
+      "segments": [
+        {
+          "activity": "Warmup",
+          "duration_seconds": 600,
+          "sets": 1,
+          "segments": [
+            {
+              "exercise": "Jump Rope",
+              "duration_seconds": 300,
+              "notes": "Light intensity to increase heart rate.",
+              "url": "https://example.com/jumprope"
+            }
+          ]
+        },
+        {
+          "activity": "Main Workout",
+          "duration_seconds": 2400,
+          "sets": 3,
+          "segments": [
+            {
+              "exercise": "Squats",
+              "duration_seconds": 60,
+              "notes": "3 sets of 10 reps with moderate weight.",
+              "url": "https://example.com/squats"
+            }
+          ]
+        }
+      ],
+      "total_duration_seconds": 3600,
+      "difficulty": "Intermediate",
+      "goal": "Build muscle"
+    }
+  ]
+}
+```
+
+
+---
+
+### Get AI Configurations
+
+**GET** `/api/aimanagement/`
+Retrieves a list of all configured AI model integrations.
+
+**Response**
+
 ```json
 [
   {
@@ -121,6 +196,76 @@
     "updated_at": "2025-09-21T12:34:56Z"
   }
 ]
+```
+
+---
+
+### Create AI Configuration
+
+**POST** `/api/aimanagement/`
+Creates a new AI model configuration entry.
+
+**Request**
+
+```json
+{
+  "name": "Gemini",
+  "model_name": "gemini-pro",
+  "api_key": "your-api-key",
+  "system_prompt": "You are an assistant that generates exercise advice.",
+  "order": 1
+}
+```
+
+**Response**
+
+```json
+{
+  "uid": "2b1d0f44-8a88-49c2-b617-5b1e9115b92a",
+  "name": "Gemini",
+  "model_name": "gemini-pro",
+  "order": 1
+}
+```
+
+---
+
+### Update AI Configuration
+
+**PUT** `/api/aimanagement/{uid}/`
+Updates an existing AI model configuration.
+
+**Request**
+
+```json
+{
+  "model_name": "gemini-1.5-pro",
+  "order": 2
+}
+```
+
+**Response**
+
+```json
+{
+  "uid": "2b1d0f44-8a88-49c2-b617-5b1e9115b92a",
+  "name": "Gemini",
+  "model_name": "gemini-1.5-pro",
+  "order": 2
+}
+```
+
+---
+
+### Delete AI Configuration
+
+**DELETE** `/api/aimanagement/{uid}/`
+Deletes an existing AI configuration.
+
+**Response**
+
+```json
+{}
 ```
 
 ---
