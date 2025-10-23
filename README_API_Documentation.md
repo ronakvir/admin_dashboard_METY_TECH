@@ -2,51 +2,68 @@
 
 # 📖 Table of Contents – API Documentation
 
-- [🔑 API Keys](#-api-keys)  
-  - [List API Keys](#list-api-keys)  
-  - [Get API Key by ID](#get-api-key-by-id)  
-  - [Create API Key](#create-api-key)  
+* [🔑 API Keys](#-api-keys)
 
-- [🧠 AI Management](#-ai-management)  
-  - [Get AI Configurations](#get-ai-configurations)  
+  * [List API Keys](#list-api-keys)
+  * [Get API Key by ID](#get-api-key-by-id)
+  * [Create API Key](#create-api-key)
 
-- [📋 Questionnaires](#-questionnaires)  
-  - [List Questionnaires](#list-questionnaires)  
-  - [Get Questionnaire by ID](#get-questionnaire-by-id)  
-  - [Create Questionnaire](#create-questionnaire)  
-  - [Update Questionnaire](#update-questionnaire)  
+* [🧠 AI Query](#-ai-query)
 
-- [❓ Questions & Answers](#-questions--answers)  
-  - [List Questions](#list-questions)  
-  - [Get Questions for a Questionnaire](#get-questions-for-a-questionnaire)  
-  - [Create Question](#create-question)  
-  - [Create Answer](#create-answer)  
+  * [GET AI Workout Recommendation](#get-ai-workout-recommendation)
 
-- [🧩 Logic Mappings](#-logic-mappings)  
-  - [Get Categories](#get-categories)  
-  - [Get Questionnaires for Mapping](#get-questionnaires-for-mapping)  
-  - [Add Mapping](#add-mapping)  
+* [🧠 AI Management](#-ai-management)
 
-- [🎥 Videos](#-videos)  
-  - [Create Video](#create-video)  
-  - [Search Videos](#search-videos)  
-  - [Delete Video](#delete-video)  
+  * [Get AI Configurations](#get-ai-configurations)
+  * [Create AI Configuration](#create-ai-configuration)
+  * [Update AI Configuration](#update-ai-configuration)
+  * [Delete AI Configuration](#delete-ai-configuration)
 
-- [👤 Users](#-users)  
-  - [List Users](#list-users)  
-  - [Get User by ID](#get-user-by-id)  
-  - [Login](#login)  
-  - [Register](#register)  
+* [📋 Questionnaires](#-questionnaires)
 
-- [👩‍💼 Admin Management](#-admin-management)  
-  - [List Admins](#list-admins)  
+  * [Get All Questionnaires](#get-all-questionnaires)
+  * [Get Questionnaire by ID](#get-questionnaire-by-id)
+  * [Create Questionnaire](#create-questionnaire)
+  * [Update Questionnaire](#update-questionnaire)
 
-- [🌐 Public API](#-public-api)  
-  - [Get Public Questionnaire](#get-public-questionnaire)  
-  - [Preview Videos](#preview-videos)  
+* [❓ Questions & Answers](#-questions--answers)
 
-- [🛠 REST Check](#-rest-check)  
-  - [Check REST API](#check-rest-api)  
+  * [Get All Questions](#get-all-questions)
+  * [Get Questions for a Questionnaire](#get-questions-for-a-questionnaire)
+  * [Create Question](#create-question)
+  * [Create Answer](#create-answer)
+
+* [🧩 Logic Mappings](#-logic-mappings)
+
+  * [Get Categories](#get-categories)
+  * [Get Questionnaires for Mapping](#get-questionnaires-for-mapping)
+  * [Add Mapping](#add-mapping)
+
+* [🎥 Videos](#-videos)
+
+  * [Create Video](#create-video)
+  * [Search Videos](#search-videos)
+  * [Delete Video](#delete-video)
+
+* [👤 Users](#-users)
+
+  * [List Users](#list-users)
+  * [Get User by ID](#get-user-by-id)
+  * [Login](#login)
+  * [Register](#register)
+
+* [👩‍💼 Admin Management](#-admin-management)
+
+  * [List Admins](#list-admins)
+
+* [🌐 Public API](#-public-api)
+
+  * [Get Public Questionnaire](#get-public-questionnaire)
+  * [Preview Videos](#preview-videos)
+
+* [🛠 REST Check](#-rest-check)
+
+  * [Check REST API](#check-rest-api)
 
 ---
 
@@ -103,9 +120,6 @@
 ```
 
 ---
-
-## 🧠 AI Management
-
 
 ## 🧠 AI Query
 
@@ -174,9 +188,8 @@ Submits a list of questionnaire questions and answers, and returns a structured 
   ]
 }
 ```
-
-
 ---
+## 🧠 AI Management
 
 ### Get AI Configurations
 
