@@ -15,7 +15,7 @@ const AITest: React.FC = () => {
   /* ───────────── Fetch questionnaire ───────────── */
   useEffect(() => {
     QuestionnairebuilderService.questionnairebuilderGetquestionnairesRetrieve()
-      .then((res) => setQuestionnaires(res))
+      .then((res:any[]) => setQuestionnaires(res))
       .catch(console.error);
   }, []);
 
