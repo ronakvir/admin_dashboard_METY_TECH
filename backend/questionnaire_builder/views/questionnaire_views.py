@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+
 class CreateQuestionnaire(APIView):
     serializer_class = CreateQuestionnaireRequestSerializer
     
@@ -178,7 +179,7 @@ from drf_spectacular.utils import extend_schema
 
 from ..models import Video, AnswerCategoryMapping
 from ..serializers import GetVideosForPreviewSerializer, VideoResponseSerializer
-
+from math import ceil
 
 class getVideosForPreview(APIView):
     serializer_class = GetVideosForPreviewSerializer
@@ -235,17 +236,278 @@ class getVideosForPreview(APIView):
         )
 
         # Build clean response
-        responseData = [
-            {
-                "id": v.id,
-                "title": v.title,
-                "duration": v.duration,
-                "description": v.description,
-                "url": v.url,
-                "count": getattr(v, "count", 0),
-            }
-            for v in rankedVideos
-        ]
+        # responseData = [
+        #     {
+        #         "id": v.id,
+        #         "title": v.title,
+        #         "duration": v.duration,
+        #         "description": v.description,
+        #         "url": v.url,
+        #         "count": getattr(v, "count", 0),
+        #     }
+        #     for v in rankedVideos
+        # ]
+        # responseData = []
+        # for video in rankedVideos:
+        #     # Add duration parsing logic for testing
+        #     total_seconds = self.parse_duration_to_seconds(video.duration)
+        #     segments_needed = self.calculate_segments_needed(total_seconds)
+            
+        #     responseData.append({
+        #         "id": video.id,
+        #         "title": video.title,
+        #         "duration": video.duration,
+        #         "description": video.description,
+        #         "url": video.url,
+        #         "count": getattr(video, "count", 0),
+        #         # NEW 
+        #         "total_seconds": total_seconds,
+        #         "segments_needed": segments_needed,
+        #         "is_sequence": segments_needed > 1
+        #     })
+        #responseData = self.generate_video_sequences(rankedVideos)
 
+        # responseData = []
+        # for video in rankedVideos:
+        #     total_seconds = self.parse_duration_to_seconds(video.duration)
+        #     segments_needed = self.calculate_segments_needed(total_seconds)
+            
+        #     # Create multiple segments for the video
+        #     for segment_num in range(segments_needed):
+        #         # Calculate segment duration (10s or remainder for last segment)
+        #         segment_duration = 10
+        #         if segment_num == segments_needed - 1:  # Last segment
+        #             remaining_seconds = total_seconds % 10
+        #             if remaining_seconds > 0:
+        #                 segment_duration = remaining_seconds
+                
+        #         responseData.append({
+        #             "id": f"{video.id}-{segment_num + 1}",  # Unique segment ID
+        #             "title": video.title,
+        #             "duration": str(segment_duration),
+        #             "description": video.description,
+        #             "url": video.url,  
+        #             "segment_number": segment_num + 1,
+        #             "total_segments": segments_needed,
+        #             "original_video_id": video.id,
+        #             "exercise_type": video.title  # Category is basically the title
+        #         })
+        # NEW: Build workout sequence using skeleton approach
+        workout_skeleton = self.get_workout_skeleton(answer_ids)
+        available_videos = list(rankedVideos)  # Convert to list for easier manipulation
+
+        responseData = []
+        current_segment = 1
+
+        for slot in workout_skeleton['structure']:
+            if slot['type'] == 'exercise':
+                # Select appropriate exercise for this slot
+                exercise_video = self.select_exercise_for_slot(slot, available_videos)
+                if exercise_video:
+                    responseData.append({
+                        "id": f"workout-{current_segment}",
+                        "title": exercise_video.title,
+                        "duration": str(slot['duration']),
+                        "description": exercise_video.description,
+                        "url": exercise_video.url,
+                        "segment_number": current_segment,
+                        "total_segments": len(workout_skeleton['structure']),
+                        "workout_type": workout_skeleton['name'],
+                        "slot_type": slot['type'],
+                        "exercise_type": slot['exercise_type'],
+                        "is_workout_segment": True
+                    })
+                    # Remove used video to avoid duplicates (optional)
+                    if exercise_video in available_videos:
+                        available_videos.remove(exercise_video)
+            else:
+                # Warmup, cooldown, or rest slot
+                slot_title = f"{slot['type'].title()} Segment"
+                slot_description = f"{slot['type'].title()} for {slot['duration']} seconds"
+                
+                # For rest periods, no video URL
+                slot_url = None
+                if slot['type'] in ['warmup', 'cooldown']:
+                    # You could add specific warmup/cooldown videos here later
+                    slot_description = f"{slot['type'].title()} exercises for {slot['duration']} seconds"
+                
+                responseData.append({
+                    "id": f"workout-{current_segment}",
+                    "title": slot_title,
+                    "duration": str(slot['duration']),
+                    "description": slot_description,
+                    "url": slot_url,
+                    "segment_number": current_segment,
+                    "total_segments": len(workout_skeleton['structure']),
+                    "workout_type": workout_skeleton['name'],
+                    "slot_type": slot['type'],
+                    "exercise_type": slot['exercise_type'],
+                    "is_workout_segment": True
+                })
+            
+            current_segment += 1
+
+        # Add workout metadata as the first item
+        responseData.insert(0, {
+            "id": "workout-metadata",
+            "workout_metadata": {
+                "workout_type": workout_skeleton['name'],
+                "total_duration": workout_skeleton['total_duration'],
+                "segment_count": len(workout_skeleton['structure']),
+            },
+            "is_metadata": True
+        })
+        # except Exception as e:
+        #     # Fallback to original behavior if skeleton approach fails
+        #     print(f"Workout skeleton error: {e}")
+        #     responseData = []
+        #     for video in rankedVideos:
+        #         responseData.append({
+        #             "id": video.id,
+        #             "title": video.title,
+        #             "duration": video.duration,
+        #             "description": video.description,
+        #             "url": video.url,
+        #             "count": getattr(video, "count", 0)
+        #         })
         return Response(responseData, status=status.HTTP_200_OK)
+    def get_workout_skeleton(self, answer_ids):
+        """
+        Determine workout type based on user answers and select appropriate skeleton
+        """
+        WORKOUT_SKELETONS = {
+            'hiit': {
+                'name': 'HIIT Workout',
+                'structure': [
+                    {'type': 'warmup', 'duration': 30, 'exercise_type': 'warmup'},
+                    {'type': 'exercise', 'duration': 45, 'exercise_type': 'cardio'},
+                    {'type': 'rest', 'duration': 15, 'exercise_type': 'rest'},
+                    {'type': 'exercise', 'duration': 45, 'exercise_type': 'strength'},
+                    {'type': 'rest', 'duration': 15, 'exercise_type': 'rest'},
+                    {'type': 'exercise', 'duration': 45, 'exercise_type': 'cardio'},
+                    {'type': 'cooldown', 'duration': 30, 'exercise_type': 'cooldown'}
+                ],
+                'total_duration': 225
+            },
+            'strength': {
+                'name': 'Strength Training',
+                'structure': [
+                    {'type': 'warmup', 'duration': 30, 'exercise_type': 'warmup'},
+                    {'type': 'exercise', 'duration': 60, 'exercise_type': 'strength'},
+                    {'type': 'exercise', 'duration': 60, 'exercise_type': 'strength'},
+                    {'type': 'exercise', 'duration': 60, 'exercise_type': 'strength'},
+                    {'type': 'cooldown', 'duration': 30, 'exercise_type': 'cooldown'}
+                ],
+                'total_duration': 240
+            },
+            'cardio': {
+                'name': 'Cardio Session',
+                'structure': [
+                    {'type': 'warmup', 'duration': 30, 'exercise_type': 'warmup'},
+                    {'type': 'exercise', 'duration': 60, 'exercise_type': 'cardio'},
+                    {'type': 'exercise', 'duration': 60, 'exercise_type': 'cardio'},
+                    {'type': 'cooldown', 'duration': 30, 'exercise_type': 'cooldown'}
+                ],
+                'total_duration': 180
+            }
+        }
+        
+        # Get answer texts to analyze preferences
+        from ..models import Answer
+        answers = Answer.objects.filter(id__in=answer_ids)
+        answer_texts = [answer.text.lower() for answer in answers]
+        all_answers_text = ' '.join(answer_texts)
+        
+        # Determine workout type based on answer keywords
+        if any(keyword in all_answers_text for keyword in ['hiit', 'high intensity', 'interval', 'burpee', 'jump']):
+            return WORKOUT_SKELETONS['hiit']
+        elif any(keyword in all_answers_text for keyword in ['strength', 'weight', 'muscle', 'lift', 'push', 'pull', 'squat']):
+            return WORKOUT_SKELETONS['strength']
+        elif any(keyword in all_answers_text for keyword in ['cardio', 'endurance', 'running', 'aerobic', 'jog']):
+            return WORKOUT_SKELETONS['cardio']
+        else:
+            # Default to HIIT if no clear preference
+            return WORKOUT_SKELETONS['hiit']
 
+    def select_exercise_for_slot(self, slot, available_videos):
+        """
+        Select an appropriate exercise for a workout slot
+        """
+        try:
+            if not available_videos:
+                return None
+                
+            slot_duration = slot.get('duration', 45)
+            exercise_type = slot.get('exercise_type', 'cardio')
+            
+            print(f"Slot: {exercise_type}, needs {slot_duration}s, available: {len(available_videos)} videos")
+            
+            # Filter by exercise type if possible
+            suitable_videos = [v for v in available_videos if self.video_matches_type(v, exercise_type)]
+            
+            # If no type matches, use all available videos
+            if not suitable_videos:
+                suitable_videos = available_videos
+                print(f"No {exercise_type} matches, using all available videos")
+            
+            # Just use the first suitable video
+            # Since all videos are 10s, the frontend will need to handle repeating them
+            selected_video = suitable_videos[0]
+            print(f"Selected: {selected_video.title} for {slot_duration}s slot")
+            
+            return selected_video
+            
+        except Exception as e:
+            print(f"Error in select_exercise_for_slot: {e}")
+            return available_videos[0] if available_videos else None
+
+    def video_matches_type(self, video, exercise_type):
+        """
+        Determine if a video matches the required exercise type
+        """
+        try:
+            title = video.title.lower()
+            
+            # Simple keyword matching
+            if exercise_type == 'cardio':
+                cardio_keywords = ['jump', 'jack', 'burpee', 'knee', 'skip', 'kick', 'climber', 'shadow', 'rope', 'high', 'run', 'jog']
+                return any(keyword in title for keyword in cardio_keywords)
+            elif exercise_type == 'strength':
+                strength_keywords = ['push', 'pull', 'squat', 'sit-up', 'lunge', 'dip', 'plank', 'bridge', 'raise', 'curl', 'press', 'up']
+                return any(keyword in title for keyword in strength_keywords)
+            else:
+                # For warmup/cooldown/rest, any video is fine (though we shouldn't get here for these)
+                return True
+                
+        except Exception as e:
+            print(f"Error in video_matches_type: {e}")
+            return True  # Default to True if there's an error
+
+    def parse_duration_to_seconds(self, duration_str):
+        """
+        Convert duration string to total seconds for testing
+        """
+        try:
+            # If it's just a number, assume seconds
+            if duration_str.isdigit():
+                return int(duration_str)
+            
+            # Handle "45s" format
+            if duration_str.endswith('s') and duration_str[:-1].isdigit():
+                return int(duration_str[:-1])
+            
+            # Handle "1:30" format (minutes:seconds)
+            if ':' in duration_str:
+                parts = duration_str.split(':')
+                if len(parts) == 2:
+                    return int(parts[0]) * 60 + int(parts[1])
+            
+            # Default fallback
+            return 30  
+        except:
+            return 30  
+
+    def calculate_segments_needed(self, total_seconds):
+        """Calculate how many 10-second segments are needed"""
+        from math import ceil
+        return ceil(total_seconds / 10)
