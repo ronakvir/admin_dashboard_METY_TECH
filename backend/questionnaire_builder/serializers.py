@@ -226,12 +226,26 @@ class GetVideosForPreviewSerializer(serializers.Serializer):
 
 # Video Response Serializer for getVideosForPreview
 class VideoResponseSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    # id = serializers.IntegerField()
+    # title = serializers.CharField()
+    # duration = serializers.CharField()
+    # description = serializers.CharField()
+    # url = serializers.CharField(allow_null=True)
+    # count = serializers.IntegerField()
+    id = serializers.CharField()  # Changed to CharField to handle segment IDs like "51-1"
     title = serializers.CharField()
     duration = serializers.CharField()
     description = serializers.CharField()
     url = serializers.CharField(allow_null=True)
-    count = serializers.IntegerField()
+    segment_number = serializers.IntegerField(required=False)
+    total_segments = serializers.IntegerField(required=False)
+    workout_type = serializers.CharField(required=False)
+    slot_type = serializers.CharField(required=False)
+    exercise_type = serializers.CharField(required=False)
+    is_workout_segment = serializers.BooleanField(required=False)
+    is_metadata = serializers.BooleanField(required=False)
+    workout_metadata = serializers.DictField(required=False)
+
 
 # Create Video Request Serializer
 class CreateVideoSerializer(serializers.Serializer):
