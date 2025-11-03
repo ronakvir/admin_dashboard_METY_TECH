@@ -77,6 +77,7 @@ class AIEngineConfiguration(models.Model):
     model_name = models.CharField(max_length=100)
     _api_key = models.TextField(db_column="api_key")
     system_prompt = models.TextField(blank=True)
+    modification_prompt = models.TextField(blank=True)
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

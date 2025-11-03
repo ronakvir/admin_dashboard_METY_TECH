@@ -37,4 +37,5 @@ urlpatterns = [
     path('fixaiquery/', views.QueryAI.as_view(), name='FixAIQuery'),
     path('aimanagement/', views.AIEngineManagement.as_view(), name='AIEngineManagementList'),
     path("aimanagement/<uuid:uid>/", views.AIEngineManagement.as_view(), name="AIEngineManagementDetail"),
+    path('modifyaiquery/', views.ModifyQueryAI.as_view(), name='ModifyAIQuery'),
 ]

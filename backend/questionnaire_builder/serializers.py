@@ -318,6 +318,7 @@ class AIEngineConfigurationSerializer(serializers.ModelSerializer):
             "model_name",
             "api_key",  # can be written, not read
             "system_prompt",
+            "modification_prompt",
             "order",
             "created_at",
             "updated_at",
@@ -338,5 +339,6 @@ class InternalAIEngineConfigSerializer(serializers.ModelSerializer):
             "model_name",
             "api_key",  # decrypted version
             "system_prompt",
+            "modification_prompt",
             "order",
         ]

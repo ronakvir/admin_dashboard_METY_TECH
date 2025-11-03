@@ -102,6 +102,17 @@ export class AIQuery {
     });
   }
 
+  public static ModifyQueryGemini(
+    data: String,
+  ): CancelablePromise<{answer: string}> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/modifyaiquery/",
+      body: data,
+      mediaType: "application/json",
+    });
+  }
+
   public static getAIConfigurations(): CancelablePromise<{answer: string}> {
     return __request(OpenAPI, {
       method: "GET",
