@@ -26,7 +26,7 @@ import base64
 from django.core import signing
 from django.conf import settings
 from litellm import completion
-from .default_aimodel_config import *
+from . import default_aimodel_config as default
 
 
 
@@ -138,7 +138,7 @@ class AIEngineManagement(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            print("❌ Serializer errors:", serializer.errors)  # 👈 ADD THIS
+            print("❌ Serializer errors:", serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, uid):
@@ -204,10 +204,10 @@ class QueryAI(APIView):
 
         # Add the default model to the end of the pipeline
         defaultModel = {
-            "config_name": config_name,
-            "model_name": model_name,
-            "model_key": model_key,
-            "model_prompt": model_prompt,
+            "config_name":  default.config_name,
+            "model_name": default.model_name,
+            "model_key": default.model_key,
+            "model_prompt": default.model_prompt,
         }
         pipeline.append(defaultModel)
 
@@ -233,13 +233,14 @@ class QueryAI(APIView):
             try:
                 # === Step 1: Generate plan ===
                 signal.alarm(30)  # 30-second safeguard per model
+                print(model["model_key"])
                 llmResponse = completion(
                     model = model["model_name"],
                     messages = [{"role": "user", "content": updated_prompt}],
                     api_key = model["model_key"]
                 )
                 signal.alarm(0)
-
+                
                 raw = llmResponse["choices"][0]["message"]["content"].strip() if llmResponse["choices"] else ""
                 cleaned = re.sub(r"```json|```", "", raw).strip()
 
