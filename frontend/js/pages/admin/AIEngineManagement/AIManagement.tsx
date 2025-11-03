@@ -381,31 +381,44 @@ const PipelineEditor: React.FC<PipelineEditorProps> = ({ configs, onSave }) => {
         const options = getAvailableModels(slot);
 
         return (
-          <div key={slot} className="pipeline-slot">
-            <label>Step {slot}</label>
-            <select
-              value={currentUid}
-              disabled={saving}
-              onChange={(e) => handleModelChange(slot, e.target.value)}
-            >
-              <option value="">Select Model</option>
-              {options.map((m) => (
-                <option key={m.uid} value={m.uid}>
-                  {m.name} ({m.model_name})
-                </option>
-              ))}
-            </select>
+          <>
+            <div key={slot} className="pipeline-slot">
+              <label>Step {slot}</label>
+              <select
+                value={currentUid}
+                disabled={saving}
+                onChange={(e) => handleModelChange(slot, e.target.value)}
+              >
+                <option value="">Select Model</option>
+                {options.map((m) => (
+                  <option key={m.uid} value={m.uid}>
+                    {m.name} ({m.model_name})
+                  </option>
+                ))}
+              </select>
+              
 
-            <button
-              className="btn-small btn-danger"
-              disabled={slot !== Math.max(...slots) || saving}
-              onClick={() => removeSlot(slot)}
-            >
-              ✕
-            </button>
-          </div>
+              <button
+                className="btn-small btn-danger"
+                disabled={slot !== Math.max(...slots) || saving}
+                onClick={() => removeSlot(slot)}
+              >
+                ✕
+              </button>
+            </div>
+
+          
+          </>
         );
       })}
+
+      {/* Default Pipeline Entry. This in not changeable, but keeps the <select> format to maintain visual consistency */}
+      <div className="pipeline-slot">
+        <label>Default</label>
+        <select>
+          <option value="">Default .env-based Model (gemini/gemini-2.5.flash-lite)</option>
+        </select>
+      </div>
 
       <div className="pipeline-buttons">
         <button className="btn-secondary" disabled={saving} onClick={addSlot}>
