@@ -146,7 +146,7 @@ const AIManagement: React.FC = () => {
               </label>
 
               <label>
-                System Prompt:
+                Initial Prompt:
                 <textarea
                   value={editingConfig.system_prompt}
                   onChange={(e) =>
@@ -179,7 +179,7 @@ const AIManagement: React.FC = () => {
                   }}
                 />
                 <small className="form-hint">
-                  <strong>Note:</strong> When the model runs, this prompt will be followed by:
+                  <strong>Note:</strong> This is the prompt used when requesting an initial workout recommendation. When the model runs, this prompt will be followed by:
                   <ul>
                     <li>The list of available <code>categories</code></li>
                     <li>The user's submitted input</li>
@@ -221,10 +221,13 @@ const AIManagement: React.FC = () => {
                   }}
                 />
                 <small className="form-hint">
-                  <strong>Note:</strong> When the model runs, this prompt will be followed by:
+                  <strong>Note:</strong> This is the prompt used when requesting an updated, modified workout recommendation. When the model runs, this prompt will be preceded by:
                   <ul>
-                    <li>The list of available <code>categories</code></li>
-                    <li>The user's submitted input</li>
+                    <li>User preferences and requested modifications</li>
+                  </ul>
+                  and followed by:
+                  <ul>
+                    <li>The list of available <code>categories</code>, except any categories explicitely chosen by the user to discard.</li>
                   </ul>
                 </small>
               </label>
@@ -321,6 +324,10 @@ const AIManagement: React.FC = () => {
     </div>
   );
 };
+
+
+
+
 
 /* 
 ════════════════════════════════════════════════════════════

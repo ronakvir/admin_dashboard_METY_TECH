@@ -46,6 +46,7 @@ Generate a JSON response in the following format only (no extra text):
     }
 
 Rules:
+- Rest Segments should last no LONGER than 1 minute
 - Each exercise should include 1 of 3 intensities: {low, medium, high}
 - For each "set" within an activity, only include one set of exercises in the list. The # of sets indicate repeats
 - Output valid JSON only (no Markdown or text).

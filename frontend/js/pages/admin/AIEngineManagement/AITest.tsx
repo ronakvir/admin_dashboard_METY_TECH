@@ -402,6 +402,7 @@ const AITest: React.FC = () => {
                         <strong>{ex.exercise}</strong>{" "}
                         <span>{ex.duration_seconds}s</span>
                       </div>
+                      {ex.notes && <p className="exercise-notes">{ex.intensity} intensity</p>}
                       {ex.notes && <p className="exercise-notes">{ex.notes}</p>}
                       {ex.url && (
                         <div className="exercise-url">

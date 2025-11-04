@@ -88,6 +88,7 @@ import type {
   VideomanagementGetvideosCreateData,
   VideomanagementGetvideosCreateResponse,
   Workout,
+  AIConfig,
 } from "./types.gen";
 
 export class AIQuery {
@@ -113,7 +114,7 @@ export class AIQuery {
     });
   }
 
-  public static getAIConfigurations(): CancelablePromise<{answer: string}> {
+  public static getAIConfigurations(): CancelablePromise<AIConfig[]> {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/aimanagement/"
