@@ -7,6 +7,7 @@ export interface AIConfig {
   model_name: string;
   api_key: string;
   system_prompt: string;
+  modification_prompt: string;
   order: number;
   created_at: string;
   updated_at: string;

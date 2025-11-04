@@ -167,6 +167,7 @@ class AIEngineManagement(APIView):
         return Response({"detail": "Deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 
+
 class QueryAI(APIView):
     """
     One-stop endpoint:
@@ -275,4 +276,129 @@ class QueryAI(APIView):
         return Response({"error": "AI prompting failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+class ModifyQueryAI(APIView):
+
+    def post(self, request):
+        from ..models import Video
+        #videos = Video.objects.all()
+
+        #exercise_data = ""
+        #for video in videos:
+        #    exercise_data += f"{video.title}|{video.duration}|{video.url or 'no-url'}\n"
+        
+        # Get the models list from the DB
+        matchingRows = AIEngineConfiguration.objects.filter(order__gt=0)
+
+        # This is the internal serializer that allows api_key to be readable
+        models = InternalAIEngineConfigSerializer(matchingRows, many=True).data
+        sorted_models = sorted(models, key=lambda x: x["order"])
+        # Create the failover pipeline for the query
+        pipeline = []
+
+        # Add each model in the D
+        for model in sorted_models:
+            modelToBeAppended = {
+                "config_name": model["name"],
+                "model_name": model["model_name"],
+                "model_key": model["api_key"],
+                "model_prompt": model["modification_prompt"],
+            }
+            pipeline.append(modelToBeAppended)
+
+        # Add the default model to the end of the pipeline
+        defaultModel = {
+            "config_name":  default.config_name,
+            "model_name": default.model_name,
+            "model_key": default.model_key,
+            "model_prompt": default.modification_prompt,
+        }
+        pipeline.append(defaultModel)
+
+
+        userContext = request.data if isinstance(request.data, dict) else request.data
+        
+        
+        excluded = {
+            ex["name"].strip().lower()
+            for ex in userContext.get("exercises", [])
+            if ex.get("replace")
+        }
+
+        # Remove excluded exercises from your available exercise list
+        filtered_videos = [
+            v for v in Video.objects.all()
+            if v.title.strip().lower() not in excluded
+        ]
+
+        exercise_data = "\n".join(
+            f"{v.title}|{v.duration}|{v.url or 'no-url'}" for v in filtered_videos
+        )
+
+
+        if not userContext:
+            return Response({"error": "Prompt is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        def timeout_handler(signum, frame):
+            raise TimeoutError("Request timed out")
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        
+
+        for model in pipeline:
+            # Make the prompt according to the currently defined model
+            updated_prompt = f"""
+                {userContext}
+                {model["model_prompt"]}
+                {exercise_data}
+            """
+
+
+
+            
+            print(f"Attempting {model["config_name"]}")
+
+            try:
+                # === Step 1: Generate plan ===
+                signal.alarm(30)  # 30-second safeguard per model
+                print(model["model_key"])
+                llmResponse = completion(
+                    model = model["model_name"],
+                    messages = [{"role": "user", "content": updated_prompt}],
+                    api_key = model["model_key"]
+                )
+                signal.alarm(0)
+                
+                raw = llmResponse["choices"][0]["message"]["content"].strip() if llmResponse["choices"] else ""
+                cleaned = re.sub(r"```json|```", "", raw).strip()
+
+                try:
+                    parsed = json.loads(cleaned)
+                except json.JSONDecodeError:
+                    return Response({"error": "Invalid JSON from Gemini", "raw": cleaned}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                # === Step 2: Validate + correct ===
+                corrected = correct_workout_durations(parsed)
+
+                # === Step 3: Add AI engine information to response ===
+                corrected["ai_engine_used"] = {
+                    "config_name": model["config_name"],
+                    "model_name": model["model_name"]
+                }
+
+                # === Step 4: Return final result ===
+                return Response(corrected, status=status.HTTP_200_OK)
+
+            except TimeoutError:
+                signal.alarm(0)
+                traceback.print_exc()
+                print(f"{model['config_name']} Timed Out")
+                continue
+
+            except Exception as e:
+                signal.alarm(0)
+                traceback.print_exc()
+                print(f"{model['config_name']} Failed: {str(e)}")
+        
+        return Response({"error": "AI prompting failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

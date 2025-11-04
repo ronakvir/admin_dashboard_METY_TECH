@@ -16,35 +16,39 @@ model_prompt = """
 Generate a JSON response in the following format only (no extra text):
 
     {
-        "week_number": 0,
+        "week_number": number,
         "days": [
             {
-            "day_number": 0,
-            "duration_seconds": 0,
-            "title": "",
+            "day_number": number,
+            "duration_seconds": number,
+            "title": string,
             "segments": [
                 {
-                "activity": "",
-                "duration_seconds": 0,
-                "sets": 0,
+                "activity": string,
+                "duration_seconds": number,
+                "sets": number,
                 "segments": [
                     {
-                    "exercise": "",
-                    "duration_seconds": 0,
-                    "notes": "",
-                    "url": ""
+                    "exercise": string,
+                    "duration_seconds": number,
+                    "intensity": string,
+                    "notes": string,
+                    "url": string
                     }
                 ]
                 }
             ],
-            "total_duration_seconds": 0,
-            "difficulty": "",
-            "goal": ""
+            "total_duration_seconds": number,
+            "difficulty": string,
+            "goal": string
             }
         ]
     }
 
 Rules:
+- Rest Segments should last no LONGER than 1 minute
+- Each exercise should include 1 of 3 intensities: {low, medium, high}
+- For each "set" within an activity, only include one set of exercises in the list. The # of sets indicate repeats
 - Output valid JSON only (no Markdown or text).
 - Each exercise should be based on the exercise data duration passed
 - Each activity must include a warmup, primary, and cooldown.
@@ -70,4 +74,60 @@ Rules:
 - Match the exercise name exactly to the title in the exercise list and use that specific URL.
 - For each exercise, you MUST use the exact duration provided (convert "0:10" to 10 seconds).
 - If an exercise shows "no-url", use an empty string "" for the url field.
+"""
+
+
+modification_prompt = """
+Use the previous context to guide the updated workout
+
+Your task:
+Update the provided workout plan based on the context above.
+
+If a `"replace": true"` flag appears on a day, activity, or exercise:
+- Generate a new version of that section (not just reformat it).
+- Use different activities and exercises than the original, keeping difficulty, goal, and total duration consistent.
+- Ensure the structure and timing make sense as a full workout.
+
+Return ONLY valid JSON in this format:
+{{
+  "week_number": int,
+  "days": [
+    {{
+      "day_number": int,
+      "title": str,
+      "duration_seconds": int,
+      "goal": str,
+      "difficulty": str,
+      "segments": [
+        {{
+          "activity": str,
+          "duration_seconds": int,
+          "sets": int,
+          "segments": [
+            {{
+              "exercise": str,
+              "duration_seconds": int,
+              "intensity": str,
+              "notes": str,
+              "url": str
+            }}
+          ]
+        }}
+      ]
+    }}
+  ]
+}}
+
+Rules (follow in order of priority):
+1. Respond with ONLY the JSON object (no markdown, no commentary).
+2. Replace every section where `"replace": true"`.
+3. If the activity is a Warmup or Cooldown **and** it is being replaced, the new activity MUST contain between 2 and 4 exercises.
+    - New Warmup and Cooldown activities must be between 1-5 minutes each, as ratio of the total workout duration.
+4. Choose replacements ONLY from the available exercise list below.
+5. Do not use exercises not present in that list.
+6. Keep total workout length, difficulty, and flow balanced for other activities.
+7. Maintain valid JSON that matches the above schema exactly.
+8. If an exercise in an existing activity, whether `"replace": true"` or `"replace": false"`, but it is not in the list of available exercises, replace or remove it.
+
+Available Exercises:
 """

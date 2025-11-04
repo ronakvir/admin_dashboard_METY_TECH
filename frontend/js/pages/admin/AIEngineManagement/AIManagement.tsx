@@ -146,7 +146,7 @@ const AIManagement: React.FC = () => {
               </label>
 
               <label>
-                System Prompt:
+                Initial Prompt:
                 <textarea
                   value={editingConfig.system_prompt}
                   onChange={(e) =>
@@ -179,7 +179,7 @@ const AIManagement: React.FC = () => {
                   }}
                 />
                 <small className="form-hint">
-                  <strong>Note:</strong> When the model runs, this prompt will be followed by:
+                  <strong>Note:</strong> This is the prompt used when requesting an initial workout recommendation. When the model runs, this prompt will be followed by:
                   <ul>
                     <li>The list of available <code>categories</code></li>
                     <li>The user's submitted input</li>
@@ -187,7 +187,50 @@ const AIManagement: React.FC = () => {
                 </small>
               </label>
 
+              <label>
+                Modification Prompt:
+                <textarea
+                  value={editingConfig.modification_prompt}
+                  onChange={(e) =>
+                    setEditingConfig({
+                      ...editingConfig,
+                      modification_prompt: e.target.value,
+                    })
+                  }
+                  placeholder="Enter the AI system prompt..."
+                  onKeyDown={(e) => {
+                    if (e.key === "Tab") {
+                      e.preventDefault();
+                      const textarea = e.currentTarget;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const newValue =
+                        textarea.value.substring(0, start) + "\t" + textarea.value.substring(end);
 
+                      // update state with the new text
+                      setEditingConfig({
+                        ...editingConfig,
+                        modification_prompt: newValue,
+                      });
+
+                      // restore cursor position after the tab
+                      requestAnimationFrame(() => {
+                        textarea.selectionStart = textarea.selectionEnd = start + 1;
+                      });
+                    }
+                  }}
+                />
+                <small className="form-hint">
+                  <strong>Note:</strong> This is the prompt used when requesting an updated, modified workout recommendation. When the model runs, this prompt will be preceded by:
+                  <ul>
+                    <li>User preferences and requested modifications</li>
+                  </ul>
+                  and followed by:
+                  <ul>
+                    <li>The list of available <code>categories</code>, except any categories explicitely chosen by the user to discard.</li>
+                  </ul>
+                </small>
+              </label>
               <div className="form-buttons">
                 <button
                   className="btn-primary"
@@ -221,6 +264,7 @@ const AIManagement: React.FC = () => {
                     model_name: "",
                     api_key: "",
                     system_prompt: "",
+                    modification_prompt: "",
                     order: 0,
                     created_at: "",
                     updated_at: "",
@@ -280,6 +324,10 @@ const AIManagement: React.FC = () => {
     </div>
   );
 };
+
+
+
+
 
 /* 
 ════════════════════════════════════════════════════════════
