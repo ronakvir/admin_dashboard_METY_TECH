@@ -402,3 +402,180 @@ class ModifyQueryAI(APIView):
         
         return Response({"error": "AI prompting failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class ManualQuery(APIView):
+    """
+    Manual, in-house logic that maps questionnaire answers to video categories
+    and constructs a weekly workout plan. The response matches the AI engine
+    endpoint shape so the frontend can render either source identically.
+
+    Accepts JSON shaped like:
+      [
+        { "question": "..."|<id>, "answers": ["..."|<id>, ...] },
+        ...
+      ]
+
+    Optionally, a top-level object with keys:
+      { "questionnaire_id": <id>, "responses": [ ...same as above... ] }
+    """
+
+    def post(self, request):
+        from ..models import Video, Answer, Question, AnswerCategoryMapping
+        from django.db.models import Count, Q
+
+        payload = request.data
+
+        # Frontend may send a JSON string as body. Parse if needed.
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except Exception:
+                return Response({"error": "Invalid JSON payload."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Normalize input into a flat list of {question, answers}
+        questionnaire_id = None
+        responses = []
+        if isinstance(payload, dict) and "responses" in payload:
+            questionnaire_id = payload.get("questionnaire_id")
+            responses = payload.get("responses", [])
+        else:
+            responses = payload if isinstance(payload, list) else []
+
+        if not isinstance(responses, list) or len(responses) == 0:
+            return Response({"error": "Expected a non-empty list of question/answers."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Resolve provided answers to Answer IDs
+        # Handle both formats: {question, answers: [...]} and {question, answer: ...}
+        answer_ids = []
+        for item in responses:
+            if not isinstance(item, dict):
+                continue
+                
+            q_ref = item.get("question")
+            # Support both "answers" (array) and "answer" (single value)
+            a_refs = item.get("answers", [])
+            if not a_refs and "answer" in item:
+                # Convert single answer to array format
+                a_refs = [item.get("answer")]
+
+            question_obj = None
+            if isinstance(q_ref, int):
+                question_obj = Question.objects.filter(id=q_ref).first()
+            elif isinstance(q_ref, str) and q_ref.strip():
+                question_obj = Question.objects.filter(text__iexact=q_ref.strip()).first()
+
+            for a_ref in a_refs:
+                answer_obj = None
+                # Accept id, text, or answer object {id, text}
+                if isinstance(a_ref, dict):
+                    a_id = a_ref.get("id")
+                    a_text = a_ref.get("text")
+                    if isinstance(a_id, int):
+                        answer_obj = Answer.objects.filter(id=a_id).first()
+                    if not answer_obj and isinstance(a_text, str) and a_text.strip():
+                        qs = Answer.objects
+                        if question_obj:
+                            qs = qs.filter(question=question_obj)
+                        answer_obj = qs.filter(text__iexact=a_text.strip()).first()
+                elif isinstance(a_ref, int):
+                    answer_obj = Answer.objects.filter(id=a_ref).first()
+                elif isinstance(a_ref, str) and a_ref.strip():
+                    qs = Answer.objects
+                    if question_obj:
+                        qs = qs.filter(question=question_obj)
+                    answer_obj = qs.filter(text__iexact=a_ref.strip()).first()
+                if answer_obj:
+                    answer_ids.append(answer_obj.id)
+
+        if not answer_ids:
+            return Response({"error": "No valid answers were matched."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch mapped categories for these answers
+        mapping_qs = AnswerCategoryMapping.objects.filter(answer_id__in=answer_ids)
+        if questionnaire_id:
+            mapping_qs = mapping_qs.filter(questionnaire_id=questionnaire_id)
+
+        included_category_ids = list(mapping_qs.filter(inclusive=True).values_list("category_id", flat=True))
+
+        # Rank videos by how many of the included categories they match
+        ranked_videos = (
+            Video.objects
+            .filter(videocategory__category_id__in=included_category_ids)
+            .annotate(
+                match_count=Count(
+                    "videocategory__category_id",
+                    filter=Q(videocategory__category_id__in=included_category_ids),
+                    distinct=True,
+                )
+            )
+            .order_by("-match_count")
+        )
+
+        videos = list(ranked_videos)
+        if not videos:
+            # Fallback: use any videos if no mapping matched
+            videos = list(Video.objects.all()[:12])
+
+        # Build a simple 3-day plan that mirrors the AI response shape
+        def pick_ex(idx: int):
+            return videos[idx % len(videos)] if videos else None
+
+        week = {
+            "week_number": 1,
+            "days": []
+        }
+
+        day_defs = [
+            {"title": "Full Body Focus", "goal": "General fitness", "difficulty": "medium"},
+            {"title": "Strength & Core", "goal": "Strength", "difficulty": "medium"},
+            {"title": "Cardio & Mobility", "goal": "Endurance", "difficulty": "easy"},
+        ]
+
+        # Helper to construct an activity block
+        def activity_block(name: str, sets: int, exercise_videos, per_ex_seconds: int):
+            segments = []
+            for v in exercise_videos:
+                if not v:
+                    continue
+                segments.append({
+                    "exercise": v.title,
+                    "duration_seconds": per_ex_seconds,
+                    "url": v.url,
+                    "intensity": "moderate",
+                    "notes": v.description,
+                })
+            duration_total = per_ex_seconds * len(segments) * max(1, sets)
+            return {
+                "activity": name,
+                "sets": sets,
+                "segments": segments,
+                "duration_seconds": duration_total,
+            }
+
+        # Construct each day
+        for i, meta in enumerate(day_defs, start=1):
+            warmup = activity_block("Warmup", 1, [pick_ex(i), pick_ex(i+1)], 30)
+            main = activity_block("Main Circuit", 2, [pick_ex(i+2), pick_ex(i+3), pick_ex(i+4)], 45)
+            cooldown = activity_block("Cooldown", 1, [pick_ex(i+5)], 30)
+
+            total_duration = sum(a.get("duration_seconds", 0) for a in [warmup, main, cooldown])
+
+            week["days"].append({
+                "day_number": i,
+                "title": meta["title"],
+                "goal": meta["goal"],
+                "difficulty": meta["difficulty"],
+                "total_duration_seconds": total_duration,
+                "segments": [warmup, main, cooldown],
+            })
+
+        # Ensure durations are consistent with the AI post-processor
+        week = correct_workout_durations(week)
+
+        # Add engine metadata to align with frontend expectations
+        week["ai_engine_used"] = {
+            "config_name": "Manual Logic",
+            "model_name": "in-house"
+        }
+
+        return Response(week, status=status.HTTP_200_OK)
