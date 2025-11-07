@@ -118,9 +118,9 @@ const AITest: React.FC = () => {
     };
 
     const fullPayload = {
-      "exercises": uniqueExercises, 
-      "workout": partialPayload,
-      "responses": qResponses
+      "exercises_to_remove": uniqueExercises, 
+      "workout_to_be_changed": partialPayload,
+      "user_profile_data": qResponses
     }
 
 

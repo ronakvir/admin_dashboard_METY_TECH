@@ -11,6 +11,7 @@
 * [🧠 AI Query](#-ai-query)
 
   * [GET AI Workout Recommendation](#get-ai-workout-recommendation)
+  * [GET a Modified AI Workout Recommendation](#get-ai-modified-workout-recommendation)
 
 * [🧠 AI Management](#-ai-management)
 
@@ -188,6 +189,125 @@ Submits a list of questionnaire questions and answers, and returns a structured 
   ]
 }
 ```
+
+### GET AI Modified Workout Recommendation
+
+**POST** `/api/modifyaiquery/`
+Submits a list of 3 things. 1. a list of excersizes NOT to include in the modification. 2. The workout to be modified, with "replace" keys to indicate if an exercise, activity, or whole day should be replaced. and 3. questionnaire questions and answers. Returns a modified structured workout plan JSON.
+
+**Request**
+
+```json
+{
+  "exercises_to_remove": [
+    "pushups",
+    "situps"
+  ],
+  "workout_to_be_changed": {
+    "week_number": 1,
+    "days": [
+      {
+        "day_number": 1,
+        "duration_seconds": 3600,
+        "title": "Full Body Strength",
+        "replace": false
+        "segments": [
+          {
+            "activity": "Warmup",
+            "duration_seconds": 600,
+            "sets": 1,
+            "replace": false
+            "segments": [
+              {
+                "exercise": "Jump Rope",
+                "duration_seconds": 300,
+                "notes": "Light intensity to increase heart rate.",
+                "url": "https://example.com/jumprope",
+                "replace": true
+              }
+            ]
+          },
+          {
+            "activity": "Main Workout",
+            "duration_seconds": 2400,
+            "sets": 3,
+            "replace": true
+            "segments": [
+              {
+                "exercise": "Squats",
+                "duration_seconds": 60,
+                "notes": "3 sets of 10 reps with moderate weight.",
+                "url": "https://example.com/squats",
+                "replace": true
+              }
+            ]
+          }
+        ],
+        "total_duration_seconds": 3600,
+        "difficulty": "Intermediate",
+        "goal": "Build muscle"
+      }
+    ]
+  },
+  "user_profile_data": [
+    {
+      "question": "What is your primary fitness goal?",
+      "answers": ["Build muscle"]
+    },
+    {
+      "question": "How many days per week can you train?",
+      "answers": ["3"]
+    }
+  ]
+}
+```
+
+**Response**
+
+```json
+{
+  "week_number": 1,
+  "days": [
+    {
+      "day_number": 1,
+      "duration_seconds": 3600,
+      "title": "Full Body Strength",
+      "segments": [
+        {
+          "activity": "Warmup",
+          "duration_seconds": 600,
+          "sets": 1,
+          "segments": [
+            {
+              "exercise": "Jump Rope",
+              "duration_seconds": 300,
+              "notes": "Light intensity to increase heart rate.",
+              "url": "https://example.com/jumprope"
+            }
+          ]
+        },
+        {
+          "activity": "Main Workout",
+          "duration_seconds": 2400,
+          "sets": 3,
+          "segments": [
+            {
+              "exercise": "Squats",
+              "duration_seconds": 60,
+              "notes": "3 sets of 10 reps with moderate weight.",
+              "url": "https://example.com/squats"
+            }
+          ]
+        }
+      ],
+      "total_duration_seconds": 3600,
+      "difficulty": "Intermediate",
+      "goal": "Build muscle"
+    }
+  ]
+}
+```
+
 ---
 ## 🧠 AI Management
 

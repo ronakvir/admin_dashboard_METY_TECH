@@ -78,7 +78,7 @@ Rules:
 
 
 modification_prompt = """
-Use the previous context to guide the updated workout
+Use the previous context to guide the provided workout
 
 Your task:
 Update the provided workout plan based on the context above.
