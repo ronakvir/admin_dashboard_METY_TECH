@@ -316,13 +316,19 @@ class ModifyQueryAI(APIView):
         pipeline.append(defaultModel)
 
 
-        userContext = request.data if isinstance(request.data, dict) else request.data
-        
+        promptContext = request.data if isinstance(request.data, dict) else request.data
+        if not promptContext:
+            return Response({"error": "Prompt is required."}, status=status.HTTP_400_BAD_REQUEST)
         
         excluded = {
             ex["name"].strip().lower()
-            for ex in userContext.get("exercises", [])
+            for ex in promptContext.get("exercises_to_remove", [])
             if ex.get("replace")
+        }
+
+        promptContext = {
+            "workout_to_be_changed": promptContext["workout_to_be_changed"], 
+            "user_profile_data": promptContext["user_profile_data"]
         }
 
         # Remove excluded exercises from your available exercise list
@@ -336,8 +342,7 @@ class ModifyQueryAI(APIView):
         )
 
 
-        if not userContext:
-            return Response({"error": "Prompt is required."}, status=status.HTTP_400_BAD_REQUEST)
+
 
         def timeout_handler(signum, frame):
             raise TimeoutError("Request timed out")
@@ -348,7 +353,7 @@ class ModifyQueryAI(APIView):
         for model in pipeline:
             # Make the prompt according to the currently defined model
             updated_prompt = f"""
-                {userContext}
+                {promptContext}
                 {model["model_prompt"]}
                 {exercise_data}
             """
